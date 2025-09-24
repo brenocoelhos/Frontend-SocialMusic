@@ -2,10 +2,10 @@
 
 body {
     background-color: #f8f9fa;
-
 }
 
-.navbar {
+
+.sm-navbar {
     display:flex;
     justify-content: space-between;
     align-items: center;
@@ -14,22 +14,22 @@ body {
     color: white;
 }
 
-.menu ul {
+.sm-menu ul {
     display: flex;
     justify-content: space-between;
     list-style-type: none;
     padding: 0;
-    justify-content: space-between;
+    align-items: center; 
+    gap: 20px; 
 }
 
-.menu li{
+.sm-menu  li{
     color: white;
-    margin-right: 20px;
     font-family: 'Poppins', sans-serif;
     cursor: pointer;
 }
 
-.barra-pesquisa{
+.barra-pesquisa {
     display: flex;
     align-items: center;
     background: #EEE8FF;
@@ -38,7 +38,8 @@ body {
     width: 400px;
 }
 
-.barra-pesquisa input{
+.barra-pesquisa input {
+    flex-grow: 1; 
     background: transparent;
     border: none;
     outline: none;
@@ -46,24 +47,22 @@ body {
     padding: 8px;
 }
 
-
-.barra-pesquisa img{
+.barra-pesquisa img {
     width: 18px;
     height: 18px;
-    margin-right: 8px;
 }
 
 .lupa-direita {
-    margin-left: 190px;
     cursor: pointer;
 }
 
-.barra-pesquisa button{
+.barra-pesquisa button {
     background-color: transparent;
     border: none;
 }
 
-.imagem-fundo{
+
+.imagem-fundo {
     width: 100%; 
     height: 630px; 
     background-image: url('fundo.jpg'); 
@@ -73,14 +72,7 @@ body {
     background-color: #cccccc;
 }
 
-.titulos{
-    padding: 8px 15px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 400;
-
-}
-
-.primeiro-titulo{
+.primeiro-titulo {
     margin-top: 320px;
     font-family: 'Poppins', sans-serif;
     padding: 8px 15px;
@@ -88,13 +80,13 @@ body {
     color: white;
 }
 
-.introducao{
+.introducao {
     font-family: 'Poppins', sans-serif;
     padding: 8px 15px;
     color: white;
 }
 
-.login{
+.sm-login-button {
     font-family: 'Poppins', sans-serif;
     background-color: transparent;
     border: 2px solid #EEE8FF;
@@ -106,10 +98,17 @@ body {
     margin-left: 15px;
 }
 
-.container{
+
+.sm-section-title {
+    padding: 8px 15px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+}
+
+.sm-grid-container {
     background-color: #EEE8FF;
     width: 1200px;
-    height: 200px;
+    height: 290px;
     border-radius: 20px;
     margin: 0 auto; 
     display: flex;       
@@ -119,33 +118,66 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
-.artista{
+.sm-card-img {
+    width: 105%;
+    border-radius: 6%;
+}
+
+.artista {
     color: grey;
     font-family: 'Poppins', sans-serif;
     cursor: pointer;
     margin-top: -15px;
 }
 
-.musica{
+.musica {
     font-family: 'Poppins', sans-serif;
     cursor: pointer;
     margin-top: 0px;
 }
 
-.container-avaliacoes{
+
+.container-avaliacoes {
    background: white;
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    margin-bottom: 20px;
+    margin: 20px 15px; 
     font-family: 'Poppins', sans-serif;
 }
 
-.comentario{
+.sm-comment-box {
+    border-bottom: 1.9px solid #eeee;
+    padding: 10px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.sm-comment-text {
     color: grey;
 }
 
-.botao-seguir{
+.containerUser, .containerStar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+}
+
+.info-artista {
+    display: flex;
+}
+    
+.avaliacao-capa {
+
+    width: 50px; 
+    height: 50px;
+    border-radius: 6%;
+}
+
+.margem-artista {
+    margin-left: 15px; 
+}
+
+.botao-seguir {
     font-family: 'Poppins', sans-serif;
     background-color: transparent;
     border: 2px solid #EEE8FF;
@@ -155,27 +187,22 @@ body {
     height: 25px;
 }
 
-.botao-like{
+.botao-like {
     background-color: transparent;
     border: none;
     cursor: pointer;
-    margin-top: 1px;
-
-
 }
 
-.num-avaliacao{
+.buttonSpotify {
     font-family: 'Poppins', sans-serif;
-}
-
-.img{
-    width: 105%;
-}
-
-.comentarios{
-    border-bottom:1.9px solid #eeee;
-}
-
-.capa-alb {
-    width: 7%;
+    border: 2px solid #EEE8FF;
+    color: white;
+    background-color: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 180px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
