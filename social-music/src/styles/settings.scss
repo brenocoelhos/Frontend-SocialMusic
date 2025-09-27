@@ -1,0 +1,6 @@
+// src/styles/settings.scss
+
+@use 'vuetify/settings' with (
+  // Define a fonte padrão para todo o corpo da aplicação
+  $body-font-family: ('Poppins', sans-serif)
+);
