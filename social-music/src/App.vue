@@ -15,7 +15,7 @@
                 <p class="text-h6 mb-6 text-grey-lighten-2" style="max-width: 500px;">
                   Entre com sua conta Spotify, avalie e comente músicas, visualize as avaliações de seus amigos.
                 </p>
-                <v-btn size="x-large" variant="outlined" rounded="lg">Junte-se agora</v-btn>
+                <v-btn size="x-large" variant="outlined" rounded="lg" style="color: #EEE8FF;">Junte-se agora</v-btn>
               </v-col>
             </v-row>
           </v-container>
@@ -45,7 +45,7 @@
         <v-btn variant="text" class="text-capitalize" style="color: white;">Músicas</v-btn>
         <v-btn 
           variant="outlined" 
-          class="text-capitalize" 
+          class="text-none" 
           rounded="lg" 
           style="border: 2px solid #EEE8FF; color: #EEE8FF;"
         >
@@ -66,7 +66,7 @@
                 <v-card hover color="transparent" flat>
                   <v-img :src="musica.capa" class="rounded-lg"></v-img>
                   <v-card-title class="text-subtitle-1 pa-1 mt-2">{{ musica.titulo }}</v-card-title>
-                  <v-card-subtitle class="text-grey pa-1">{{ musica.artista }}</v-card-subtitle>
+                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista }}</v-card-subtitle>
                 </v-card>
               </v-col>
             </v-row>
@@ -115,8 +115,77 @@
           </v-row>
         </v-container>
       </div>
+      <div style="background-color: #f8f9fa;">
+        <v-container>
+    <v-row>
+      <v-col cols="12" md="8">
+        <h2 class="text-h5 font-weight-bold mb-4">Músicas em destaques</h2>
+
+        <v-list lines="two" bg-color="transparent">
+          <v-list-item
+            v-for="musica in musicasAvaliadas"
+            :key="musica.titulo"
+            class="mb-2"
+          >
+            <template v-slot:prepend>
+              <v-avatar size="56" rounded="lg">
+                <v-img :src="musica.capa"></v-img>
+              </v-avatar>
+            </template>
+
+            <v-list-item-title class="font-weight-normal">{{ musica.titulo }}</v-list-item-title>
+            <v-list-item-subtitle>{{ musica.artista }}</v-list-item-subtitle>
+
+            <template v-slot:append>
+              <div class="d-flex align-center">
+                <v-icon color="amber" icon="mdi-star" class="mr-1"></v-icon>
+                <span class="font-weight-normal">{{ musica.nota }}</span>
+              </div>
+            </template>
+          </v-list-item>
+        </v-list>
+      </v-col>
+
+      <v-col cols="12" md="4">
+        <h2 class="text-h5 font-weight-bold mb-4">Minha última avaliação</h2>
+        <v-sheet rounded="xl" class="pa-5" color="#EEE8FF">
+          <div class="d-flex align-center mb-3">
+            <v-avatar class="mr-3">
+              <v-img :src="ultimaAvaliacao.usuario.avatar"></v-img>
+            </v-avatar>
+            <div>
+              <div class="font-weight-normal">{{ ultimaAvaliacao.usuario.nome }}</div>
+              <div class="text-grey text-caption">{{ ultimaAvaliacao.usuario.handle }}</div>
+            </div>
+          </div>
+          <p class="text-body-2 text-grey-darken-2">
+            {{ ultimaAvaliacao.texto }}
+          </p>
+        </v-sheet>
+
+        <h2 class="text-h5 font-weight-bold mb-4 mt-8">Usuários recomendados</h2>
+        <v-list bg-color="transparent">
+          <v-list-item
+            v-for="usuario in usuariosRecomendados"
+            :key="usuario.handle"
+            class="px-1"
+          >
+            <template v-slot:prepend>
+              <v-avatar class="mr-3">
+                <v-img :src="usuario.avatar"></v-img>
+              </v-avatar>
+            </template>
+            <v-list-item-title class="font-weight-normal">{{ usuario.nome }}</v-list-item-title>
+            <v-list-item-subtitle>{{ usuario.handle }}</v-list-item-subtitle>
+          </v-list-item>
+        </v-list>
+      </v-col>
+    </v-row>
+  </v-container>
+      </div>
     </v-main>
   </v-app>
+
 </template>
 
 <script setup>
@@ -131,6 +200,29 @@ const musicasPopulares = ref([
   { titulo: 'Levitating', artista: 'Dua Lipa', capa: 'https://images.genius.com/4136ca8f6c03bd2fbc30c8d75407de75.1000x1000x1.png' },
   { titulo: 'good 4 u', artista: 'Olivia Rodrigo', capa: 'https://i.scdn.co/image/ab67616d0000b273a91c10fe9472d9bd89802e5a' },
   { titulo: 'MONTERO', artista: 'Lil Nas X', capa: 'https://cdn-images.dzcdn.net/images/cover/18e6daf0a1c70c1346c44670ff70645d/0x1900-000000-80-0-0.jpg' },
+]);
+const musicasAvaliadas = ref([
+  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Ferrari', artista: 'Frank Ocean', nota: '4.5/5' },
+  { capa: 'https://i.scdn.co/image/ab67616d0000b2739478c87599550dd73bfa7e02', titulo: 'White Iverson', artista: 'Post Malone', nota: '4.5/5' },
+  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Tee (with NOI-NOAH)', artista: 'Summer Walk - NOI-NOAH', nota: '4.5/5' },
+  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Teeth Teens', artista: 'Lorde', nota: '4.5/5' },
+  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Horse', artista: 'Chris Stapleton', nota: '4.5/5' },
+  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Rabbit', artista: 'Jefferson Airplane', nota: '4.5/5' },
+]);
+
+const ultimaAvaliacao = ref({
+  usuario: {
+    nome: 'Isabella',
+    handle: '@white',
+    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+  },
+  texto: 'Produção visionária, linha de baixo icônica e performance magnética...',
+});
+
+const usuariosRecomendados = ref([
+  { nome: 'White', handle: '@white', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
+  { nome: 'White Mustang', handle: '@white_lana', avatar: 'https://randomuser.me/api/portraits/men/46.jpg' },
+  { nome: 'White Orange', handle: '@orange_white', avatar: 'https://randomuser.me/api/portraits/men/47.jpg' },
 ]);
 
 const avaliacoes = ref([
