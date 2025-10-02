@@ -136,6 +136,8 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 
 ## 👥 Autores
 - [@brenocoelhos](https://github.com/brenocoelhos)
+- [@IsaBarb0sa](https://github.com/IsaBarb0sa)
+- [@pdromciel](https://github.com/pdromciel)
 
 ## 🎯 Status do Projeto
 🚧 Em desenvolvimento 🚧
