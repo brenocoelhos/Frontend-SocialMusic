@@ -1,72 +1,122 @@
-<template>  
+<template>
   <v-app>
-    <v-img
-        :src="fundoUrl" 
-        cover
-        height="85vh"
-      >
-        <div class="fill-height" style="background-color: rgba(0, 0, 0, 0.5);">
-          <v-container id="intro" class="fill-height">
-            <v-row align-content="end" justify="start" class="fill-height">
-              <v-col cols="12" md="8" lg="6">
-                <h1 class="text-h2 font-weight-bold mb-4 text-white">
-                  Avalie músicas do momento!
-                </h1>
-                <p class="text-h6 mb-6 text-grey-lighten-2" style="max-width: 500px;">
-                  Entre com sua conta Spotify, avalie e comente músicas, visualize as avaliações de seus amigos.
-                </p>
-                <v-btn size="x-large" variant="outlined" rounded="lg" style="color: #EEE8FF;">Junte-se agora</v-btn>
-              </v-col>
-            </v-row>
-          </v-container>
-        </div>
-      </v-img>
-    <v-app-bar flat color="transparent" absolute>
-        
-        <v-app-bar-title class="font-weight-normal" style="color: white;">SocialMusic</v-app-bar-title>
 
-        <v-spacer></v-spacer>
+    <v-app-bar elevation="0" color=transparent dark>
 
-        <v-text-field
-          label="Busque no SocialMusic"
-          variant="solo"
-          bg-color="#E6E0FF"
-          rounded="pill"
-          density="compact"
-          hide-details
-          append-inner-icon="mdi-magnify"
-          class="mx-4"
-          style="max-width: 450px;"
-        ></v-text-field>
+      <v-app-bar-title class="font-weight-normal" style="color: white;">SocialMusic</v-app-bar-title>
 
-        <v-spacer></v-spacer>
+      <v-spacer></v-spacer>
 
-        <v-btn variant="text" class="text-capitalize" style="color: white;">Página Inicial</v-btn>
-        <v-btn variant="text" class="text-capitalize" style="color: white;">Músicas</v-btn>
-        <v-btn 
-          variant="outlined" 
-          class="text-none" 
-          rounded="lg" 
-          style="border: 2px solid #EEE8FF; color: #EEE8FF;"
-        >
-          Entre com o Spotify
-        </v-btn>
+      <v-text-field label="Busque no SocialMusic" variant="solo" bg-color="#E6E0FF" rounded="pill" density="compact"
+        hide-details append-inner-icon="mdi-magnify" class="mx-4" style="max-width: 450px;"></v-text-field>
 
-      </v-app-bar>
+      <v-spacer></v-spacer>
+
+      <v-btn variant="text" class="text-capitalize" style="color: white;">Página Inicial</v-btn>
+      <v-btn variant="text" class="text-capitalize" style="color: white;">Músicas</v-btn>
+      <v-dialog max-width="500" v-model="dialog" persistent>
+        <template v-slot:activator="{ props: activatorProps }">
+          <v-btn v-bind="activatorProps" text="Entre com o Spotify" variant="outlined" class="text-none" rounded="lg"
+            style="border: 2px solid #EEE8FF; color: #EEE8FF;"></v-btn>
+        </template>
+
+        <v-form ref="form" @submit.prevent="submitForm">
+          <v-card class="rounded-lg">
+
+            <v-fade-transition mode="out-in">
+
+              <div v-if="view === 'register'">
+                <v-card-title class="text-h5 text-center font-weight-bold pt-5">Seja um membro
+                  SocialMusic</v-card-title>
+                <v-card-text>
+                  <v-text-field v-model="formData.username" :rules="rules.required" label="Nome de Usuário"
+                    variant="outlined" density="compact" class="mb-2"></v-text-field>
+
+                  <v-text-field v-model="formData.email" :rules="rules.email" label="E-mail" variant="outlined"
+                    density="compact" class="mb-2"></v-text-field>
+
+                  <v-text-field v-model="formData.password" :rules="rules.required" label="Senha" variant="outlined"
+                    density="compact" type="password" class="mb-2"></v-text-field>
+
+                  <v-text-field v-model="formData.confirmPassword" :rules="[...rules.required, rules.passwordMatch]"
+                    label="Confirmar Senha" variant="outlined" density="compact" type="password"></v-text-field>
+
+                  <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-6 text-none"
+                    style="background-color: #B39DDB; color: white;">
+                    Criar conta
+                  </v-btn>
+
+                  <v-btn block variant="plain" :ripple="false" class="mt-2  text-none ajuste-botao" @click="changeView('login')"
+                    style="text-decoration: underline;">
+                    Já possuo uma conta
+                  </v-btn>
+                </v-card-text>
+              </div>
+
+              <div v-if="view === 'login'">
+                <v-card-title class="text-h5 text-center font-weight-bold pt-5">Login na sua Conta</v-card-title>
+                <v-card-text>
+                  <v-text-field v-model="formData.email" :rules="rules.email" label="E-mail" variant="outlined"
+                    density="compact" class="mb-2"></v-text-field>
+
+                  <v-text-field v-model="formData.password" :rules="rules.required" label="Senha" variant="outlined"
+                    density="compact" type="password"></v-text-field>
+
+                  <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-6 text-none"
+                    style="background-color: #B39DDB; color: white;">
+                    Entrar
+                  </v-btn>
+                  <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" color="black" @click="changeView('register')"
+                    style="text-decoration: underline;">
+                    Cadastre-se
+                  </v-btn>
+                </v-card-text>
+              </div>
+
+            </v-fade-transition>
+
+            <v-card-actions class="px-5 pb-4">
+              <v-spacer></v-spacer>
+              <v-btn text="Fechar" @click="closeDialog"></v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-form>
+      </v-dialog>
+
+    </v-app-bar>
+
+    <v-img :src="fundoUrl" cover height="85vh">
+      <div class="fill-height" style="background-color: rgba(0, 0, 0, 0.5);">
+        <v-container id="intro" class="fill-height">
+          <v-row align-content="end" justify="start" class="fill-height">
+            <v-col cols="12" md="8" lg="6">
+              <h1 class="text-h2 font-weight-bold mb-4 text-white">
+                Avalie músicas do momento!
+              </h1>
+              <p class="text-h6 mb-6 text-grey-lighten-2" style="max-width: 500px;">
+                Entre com sua conta Spotify, avalie e comente músicas, visualize as avaliações de seus amigos.
+              </p>
+              <v-btn size="x-large" variant="outlined" rounded="lg" style="color: #EEE8FF;">Junte-se agora</v-btn>
+            </v-col>
+          </v-row>
+        </v-container>
+      </div>
+    </v-img>
 
     <v-main>
 
       <div style="background-color: #f8f9fa;">
         <v-container>
           <h2 class="text-h4 font-weight-bold my-8 text-grey-darken-3">Populares essa semana - Spotify</h2>
-          
+
           <v-sheet color="#EEE8FF" rounded="xl" class="pa-md-10 pa-5">
             <v-row>
               <v-col v-for="musica in musicasPopulares" :key="musica.titulo" cols="6" sm="4" md="2">
                 <v-card hover color="transparent" flat>
                   <v-img :src="musica.capa" class="rounded-lg"></v-img>
                   <v-card-title class="text-subtitle-1 pa-1 mt-2">{{ musica.titulo }}</v-card-title>
-                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista }}</v-card-subtitle>
+                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista
+                  }}</v-card-subtitle>
                 </v-card>
               </v-col>
             </v-row>
@@ -76,7 +126,7 @@
 
           <v-row>
             <v-col v-for="(avaliacao, i) in avaliacoes" :key="i" cols="12" md="6" lg="4">
-              <v-card rounded="lg" class="pa-2">
+              <v-card rounded="lg" class="d-flex flex-column" height="300" >
                 <v-card-text>
                   <div class="d-flex justify-space-between align-center">
                     <div class="d-flex align-center">
@@ -88,13 +138,8 @@
                         <div class="text-caption text-grey">{{ avaliacao.musica.artista }}</div>
                       </div>
                     </div>
-                    <v-rating
-                      :model-value="avaliacao.nota"
-                      color="orange"
-                      density="compact"
-                      half-increments
-                      readonly
-                    ></v-rating>
+                    <v-rating :model-value="avaliacao.nota" color="orange" density="compact" half-increments
+                      readonly></v-rating>
                   </div>
                 </v-card-text>
                 <v-divider class="mx-4"></v-divider>
@@ -113,75 +158,67 @@
               </v-card>
             </v-col>
           </v-row>
-        </v-container>
+        </v-container>  
       </div>
       <div style="background-color: #f8f9fa;">
         <v-container>
-    <v-row>
-      <v-col cols="12" md="8">
-        <h2 class="text-h5 font-weight-bold mb-4">Músicas em destaques</h2>
+          <v-row>
+            <v-col cols="12" md="8">
+              <h2 class="text-h5 font-weight-bold mb-4">Músicas em destaques</h2>
 
-        <v-list lines="two" bg-color="transparent">
-          <v-list-item
-            v-for="musica in musicasAvaliadas"
-            :key="musica.titulo"
-            class="mb-2"
-          >
-            <template v-slot:prepend>
-              <v-avatar size="56" rounded="lg">
-                <v-img :src="musica.capa"></v-img>
-              </v-avatar>
-            </template>
+              <v-list lines="two" bg-color="transparent">
+                <v-list-item v-for="musica in musicasAvaliadas" :key="musica.titulo" class="mb-2">
+                  <template v-slot:prepend>
+                    <v-avatar size="56" rounded="lg">
+                      <v-img :src="musica.capa"></v-img>
+                    </v-avatar>
+                  </template>
 
-            <v-list-item-title class="font-weight-normal">{{ musica.titulo }}</v-list-item-title>
-            <v-list-item-subtitle>{{ musica.artista }}</v-list-item-subtitle>
+                  <v-list-item-title class="font-weight-normal">{{ musica.titulo }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ musica.artista }}</v-list-item-subtitle>
 
-            <template v-slot:append>
-              <div class="d-flex align-center">
-                <v-icon color="amber" icon="mdi-star" class="mr-1"></v-icon>
-                <span class="font-weight-normal">{{ musica.nota }}</span>
-              </div>
-            </template>
-          </v-list-item>
-        </v-list>
-      </v-col>
+                  <template v-slot:append>
+                    <div class="d-flex align-center">
+                      <v-icon color="orange" icon="mdi-star" class="mr-1"></v-icon>
+                      <span class="font-weight-normal">{{ musica.nota }}</span>
+                    </div>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </v-col>
 
-      <v-col cols="12" md="4">
-        <h2 class="text-h5 font-weight-bold mb-4">Minha última avaliação</h2>
-        <v-sheet rounded="xl" class="pa-5" color="#EEE8FF">
-          <div class="d-flex align-center mb-3">
-            <v-avatar class="mr-3">
-              <v-img :src="ultimaAvaliacao.usuario.avatar"></v-img>
-            </v-avatar>
-            <div>
-              <div class="font-weight-normal">{{ ultimaAvaliacao.usuario.nome }}</div>
-              <div class="text-grey text-caption">{{ ultimaAvaliacao.usuario.handle }}</div>
-            </div>
-          </div>
-          <p class="text-body-2 text-grey-darken-2">
-            {{ ultimaAvaliacao.texto }}
-          </p>
-        </v-sheet>
+            <v-col cols="12" md="4">
+              <h2 class="text-h5 font-weight-bold mb-4">Minha última avaliação</h2>
+              <v-sheet rounded="xl" class="pa-5" color="#EEE8FF">
+                <div class="d-flex align-center mb-3">
+                  <v-avatar class="mr-3">
+                    <v-img :src="ultimaAvaliacao.usuario.avatar"></v-img>
+                  </v-avatar>
+                  <div>
+                    <div class="font-weight-normal">{{ ultimaAvaliacao.usuario.nome }}</div>
+                    <div class="text-grey text-caption">{{ ultimaAvaliacao.usuario.handle }}</div>
+                  </div>
+                </div>
+                <p class="text-body-2 text-grey-darken-2">
+                  {{ ultimaAvaliacao.texto }}
+                </p>
+              </v-sheet>
 
-        <h2 class="text-h5 font-weight-bold mb-4 mt-8">Usuários recomendados</h2>
-        <v-list bg-color="transparent">
-          <v-list-item
-            v-for="usuario in usuariosRecomendados"
-            :key="usuario.handle"
-            class="px-1"
-          >
-            <template v-slot:prepend>
-              <v-avatar class="mr-3">
-                <v-img :src="usuario.avatar"></v-img>
-              </v-avatar>
-            </template>
-            <v-list-item-title class="font-weight-normal">{{ usuario.nome }}</v-list-item-title>
-            <v-list-item-subtitle>{{ usuario.handle }}</v-list-item-subtitle>
-          </v-list-item>
-        </v-list>
-      </v-col>
-    </v-row>
-  </v-container>
+              <h2 class="text-h5 font-weight-bold mb-4 mt-8">Usuários recomendados</h2>
+              <v-list bg-color="transparent">
+                <v-list-item v-for="usuario in usuariosRecomendados" :key="usuario.handle" class="px-1">
+                  <template v-slot:prepend>
+                    <v-avatar class="mr-3">
+                      <v-img :src="usuario.avatar"></v-img>
+                    </v-avatar>
+                  </template>
+                  <v-list-item-title class="font-weight-normal">{{ usuario.nome }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ usuario.handle }}</v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-col>
+          </v-row>
+        </v-container>
       </div>
     </v-main>
   </v-app>
@@ -189,9 +226,9 @@
 </template>
 
 <script setup>
-// Nenhuma mudança necessária aqui, já estava correto!
-import { ref } from 'vue';
-import fundoUrl from '@/assets/fundo.jpg'
+
+import { ref, reactive } from 'vue';
+import fundoUrl from '@/assets/fundoArrumado.png'
 
 const musicasPopulares = ref([
   { titulo: 'Cardigan', artista: 'Taylor Swift', capa: 'https://akamai.sscdn.co/uploadfile/letras/albuns/6/f/6/e/971021601472784.jpg' },
@@ -251,12 +288,84 @@ const avaliacoes = ref([
     likes: 98
   }
 ]);
+// Referência para o v-form
+const dialog = ref(false)
+const form = ref(null)
+const loading = ref(false)
+const view = ref('register')
+
+// Objeto reativo para armazenar os dados dos campos
+const formData = reactive({
+  username: '',
+  email: '',
+  password: '',
+  confirmPassword: ''
+})
+
+const rules = {
+
+  required: [
+    v => !!v || 'Este campo é obrigatório.'
+  ],
+  email: [
+    v => !!v || 'O e-mail é obrigatório.',
+    v => /.+@.+\..+/.test(v) || 'O e-mail deve ser válido.',
+  ],
+  passwordMatch: [
+    v => v === formData.password || 'As senhas não conferem.',
+  ]
+}
+
+
+function changeView(newView) {
+  view.value = newView
+  form.value.resetValidation() // Limpa as mensagens de erro ao trocar de tela
+}
+
+function closeDialog() {
+  dialog.value = false
+  // Atraso para resetar o form só depois que o dialog fechar (efeito visual)
+  setTimeout(() => {
+    view.value = 'register'
+    form.value.reset()
+    form.value.resetValidation()
+  }, 300)
+}
+
+
+async function submitForm() {
+  const { valid } = await form.value.validate()
+  if (!valid) return
+
+  loading.value = true
+
+  if (view.value === 'register') {
+    console.log('Enviando dados de CADASTRO...', formData)
+    //  API para registrar o usuário
+  } else {
+    console.log('Enviando dados de LOGIN...', { email: formData.email, password: formData.password })
+    // Aqui iria a sua lógica de API para logar o usuário
+  }
+
+  // Simula uma chamada de API
+  setTimeout(() => {
+    loading.value = false
+
+  }, 2000)
+}
 </script>
 
 <style scoped>
 .v-main {
   padding-top: 0px !important;
 }
-#intro{
+
+#intro {
   margin-left: 0px;
-}</style>
+}
+.ajuste-botao {
+  transform: translateY(-8px);
+  opacity: 1 !important;
+}
+
+</style>
