@@ -76,7 +76,7 @@
       </div>
 
       <div v-else class="d-flex align-center ml-4">
-        <span class="text-subtitle-1 mr-4" >Olá, {{ usuario.nome }}!  </span>
+        <span class="text-subtitle-1 mr-4" style="color: #EEE8FF;">Olá, {{ usuario.nome }}!  </span>
         <v-btn @click="logout" text="Sair" variant="flat" color="red-lighten-1" class="text-none" rounded="lg"></v-btn>
       </div>
       
@@ -297,7 +297,7 @@ const usuario = ref(null); // Armazena os dados do usuário logado. null = deslo
 const dialog = ref(false)
 const form = ref(null)
 const loading = ref(false)
-const view = ref('register')
+const view = ref('login')
 
 const formData = reactive({
   nome: '', // Campo de nome para o cadastro
@@ -335,7 +335,7 @@ function changeView(newView) {
 function closeDialog() {
   dialog.value = false
   setTimeout(() => {
-    view.value = 'register'
+    view.value = 'login'
     form.value.reset()
     form.value.resetValidation()
   }, 300)
@@ -372,7 +372,8 @@ async function submitForm() {
         body: JSON.stringify({
           nome: formData.nome,
           email: formData.email,
-          senha: formData.password
+          senha: formData.password,
+          usuario: formData.email.split('@')[0]  // Gera um nome de usuário simples a partir do e-mail
         })
       });
       const data = await res.json();
