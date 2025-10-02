@@ -1,9 +1,9 @@
 <template>
   <v-app>
 
-    <v-app-bar elevation="0" color=transparent dark>
+    <v-app-bar elevation="0" :style="{ backgroundColor: appBarBackground }" :dark="!isScrolled" class="transition-background" app>
 
-      <v-app-bar-title class="font-weight-normal" style="color: white;">SocialMusic</v-app-bar-title>
+      <v-app-bar-title class="font-weight-normal" :style="{ color: textColor }">SocialMusic</v-app-bar-title>
 
       <v-spacer></v-spacer>
 
@@ -12,18 +12,18 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn variant="text" class="text-capitalize" style="color: white;">Página Inicial</v-btn>
-      <v-btn variant="text" class="text-capitalize" style="color: white;">Músicas</v-btn>
+      <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }">Página Inicial</v-btn>
+      <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }">Músicas</v-btn>
       
       <div v-if="!usuario">
-        <v-dialog max-width="500" v-model="dialog" persistent>
-          <template v-slot:activator="{ props: activatorProps }">
-            <v-btn v-bind="activatorProps" text="Entre ou Cadastre-se" variant="outlined" class="text-none ml-2" rounded="lg"
-              style="border: 2px solid #EEE8FF; color: #EEE8FF;"></v-btn>
+        <v-dialog max-width="550" v-model="dialog" persistent>
+          <template v-slot:activator=" { props: activatorProps }">
+            <v-btn v-bind="activatorProps" text="Entre ou Cadastre-se" variant="outlined" class="text-none mr-8 ml-2" rounded="lg"
+              :style="{ border: `2px solid ${isScrolled ? '#000000' : '#EEE8FF'}`, color: textColor }"></v-btn>
           </template>
 
           <v-form ref="form" @submit.prevent="submitForm">
-            <v-card class="rounded-lg">
+            <v-card class="rounded-lg pa-8" >
               <v-fade-transition mode="out-in">
                 <div v-if="view === 'register'">
                   <v-card-title class="text-h5 text-center font-weight-bold pt-5">Seja um membro SocialMusic</v-card-title>
@@ -77,7 +77,7 @@
 
       <div v-else class="d-flex align-center ml-4">
         <span class="text-subtitle-1 mr-4" style="color: #EEE8FF;">Olá, {{ usuario.nome }}!  </span>
-        <v-btn @click="logout" text="Sair" variant="flat" color="red-lighten-1" class="text-none" rounded="lg"></v-btn>
+        <v-btn @click="logout" text="Sair" variant="flat" color="red-lighten-1" class="text-none mr-8 ml-2" rounded="lg"></v-btn>
       </div>
       
       </v-app-bar>
@@ -102,7 +102,7 @@
 
     <v-main>
 
-      <div style="background-color: #f8f9fa;">
+      <div id="populares" style="background-color: #f8f9fa;">
         <v-container>
           <h2 class="text-h4 font-weight-bold my-8 text-grey-darken-3">Populares essa semana - Spotify</h2>
 
@@ -224,10 +224,44 @@
 
 <script setup>
 // INÍCIO DAS MUDANÇAS NO SCRIPT
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 // FIM DAS MUDANÇAS NO SCRIPT
 
 import fundoUrl from '@/assets/fundoArrumado.png'
+
+// Controle da AppBar
+const appBarBackground = ref('transparent')
+const isScrolled = ref(false)
+const textColor = computed(() => isScrolled.value ? '#000000' : '#FFFFFF')
+
+// Função para verificar o scroll
+const handleScroll = () => {
+  const scrollPosition = window.scrollY
+  const popularesSection = document.getElementById('populares')
+  
+  if (popularesSection) {
+    const sectionTop = popularesSection.offsetTop
+    const threshold = sectionTop - 64 // 64px é a altura da AppBar
+
+    if (scrollPosition >= threshold) {
+      appBarBackground.value = '#FFFFFF'
+      isScrolled.value = true
+    } else {
+      appBarBackground.value = 'transparent'
+      isScrolled.value = false
+    }
+  }
+}
+
+// Inicializa e limpa os event listeners
+onMounted(() => {
+  handleScroll() // Verifica posição inicial
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 
 const musicasPopulares = ref([
   { titulo: 'Cardigan', artista: 'Taylor Swift', capa: 'https://akamai.sscdn.co/uploadfile/letras/albuns/6/f/6/e/971021601472784.jpg' },
@@ -429,4 +463,35 @@ async function submitForm() {
   opacity: 1 !important;
 }
 
+.transition-background {
+  transition: background-color 0.3s ease !important;
+}
+
+/* Estilização da barra de rolagem */
+::-webkit-scrollbar {
+  width: 10px;
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgba(179, 157, 219, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #B39DDB;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #9575CD;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #B39DDB rgba(179, 157, 219, 0.1);
+}
 </style>
