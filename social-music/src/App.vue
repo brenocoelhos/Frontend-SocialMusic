@@ -14,76 +14,73 @@
 
       <v-btn variant="text" class="text-capitalize" style="color: white;">Página Inicial</v-btn>
       <v-btn variant="text" class="text-capitalize" style="color: white;">Músicas</v-btn>
-      <v-dialog max-width="500" v-model="dialog" persistent>
-        <template v-slot:activator="{ props: activatorProps }">
-          <v-btn v-bind="activatorProps" text="Entre com o Spotify" variant="outlined" class="text-none" rounded="lg"
-            style="border: 2px solid #EEE8FF; color: #EEE8FF;"></v-btn>
-        </template>
+      
+      <div v-if="!usuario">
+        <v-dialog max-width="500" v-model="dialog" persistent>
+          <template v-slot:activator="{ props: activatorProps }">
+            <v-btn v-bind="activatorProps" text="Entre ou Cadastre-se" variant="outlined" class="text-none ml-2" rounded="lg"
+              style="border: 2px solid #EEE8FF; color: #EEE8FF;"></v-btn>
+          </template>
 
-        <v-form ref="form" @submit.prevent="submitForm">
-          <v-card class="rounded-lg">
+          <v-form ref="form" @submit.prevent="submitForm">
+            <v-card class="rounded-lg">
+              <v-fade-transition mode="out-in">
+                <div v-if="view === 'register'">
+                  <v-card-title class="text-h5 text-center font-weight-bold pt-5">Seja um membro SocialMusic</v-card-title>
+                  <v-card-text>
+                    <v-text-field v-model="formData.nome" :rules="rules.required" label="Nome Completo"
+                      variant="outlined" density="compact" class="mb-2"></v-text-field>
+                    <v-text-field v-model="formData.email" :rules="rules.email" label="E-mail" variant="outlined"
+                      density="compact" class="mb-2"></v-text-field>
+                    <v-text-field v-model="formData.password" :rules="rules.required" label="Senha" variant="outlined"
+                      density="compact" type="password" class="mb-2"></v-text-field>
+                    <v-text-field v-model="formData.confirmPassword" :rules="[...rules.required, rules.passwordMatch]"
+                      label="Confirmar Senha" variant="outlined" density="compact" type="password"></v-text-field>
+                    <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-6 text-none"
+                      style="background-color: #B39DDB; color: white;">
+                      Criar conta
+                    </v-btn>
+                    <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" @click="changeView('login')"
+                      style="text-decoration: underline;">
+                      Já possuo uma conta
+                    </v-btn>
+                  </v-card-text>
+                </div>
 
-            <v-fade-transition mode="out-in">
+                <div v-if="view === 'login'">
+                  <v-card-title class="text-h5 text-center font-weight-bold pt-5">Login na sua Conta</v-card-title>
+                  <v-card-text>
+                    <v-text-field v-model="formData.email" :rules="rules.email" label="E-mail" variant="outlined"
+                      density="compact" class="mb-2"></v-text-field>
+                    <v-text-field v-model="formData.password" :rules="rules.required" label="Senha" variant="outlined"
+                      density="compact" type="password"></v-text-field>
+                    <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-6 text-none"
+                      style="background-color: #B39DDB; color: white;">
+                      Entrar
+                    </v-btn>
+                    <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" color="black" @click="changeView('register')"
+                      style="text-decoration: underline;">
+                      Cadastre-se
+                    </v-btn>
+                  </v-card-text>
+                </div>
+              </v-fade-transition>
 
-              <div v-if="view === 'register'">
-                <v-card-title class="text-h5 text-center font-weight-bold pt-5">Seja um membro
-                  SocialMusic</v-card-title>
-                <v-card-text>
-                  <v-text-field v-model="formData.username" :rules="rules.required" label="Nome de Usuário"
-                    variant="outlined" density="compact" class="mb-2"></v-text-field>
+              <v-card-actions class="px-5 pb-4">
+                <v-spacer></v-spacer>
+                <v-btn text="Fechar" @click="closeDialog"></v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-form>
+        </v-dialog>
+      </div>
 
-                  <v-text-field v-model="formData.email" :rules="rules.email" label="E-mail" variant="outlined"
-                    density="compact" class="mb-2"></v-text-field>
-
-                  <v-text-field v-model="formData.password" :rules="rules.required" label="Senha" variant="outlined"
-                    density="compact" type="password" class="mb-2"></v-text-field>
-
-                  <v-text-field v-model="formData.confirmPassword" :rules="[...rules.required, rules.passwordMatch]"
-                    label="Confirmar Senha" variant="outlined" density="compact" type="password"></v-text-field>
-
-                  <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-6 text-none"
-                    style="background-color: #B39DDB; color: white;">
-                    Criar conta
-                  </v-btn>
-
-                  <v-btn block variant="plain" :ripple="false" class="mt-2  text-none ajuste-botao" @click="changeView('login')"
-                    style="text-decoration: underline;">
-                    Já possuo uma conta
-                  </v-btn>
-                </v-card-text>
-              </div>
-
-              <div v-if="view === 'login'">
-                <v-card-title class="text-h5 text-center font-weight-bold pt-5">Login na sua Conta</v-card-title>
-                <v-card-text>
-                  <v-text-field v-model="formData.email" :rules="rules.email" label="E-mail" variant="outlined"
-                    density="compact" class="mb-2"></v-text-field>
-
-                  <v-text-field v-model="formData.password" :rules="rules.required" label="Senha" variant="outlined"
-                    density="compact" type="password"></v-text-field>
-
-                  <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-6 text-none"
-                    style="background-color: #B39DDB; color: white;">
-                    Entrar
-                  </v-btn>
-                  <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" color="black" @click="changeView('register')"
-                    style="text-decoration: underline;">
-                    Cadastre-se
-                  </v-btn>
-                </v-card-text>
-              </div>
-
-            </v-fade-transition>
-
-            <v-card-actions class="px-5 pb-4">
-              <v-spacer></v-spacer>
-              <v-btn text="Fechar" @click="closeDialog"></v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-form>
-      </v-dialog>
-
-    </v-app-bar>
+      <div v-else class="d-flex align-center ml-4">
+        <span class="text-subtitle-1 mr-4" >Olá, {{ usuario.nome }}!  </span>
+        <v-btn @click="logout" text="Sair" variant="flat" color="red-lighten-1" class="text-none" rounded="lg"></v-btn>
+      </div>
+      
+      </v-app-bar>
 
     <v-img :src="fundoUrl" cover height="85vh">
       <div class="fill-height" style="background-color: rgba(0, 0, 0, 0.5);">
@@ -226,8 +223,10 @@
 </template>
 
 <script setup>
+// INÍCIO DAS MUDANÇAS NO SCRIPT
+import { ref, reactive, onMounted } from 'vue';
+// FIM DAS MUDANÇAS NO SCRIPT
 
-import { ref, reactive } from 'vue';
 import fundoUrl from '@/assets/fundoArrumado.png'
 
 const musicasPopulares = ref([
@@ -288,22 +287,26 @@ const avaliacoes = ref([
     likes: 98
   }
 ]);
-// Referência para o v-form
+
+// INÍCIO DAS MUDANÇAS NO SCRIPT
+
+// --- GERENCIAMENTO DE ESTADO E SESSÃO ---
+const usuario = ref(null); // Armazena os dados do usuário logado. null = deslogado
+
+// --- CONTROLE DO FORMULÁRIO ---
 const dialog = ref(false)
 const form = ref(null)
 const loading = ref(false)
 const view = ref('register')
 
-// Objeto reativo para armazenar os dados dos campos
 const formData = reactive({
-  username: '',
+  nome: '', // Campo de nome para o cadastro
   email: '',
   password: '',
   confirmPassword: ''
 })
 
 const rules = {
-
   required: [
     v => !!v || 'Este campo é obrigatório.'
   ],
@@ -316,15 +319,21 @@ const rules = {
   ]
 }
 
+// --- VERIFICA SE JÁ EXISTE UMA SESSÃO AO CARREGAR A PÁGINA ---
+onMounted(() => {
+  const usuarioSalvo = localStorage.getItem('usuario');
+  if (usuarioSalvo) {
+    usuario.value = JSON.parse(usuarioSalvo);
+  }
+});
 
 function changeView(newView) {
   view.value = newView
-  form.value.resetValidation() // Limpa as mensagens de erro ao trocar de tela
+  form.value.resetValidation()
 }
 
 function closeDialog() {
   dialog.value = false
-  // Atraso para resetar o form só depois que o dialog fechar (efeito visual)
   setTimeout(() => {
     view.value = 'register'
     form.value.reset()
@@ -332,27 +341,78 @@ function closeDialog() {
   }, 300)
 }
 
+// --- FUNÇÃO DE LOGOUT ---
+async function logout() {
+  loading.value = true;
+  try {
+    await fetch("http://localhost/socialmusic_backend/api/logout.php", { method: "POST" });
+  } catch (err) {
+    console.error("Erro ao fazer logout:", err);
+  } finally {
+    usuario.value = null;
+    localStorage.removeItem('usuario');
+    loading.value = false;
+    alert("Você saiu com sucesso!");
+  }
+}
 
+// --- LÓGICA DE SUBMISSÃO CORRIGIDA ---
 async function submitForm() {
   const { valid } = await form.value.validate()
   if (!valid) return
 
   loading.value = true
 
-  if (view.value === 'register') {
-    console.log('Enviando dados de CADASTRO...', formData)
-    //  API para registrar o usuário
-  } else {
-    console.log('Enviando dados de LOGIN...', { email: formData.email, password: formData.password })
-    // Aqui iria a sua lógica de API para logar o usuário
+  try {
+    // --- Lógica de CADASTRO ---
+    if (view.value === 'register') {
+      const res = await fetch("http://localhost/socialmusic_backend/api/cadastro.php", { // ATENÇÃO: Crie este arquivo no seu backend!
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: formData.nome,
+          email: formData.email,
+          senha: formData.password
+        })
+      });
+      const data = await res.json();
+      alert(data.mensagem); 
+
+      if (data.sucesso) {
+        changeView('login'); // Se o cadastro der certo, muda para a tela de login
+      }
+    
+    // --- Lógica de LOGIN ---
+    } else {
+      const res = await fetch("http://localhost/socialmusic_backend/api/autentica.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: formData.email, 
+          senha: formData.password 
+        })
+      });
+      const data = await res.json();
+      
+      if (data.sucesso) {
+        alert(data.mensagem);
+        
+        usuario.value = data.usuario;
+        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+
+        closeDialog();
+      } else {
+        alert(data.mensagem);
+      }
+    }
+  } catch (err) {
+    console.error("Erro na comunicação com a API:", err);
+    alert("Ocorreu um erro. Verifique o console para mais detalhes.");
+  } finally {
+    loading.value = false;
   }
-
-  // Simula uma chamada de API
-  setTimeout(() => {
-    loading.value = false
-
-  }, 2000)
 }
+// FIM DAS MUDANÇAS NO SCRIPT
 </script>
 
 <style scoped>
