@@ -1,35 +1,40 @@
-/**
- * router/index.ts
- *
- * Automatic routes for `./src/pages/*.vue`
- */
-
-// Composables
 import { createRouter, createWebHistory } from 'vue-router'
-import { routes } from 'vue-router/auto-routes'
+import axios from 'axios'
+
+
+
+import Admin from '../pages/Admin.vue'
+import App from '../App.vue' // Página inicial
+
+
+axios.defaults.withCredentials = true
+
+const routes = [
+  { path: '/', component: App },    
+  { 
+    path: '/admin',
+    component: Admin,
+    meta: { requiresAdmin: true }
+  }
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
+  routes
 })
 
-// Workaround for https://github.com/vitejs/vite/issues/11804
-router.onError((err, to) => {
-  if (err?.message?.includes?.('Failed to fetch dynamically imported module')) {
-    if (localStorage.getItem('vuetify:dynamic-reload')) {
-      console.error('Dynamic import error, reloading page did not fix it', err)
-    } else {
-      console.log('Reloading page to fix dynamic import error')
-      localStorage.setItem('vuetify:dynamic-reload', 'true')
-      location.assign(to.fullPath)
+router.beforeEach(async (to, from, next) => {
+  if (to.meta.requiresAdmin) {
+    try {
+      await axios.get("http://localhost/backend/auth_admin.php")
+      next()
+    } catch (err) {
+      alert("Você não tem permissão para acessar essa página.")
+      next('/') 
     }
   } else {
-    console.error(err)
+    next()
   }
-})
-
-router.isReady().then(() => {
-  localStorage.removeItem('vuetify:dynamic-reload')
 })
 
 export default router
