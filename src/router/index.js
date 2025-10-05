@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import axios from 'axios'
 import Admin from '../pages/Admin.vue'
 import Index from '../pages/index.vue'
+import Perfil from '../pages/perfil.vue' // 👈 importa a página perfil
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend'
 
@@ -17,7 +18,8 @@ const routes = [
     name: 'admin',
     component: Admin,
     meta: { requiresAdmin: true }
-  }
+  },
+  { path: '/perfil', component: Perfil } // 👈 nova rota adicionada
 ]
 
 const router = createRouter({
@@ -27,7 +29,8 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAdmin) {
-    try {console.log('Dados do usuário no localStorage:', localStorage.getItem('usuario'));
+    try {
+      console.log('Dados do usuário no localStorage:', localStorage.getItem('usuario'));
       console.log('Tentando acessar:', `${API_URL}/api/auth.admin.php`);
       const response = await axios.get(`${API_URL}/api/auth.admin.php`, {
         withCredentials: true,
@@ -54,10 +57,8 @@ router.beforeEach(async (to, from, next) => {
       next('/');
    }
   } else {
-
     next();
-
-  };
+  }
 });
 
 export default router
