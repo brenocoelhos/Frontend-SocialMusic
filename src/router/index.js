@@ -2,7 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import axios from 'axios'
 import Admin from '../pages/Admin.vue'
 import Index from '../pages/index.vue'
-import Perfil from '../pages/perfil.vue' // 👈 importa a página perfil
+import Perfil from '../pages/Perfil.vue'
+import Avaliacao from '../pages/Avaliacao.vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend'
 
@@ -12,14 +13,15 @@ axios.defaults.headers.common['Accept'] = 'application/json'
 axios.defaults.headers.common['Content-Type'] = 'application/json'
 
 const routes = [
-  { path: '/', component: Index }, 
-  { 
+  { path: '/', component: Index },
+  {
     path: '/admin',
     name: 'admin',
     component: Admin,
     meta: { requiresAdmin: true }
   },
-  { path: '/perfil', component: Perfil } // 👈 nova rota adicionada
+  { path: '/perfil', component: Perfil },
+  {path: '/avaliacao', component: Avaliacao }
 ]
 
 const router = createRouter({
@@ -39,7 +41,7 @@ router.beforeEach(async (to, from, next) => {
           'Accept': 'application/json'
         }
       });
-      
+
       if (response.data.success && response.data.perfil === 'admin') {
         console.log('Acesso admin autorizado:', response.data);
         next();
@@ -55,7 +57,7 @@ router.beforeEach(async (to, from, next) => {
         headers: error.response?.headers
       });
       next('/');
-   }
+    }
   } else {
     next();
   }
