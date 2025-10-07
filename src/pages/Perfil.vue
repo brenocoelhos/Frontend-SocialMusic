@@ -12,7 +12,7 @@
             <!-- CABEÇALHO DO PERFIL -->
             <div class="d-flex justify-space-between align-center mb-6">
               <div>
-                <h1 class="text-h4 font-weight-bold text-grey-darken-4 mb-1">Perfil de Isabella</h1>
+                <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">Perfil de Isabella</h1>
                 <p class="text-body-2 text-grey-darken-1">@isa.s</p>
               </div>
               <v-btn color="primary" rounded="lg" size="default">Seguir</v-btn>
@@ -20,7 +20,7 @@
 
             <!-- ÁLBUNS MAIS OUVIDOS -->
             <div class="mb-8">
-              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Álbuns mais ouvidos:</h2>
+              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Álbuns mais ouvidos</h2>
               <v-row>
                 <v-col v-for="album in albumsOuvidos" :key="album.titulo" cols="4">
                   <v-card hover color="white" rounded="lg" flat class="pa-0">
@@ -37,7 +37,7 @@
 
             <!-- MÚSICAS OUVIDAS RECENTEMENTE -->
             <div class="mb-8">
-              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Músicas ouvidas recentemente:</h2>
+              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Músicas ouvidas recentemente</h2>
               <v-sheet color="white" rounded="lg" class="pa-0">
                 <v-list bg-color="transparent" class="py-2">
                   <v-list-item 
@@ -65,7 +65,7 @@
 
             <!-- AVALIAÇÕES -->
             <div>
-              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Avaliações:</h2>
+              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Avaliações</h2>
               <div v-for="(avaliacao, i) in avaliacoes" :key="i" class="mb-4">
                 <v-card rounded="lg" flat>
                   <v-card-text class="pa-5">
@@ -105,13 +105,11 @@
             <!-- AVATAR E GÊNEROS -->
             <v-card rounded="xl" class="mb-6 pa-8 text-center" color="white" flat elevation="0">
               <div class="d-flex justify-center mb-4">
-                <div style="width: 200px; height: 200px; background: linear-gradient(135deg, #FF8B94 0%, #FF6B7A 100%); border-radius: 50% 50% 0% 50%; display: flex; align-items: center; justify-content: center;">
-                  <v-avatar size="160">
-                    <v-img :src="perfilUsuario.avatar"></v-img>
-                  </v-avatar>
-                </div>
+                <v-avatar size="160">
+                  <v-img :src="perfilUsuario.avatar"></v-img>
+                </v-avatar>
               </div>
-              <div class="text-right">
+              <div class="text-center">
                 <p class="text-caption text-grey-darken-1">
                   Gêneros preferidos pop, eletrônico
                 </p>
@@ -120,7 +118,7 @@
 
             <!-- ONLINE AGORA -->
             <div>
-              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Online Agora:</h2>
+              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Online Agora</h2>
               <v-sheet rounded="xl" color="#EEE8FF" class="pa-4">
                 <div v-for="usuario in usuariosOnline" :key="usuario.handle" class="mb-3">
                   <div class="d-flex align-center pa-2">
