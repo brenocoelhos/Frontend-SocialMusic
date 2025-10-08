@@ -8,7 +8,7 @@ import Avaliacao from '../pages/Avaliacao.vue'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend'
 
 // Configuração global do axios
-axios.defaults.withCredentials = true
+axios.defaults.withCredentials = false
 axios.defaults.headers.common['Accept'] = 'application/json'
 axios.defaults.headers.common['Content-Type'] = 'application/json'
 
@@ -34,6 +34,11 @@ router.beforeEach(async (to, from, next) => {
     try {
       console.log('Dados do usuário no localStorage:', localStorage.getItem('usuario'));
       console.log('Tentando acessar:', `${API_URL}/api/auth.admin.php`);
+      const isadmin = JSON.parse(localStorage.getItem('usuario'));
+      if (isadmin !== 'admin') {
+        return next('/');
+      }
+
       const response = await axios.get(`${API_URL}/api/auth.admin.php`, {
         withCredentials: true,
         headers: {

@@ -15,7 +15,7 @@
                 <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">Perfil de Isabella</h1>
                 <p class="text-body-2 text-grey-darken-1">@isa.s</p>
               </div>
-              <v-btn color="primary" rounded="lg" size="default">Seguir</v-btn>
+              <v-btn color="#EEE8FF" rounded="lg" size="default">Seguir</v-btn>
             </div>
 
             <!-- ÁLBUNS MAIS OUVIDOS -->

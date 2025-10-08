@@ -261,7 +261,7 @@ async function submitForm() {
           nome: formData.nome,
           email: formData.email,
           senha: formData.password,
-          usuario: formData.email.split('@')[0]
+          user: formData.email.split('@')[0]
         })
       });
       const data = await res.json();
@@ -284,7 +284,8 @@ async function submitForm() {
       if (data.sucesso) {
         alert(data.mensagem);
         usuario.value = data.usuario;
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        console.log(data.usuario.perfil);
+        localStorage.setItem("usuario", JSON.stringify(data.usuario.perfil));
         closeDialog();
       } else {
         alert(data.mensagem);
