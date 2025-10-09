@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <!-- APP BAR - Ficará em todas as páginas -->
+
     <v-app-bar elevation="0" :style="{ backgroundColor: appBarBackground }" :dark="!isScrolled" class="transition-background" app>
       <v-app-bar-title class="font-weight-normal" :style="{ color: textColor }">SocialMusic</v-app-bar-title>
 
@@ -77,7 +77,7 @@
       </div>
 
       <div v-else class="d-flex align-center ml-4">
-        <span class="text-subtitle-1 mr-4" style="color: #EEE8FF;">Olá, {{ usuario.nome }}!</span>
+        <span class="text-subtitle-1 mr-4" :style="{ color: textColor }" >Olá, {{ usuario.nome }}!</span>
         <v-btn v-if="usuario.perfil === 'admin'" to="/admin" text="Painel Admin" variant="flat" color="error" class="text-none mr-2" rounded="lg"></v-btn>
         <v-btn @click="logout" text="Sair" variant="flat" color="red-lighten-1" class="text-none mr-8 ml-2" rounded="lg"></v-btn>
       </div>
@@ -131,7 +131,6 @@
 
         <v-divider class="my-4"></v-divider>
 
-        <!-- Copyright -->
         <v-row>
           <v-col cols="12" class="text-center">
             <p class="text-body-2 text-grey-darken-1">
@@ -145,63 +144,90 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
-// Controle da AppBar
-const appBarBackground = ref('transparent')
-const isScrolled = ref(false)
-const textColor = computed(() => isScrolled.value ? '#000000' : '#FFFFFF')
+const route = useRoute();
+const isHomePage = computed(() => route.path === '/');
 
-// Função para verificar o scroll
+const appBarBackground = computed(() => {
+  if (!isHomePage.value) {
+    return '#FFFFFF';
+  }
+  return isScrolled.value ? '#FFFFFF' : 'transparent';
+});
+
+const isScrolled = ref(false);
+const textColor = computed(() => {
+  if (!isHomePage.value) {
+    return '#000000'; 
+  }
+  return isScrolled.value ? '#000000' : '#FFFFFF';
+});
+
+
 const handleScroll = () => {
-  const scrollPosition = window.scrollY
-  const popularesSection = document.getElementById('populares')
+  if (!isHomePage.value) {
+    isScrolled.value = true; 
+    return;
+  }
+  
+  const scrollPosition = window.scrollY;
+  if (scrollPosition < 50) {
+    isScrolled.value = false;
+    return;
+  }
+  
+  const popularesSection = document.getElementById('populares');
   
   if (popularesSection) {
-    const sectionTop = popularesSection.offsetTop
-    const threshold = sectionTop - 64
+    const sectionTop = popularesSection.offsetTop;
+    const threshold = sectionTop - 64;
 
-    if (scrollPosition >= threshold) {
-      appBarBackground.value = '#FFFFFF'
-      isScrolled.value = true
-    } else {
-      appBarBackground.value = 'transparent'
-      isScrolled.value = false
-    }
+    isScrolled.value = scrollPosition >= threshold;
   }
-}
+};
+
+watch(isHomePage, (newVal) => {
+  if (newVal) {
+    isScrolled.value = false;
+    setTimeout(() => handleScroll(), 0); 
+  } else {
+    isScrolled.value = true;
+  }
+});
 
 // Inicializa e limpa os event listeners
 onMounted(() => {
-  handleScroll()
-  window.addEventListener('scroll', handleScroll)
+  handleScroll();
+  window.addEventListener('scroll', handleScroll);
   
   // Verifica se já existe uma sessão
   const usuarioSalvo = localStorage.getItem('usuario');
   if (usuarioSalvo) {
     usuario.value = JSON.parse(usuarioSalvo);
   }
-})
+});
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
+  window.removeEventListener('scroll', handleScroll);
+});
 
 // --- GERENCIAMENTO DE ESTADO E SESSÃO ---
 const usuario = ref(null);
 
 // --- CONTROLE DO FORMULÁRIO ---
-const dialog = ref(false)
-const form = ref(null)
-const loading = ref(false)
-const view = ref('login')
+const dialog = ref(false);
+const form = ref(null);
+const loading = ref(false);
+const view = ref('login');
 
 const formData = reactive({
   nome: '',
   email: '',
   password: '',
   confirmPassword: ''
-})
+});
 
 const rules = {
   required: [
@@ -214,20 +240,20 @@ const rules = {
   passwordMatch: [
     v => v === formData.password || 'As senhas não conferem.',
   ]
-}
+};
 
 function changeView(newView) {
-  view.value = newView
-  form.value.resetValidation()
+  view.value = newView;
+  form.value.resetValidation();
 }
 
 function closeDialog() {
-  dialog.value = false
+  dialog.value = false;
   setTimeout(() => {
-    view.value = 'login'
-    form.value.reset()
-    form.value.resetValidation()
-  }, 300)
+    view.value = 'login';
+    form.value.reset();
+    form.value.resetValidation();
+  }, 300);
 }
 
 // --- FUNÇÃO DE LOGOUT ---
@@ -247,10 +273,10 @@ async function logout() {
 
 // --- LÓGICA DE SUBMISSÃO ---
 async function submitForm() {
-  const { valid } = await form.value.validate()
-  if (!valid) return
+  const { valid } = await form.value.validate();
+  if (!valid) return;
 
-  loading.value = true
+  loading.value = true;
 
   try {
     if (view.value === 'register') {

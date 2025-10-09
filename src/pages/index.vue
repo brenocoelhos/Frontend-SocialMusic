@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- HERO SECTION -->
     <v-img :src="fundoUrl" cover height="85vh">
       <div class="fill-height" style="background-color: rgba(0, 0, 0, 0.5);">
         <v-container id="intro" class="fill-height">
@@ -19,7 +18,7 @@
       </div>
     </v-img>
 
-    <!-- SEÇÃO DE POPULARES -->
+
     <div id="populares" style="background-color: #f8f9fa;">
       <v-container>
         <h2 class="text-h4 font-weight-bold my-8 text-grey-darken-3">Populares essa semana - Spotify</h2>
