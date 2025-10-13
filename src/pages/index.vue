@@ -138,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import fundoUrl from '@/assets/fundoArrumado.png'
 
 const musicasPopulares = ref([
@@ -158,6 +158,42 @@ const musicasAvaliadas = ref([
   { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Horse', artista: 'Chris Stapleton', nota: '4.5/5' },
   { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Rabbit', artista: 'Jefferson Airplane', nota: '4.5/5' },
 ]);
+
+
+const loading = ref(true);
+
+onMounted(async () => {
+  try {
+    // Busca músicas populares
+    const resPopulares = await fetch(
+      'http://localhost/socialmusic_backend/api/spotify_musicas.php?tipo=populares&limit=6'
+    );
+    const dataPopulares = await resPopulares.json();
+    
+    if (dataPopulares.sucesso) {
+      musicasPopulares.value = dataPopulares.musicas;
+    }
+
+    // Busca top músicas
+    const resTop = await fetch(
+      'http://localhost/socialmusic_backend/api/spotify_musicas.php?tipo=top&limit=6'
+    );
+    const dataTop = await resTop.json();
+    
+    if (dataTop.sucesso) {
+      musicasAvaliadas.value = dataTop.musicas.map(m => ({
+        ...m,
+        nota: (m.popularidade / 20).toFixed(1) + '/5'
+      }));
+    }
+    
+  } catch (error) {
+    console.error('Erro ao carregar músicas do Spotify:', error);
+    // Se der erro, mantém os dados mockados que já estão definidos acima
+  } finally {
+    loading.value = false;
+  }
+});
 
 const ultimaAvaliacao = ref({
   usuario: {
