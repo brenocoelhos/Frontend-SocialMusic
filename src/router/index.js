@@ -4,6 +4,7 @@ import Admin from '../pages/Admin.vue'
 import Index from '../pages/index.vue'
 import Perfil from '../pages/Perfil.vue'
 import Avaliacao from '../pages/Avaliacao.vue'
+import Busca from '../pages/Busca.vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend'
 
@@ -13,15 +14,11 @@ axios.defaults.headers.common['Accept'] = 'application/json'
 axios.defaults.headers.common['Content-Type'] = 'application/json'
 
 const routes = [
-  { path: '/', component: Index },
-  {
-    path: '/admin',
-    name: 'admin',
-    component: Admin,
-    meta: { requiresAdmin: true }
-  },
-  { path: '/perfil', component: Perfil },
-  {path: '/avaliacao', component: Avaliacao }
+  { path: '/', name: 'Página Inicial', component: Index},
+  { path: '/admin', name: 'Admin', component: Admin, meta: {requiresAdmin: true }},
+  { path: '/perfil', name: 'Perfil', component: Perfil },
+  { path: '/avaliacao', component: Avaliacao },
+  { path: '/busca', name:'Busca', component: Busca }
 ]
 
 const router = createRouter({

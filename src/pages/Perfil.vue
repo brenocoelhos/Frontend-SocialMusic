@@ -2,7 +2,7 @@
   <div style="min-height: 100vh;">
     <!-- Área branca para a navbar -->
     <div style="background-color: white; height: 80px; position: fixed; top: 0; left: 0; right: 0; z-index: 1;"></div>
-    
+
     <!-- Conteúdo da página -->
     <div style="background-color: #f8f9fa; min-height: 100vh; padding-top: 80px; position: relative; z-index: 0;">
       <v-container class="py-8">
@@ -40,12 +40,8 @@
               <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Músicas ouvidas recentemente</h2>
               <v-sheet color="white" rounded="lg" class="pa-0">
                 <v-list bg-color="transparent" class="py-2">
-                  <v-list-item 
-                    v-for="(musica, index) in musicasRecentes" 
-                    :key="musica.titulo"
-                    class="px-4"
-                    :class="{ 'mb-0': index < musicasRecentes.length - 1 }"
-                  >
+                  <v-list-item v-for="(musica, index) in musicasRecentes" :key="musica.titulo" class="px-4"
+                    :class="{ 'mb-0': index < musicasRecentes.length - 1 }">
                     <template v-slot:prepend>
                       <v-avatar size="48" rounded="lg" class="mr-3">
                         <v-img :src="musica.capa"></v-img>
@@ -125,7 +121,7 @@
                     <v-avatar size="48" class="mr-3">
                       <v-img :src="usuario.avatar"></v-img>
                     </v-avatar>
-                    
+
                     <div class="flex-grow-1">
                       <div class="text-body-2 font-weight-bold text-grey-darken-4">
                         {{ usuario.nome }}
@@ -135,7 +131,7 @@
                       </div>
                     </div>
                   </div>
-                  
+
                   <div class="d-flex align-center ml-2 mt-1">
                     <v-icon icon="mdi-music-note" size="16" class="mr-2 text-grey-darken-2"></v-icon>
                     <div class="text-caption text-grey-darken-2">
@@ -153,8 +149,8 @@
             </div>
           </v-col>
         </v-row>
-        </v-container>
-      </div>
+      </v-container>
+    </div>
   </div>
 </template>
 
@@ -169,52 +165,52 @@ const perfilUsuario = ref({
 });
 
 const albumsOuvidos = ref([
-  { 
-    titulo: 'Sabrina Carpenter', 
-    artista: 'Short n\' Sweet', 
-    capa: 'https://i.scdn.co/image/ab67616d0000b273fd8d7a8d96871e791cb1f626' 
+  {
+    titulo: 'Sabrina Carpenter',
+    artista: 'Short n\' Sweet',
+    capa: 'https://i.scdn.co/image/ab67616d0000b273fd8d7a8d96871e791cb1f626'
   },
-  { 
-    titulo: 'Lorde', 
-    artista: 'Virgin', 
-    capa: 'https://cdn-images.dzcdn.net/images/cover/c3a27407eeeba58aa3cc00e83d55c81a/0x1900-000000-80-0-0.jpg' 
+  {
+    titulo: 'Lorde',
+    artista: 'Virgin',
+    capa: 'https://cdn-images.dzcdn.net/images/cover/c3a27407eeeba58aa3cc00e83d55c81a/0x1900-000000-80-0-0.jpg'
   }
 ]);
 
 const musicasRecentes = ref([
-  { 
-    titulo: 'Venice Bitch - Lana Del Rey', 
+  {
+    titulo: 'Venice Bitch - Lana Del Rey',
     artista: 'Lana Del Rey',
-    capa: 'https://cdn-images.dzcdn.net/images/cover/c0f4f022fa51f13e877aae2e758e241d/1900x1900-000000-80-0-0.jpg' 
+    capa: 'https://cdn-images.dzcdn.net/images/cover/c0f4f022fa51f13e877aae2e758e241d/1900x1900-000000-80-0-0.jpg'
   },
-  { 
-    titulo: 'Shapeshifter - Lorde', 
+  {
+    titulo: 'Shapeshifter - Lorde',
     artista: 'Lorde',
-    capa: 'https://cdn-images.dzcdn.net/images/cover/c3a27407eeeba58aa3cc00e83d55c81a/0x1900-000000-80-0-0.jpg' 
+    capa: 'https://cdn-images.dzcdn.net/images/cover/c3a27407eeeba58aa3cc00e83d55c81a/0x1900-000000-80-0-0.jpg'
   },
-  { 
-    titulo: 'New Romantics - Taylor Swift', 
+  {
+    titulo: 'New Romantics - Taylor Swift',
     artista: 'Taylor Swift',
-    capa: 'https://cdn-images.dzcdn.net/images/cover/8c39b232a5edecdf5fffc14f551fa42b/0x1900-000000-80-0-0.jpg' 
+    capa: 'https://cdn-images.dzcdn.net/images/cover/8c39b232a5edecdf5fffc14f551fa42b/0x1900-000000-80-0-0.jpg'
   }
 ]);
 
 const avaliacoes = ref([
   {
-    musica: { 
-      titulo: 'Billie Jean', 
-      artista: 'Michael Jackson', 
-      capa: 'https://cdn-images.dzcdn.net/images/cover/544862aa5be45bc82ad4ab1a14daf63a/1900x1900-000000-80-0-0.jpg' 
+    musica: {
+      titulo: 'Billie Jean',
+      artista: 'Michael Jackson',
+      capa: 'https://cdn-images.dzcdn.net/images/cover/544862aa5be45bc82ad4ab1a14daf63a/1900x1900-000000-80-0-0.jpg'
     },
     titulo: 'A batida que mudou a história do pop',
     comentario: 'Produção visionária, linha de baixo icônica e performance magnética. Se há uma crítica possível, é que a narrativa lírica...',
     likes: 117
   },
   {
-    musica: { 
-      titulo: 'Billie Jean', 
-      artista: 'Michael Jackson', 
-      capa: 'https://cdn-images.dzcdn.net/images/cover/544862aa5be45bc82ad4ab1a14daf63a/1900x1900-000000-80-0-0.jpg' 
+    musica: {
+      titulo: 'Billie Jean',
+      artista: 'Michael Jackson',
+      capa: 'https://cdn-images.dzcdn.net/images/cover/544862aa5be45bc82ad4ab1a14daf63a/1900x1900-000000-80-0-0.jpg'
     },
     titulo: 'A batida que mudou a história do pop',
     comentario: 'Produção visionária, linha de baixo icônica e performance magnética. Se há uma crítica possível, é que a narrativa lírica...',
@@ -223,32 +219,31 @@ const avaliacoes = ref([
 ]);
 
 const usuariosOnline = ref([
-  { 
-    nome: 'White', 
-    handle: '@white', 
+  {
+    nome: 'White',
+    handle: '@white',
     avatar: 'https://randomuser.me/api/portraits/women/45.jpg',
     ouvindo: 'ouvindo FOOD FOOD - IRMAS DE PAU'
   },
-  { 
-    nome: 'White', 
-    handle: '@white', 
+  {
+    nome: 'White',
+    handle: '@white',
     avatar: 'https://randomuser.me/api/portraits/women/46.jpg',
     ouvindo: 'ouvindo FOOD FOOD - IRMAS DE PAU'
   },
-  { 
-    nome: 'White', 
-    handle: '@white', 
+  {
+    nome: 'White',
+    handle: '@white',
     avatar: 'https://randomuser.me/api/portraits/men/47.jpg',
     ouvindo: 'ouvindo FOOD FOOD - IRMAS DE PAU'
   },
-  { 
-    nome: 'White', 
-    handle: '@white', 
+  {
+    nome: 'White',
+    handle: '@white',
     avatar: 'https://randomuser.me/api/portraits/women/48.jpg',
     ouvindo: 'ouvindo FOOD FOOD - IRMAS DE PAU'
   }
 ]);
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

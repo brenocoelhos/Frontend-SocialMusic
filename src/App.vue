@@ -1,33 +1,38 @@
 <template>
   <v-app>
 
-    <v-app-bar elevation="0" :style="{ backgroundColor: appBarBackground }" :dark="!isScrolled" class="transition-background" app>
+    <v-app-bar elevation="0" :style="{ backgroundColor: appBarBackground }" :dark="!isScrolled"
+      class="transition-background" app>
       <v-app-bar-title class="font-weight-normal" :style="{ color: textColor }">SocialMusic</v-app-bar-title>
 
       <v-spacer></v-spacer>
 
       <div class="d-flex align-center" style="max-width: 500px; width: 100%;">
-        <v-text-field label="Busque no SocialMusic" variant="solo" bg-color="#E6E0FF" rounded="pill" density="compact"
-        hide-details append-inner-icon="mdi-magnify" class="mx-4" style="max-width: 450px;"></v-text-field>
+        <form @submit.prevent="goToBusca" style="width: 100%;"><v-text-field v-model="searchQuery"
+            placeholder="Busque no SocialMusic" variant="solo-filled" bg-color="#E6E0FF" rounded="pill"
+            density="compact" hide-details append-inner-icon="mdi-magnify" @click:append-inner="goToBusca" class="mx-4"
+            style="max-width: 450px;"></v-text-field></form>
       </div>
 
       <v-spacer></v-spacer>
 
       <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }" to="/">Página Inicial</v-btn>
       <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }">Músicas</v-btn>
-      
+
       <div v-if="!usuario">
         <v-dialog max-width="550" v-model="dialog" persistent>
-          <template v-slot:activator=" { props: activatorProps }">
-            <v-btn v-bind="activatorProps" text="Entre ou Cadastre-se" variant="outlined" class="text-none mr-8 ml-2" rounded="lg"
+          <template v-slot:activator="{ props: activatorProps }">
+            <v-btn v-bind="activatorProps" text="Entre ou Cadastre-se" variant="outlined" class="text-none mr-8 ml-2"
+              rounded="lg"
               :style="{ border: `2px solid ${isScrolled ? '#000000' : '#EEE8FF'}`, color: textColor }"></v-btn>
           </template>
 
           <v-form ref="form" @submit.prevent="submitForm">
-            <v-card class="rounded-lg pa-8" >
+            <v-card class="rounded-lg pa-8">
               <v-fade-transition mode="out-in">
                 <div v-if="view === 'register'">
-                  <v-card-title class="text-h5 text-center font-weight-bold pt-5">Seja um membro SocialMusic</v-card-title>
+                  <v-card-title class="text-h5 text-center font-weight-bold pt-5">Seja um membro
+                    SocialMusic</v-card-title>
                   <v-card-text>
                     <v-text-field v-model="formData.nome" :rules="rules.required" label="Nome Completo"
                       variant="outlined" density="compact" class="mb-2"></v-text-field>
@@ -41,8 +46,8 @@
                       style="background-color: #B39DDB; color: white;">
                       Criar conta
                     </v-btn>
-                    <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" @click="changeView('login')"
-                      style="text-decoration: underline;">
+                    <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao"
+                      @click="changeView('login')" style="text-decoration: underline;">
                       Já possuo uma conta
                     </v-btn>
                   </v-card-text>
@@ -59,8 +64,8 @@
                       style="background-color: #B39DDB; color: white;">
                       Entrar
                     </v-btn>
-                    <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" color="black" @click="changeView('register')"
-                      style="text-decoration: underline;">
+                    <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" color="black"
+                      @click="changeView('register')" style="text-decoration: underline;">
                       Cadastre-se
                     </v-btn>
                   </v-card-text>
@@ -77,9 +82,11 @@
       </div>
 
       <div v-else class="d-flex align-center ml-4">
-        <span class="text-subtitle-1 mr-4" :style="{ color: textColor }" >Olá, {{ usuario.nome }}!</span>
-        <v-btn v-if="usuario.perfil === 'admin'" to="/admin" text="Painel Admin" variant="flat" color="error" class="text-none mr-2" rounded="lg"></v-btn>
-        <v-btn @click="logout" text="Sair" variant="flat" color="red-lighten-1" class="text-none mr-8 ml-2" rounded="lg"></v-btn>
+        <span class="text-subtitle-1 mr-4" :style="{ color: textColor }">Olá, {{ usuario.nome }}!</span>
+        <v-btn v-if="usuario.perfil === 'admin'" to="/admin" text="Painel Admin" variant="flat" color="error"
+          class="text-none mr-2" rounded="lg"></v-btn>
+        <v-btn @click="logout" text="Sair" variant="flat" color="red-lighten-1" class="text-none mr-8 ml-2"
+          rounded="lg"></v-btn>
       </div>
     </v-app-bar>
 
@@ -145,9 +152,22 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
-const route = useRoute();
+const route = useRoute(); // Rota atual
+const router = useRouter(); // Roteador para navegação programática
+const searchQuery = ref('');
+
+function goToBusca() {
+  if (!searchQuery.value.trim())
+    return;
+
+  router.push({
+    name: 'Busca',
+    query: { q: searchQuery.value },
+  });
+}
+
 const isHomePage = computed(() => route.path === '/');
 
 const appBarBackground = computed(() => {
@@ -160,7 +180,7 @@ const appBarBackground = computed(() => {
 const isScrolled = ref(false);
 const textColor = computed(() => {
   if (!isHomePage.value) {
-    return '#000000'; 
+    return '#000000';
   }
   return isScrolled.value ? '#000000' : '#FFFFFF';
 });
@@ -168,18 +188,18 @@ const textColor = computed(() => {
 
 const handleScroll = () => {
   if (!isHomePage.value) {
-    isScrolled.value = true; 
+    isScrolled.value = true;
     return;
   }
-  
+
   const scrollPosition = window.scrollY;
   if (scrollPosition < 50) {
     isScrolled.value = false;
     return;
   }
-  
+
   const popularesSection = document.getElementById('populares');
-  
+
   if (popularesSection) {
     const sectionTop = popularesSection.offsetTop;
     const threshold = sectionTop - 64;
@@ -191,7 +211,7 @@ const handleScroll = () => {
 watch(isHomePage, (newVal) => {
   if (newVal) {
     isScrolled.value = false;
-    setTimeout(() => handleScroll(), 0); 
+    setTimeout(() => handleScroll(), 0);
   } else {
     isScrolled.value = true;
   }
@@ -201,7 +221,7 @@ watch(isHomePage, (newVal) => {
 onMounted(() => {
   handleScroll();
   window.addEventListener('scroll', handleScroll);
-  
+
   // Verifica se já existe uma sessão
   const usuarioSalvo = localStorage.getItem('usuario');
   if (usuarioSalvo) {
@@ -291,7 +311,7 @@ async function submitForm() {
         })
       });
       const data = await res.json();
-      alert(data.mensagem); 
+      alert(data.mensagem);
 
       if (data.sucesso) {
         changeView('login');
@@ -300,13 +320,13 @@ async function submitForm() {
       const res = await fetch("http://localhost/socialmusic_backend/api/autentica.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          email: formData.email, 
-          senha: formData.password 
+        body: JSON.stringify({
+          email: formData.email,
+          senha: formData.password
         })
       });
       const data = await res.json();
-      
+
       if (data.sucesso) {
         alert(data.mensagem);
         usuario.value = data.usuario;
