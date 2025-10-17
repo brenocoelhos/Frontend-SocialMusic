@@ -10,26 +10,26 @@
             <v-list-item
               v-for="(musica, index) in musicasMaisAvaliadas"
               :key="index"
-              class="mb-3 rounded-lg"
-              style="background-color: #F5F5F5;"
+              class="mb-2 rounded-lg"
+              style="background-color: #f8f9fa; padding: 12px 16px; margin: 8px;"
             >
               <template v-slot:prepend>
-                <v-avatar size="60" rounded="lg">
+                <v-avatar size="56" rounded="lg">
                   <v-img :src="musica.capa" :alt="musica.titulo"></v-img>
                 </v-avatar>
               </template>
 
-              <v-list-item-title class="font-weight-medium mb-1">
+              <v-list-item-title class="font-weight-normal">
                 {{ musica.titulo }}
               </v-list-item-title>
-              <v-list-item-subtitle class="text-grey-darken-1">
+              <v-list-item-subtitle class="font-weight-normal">
                 {{ musica.artista }}
               </v-list-item-subtitle>
 
               <template v-slot:append>
                 <div class="d-flex align-center">
-                  <v-icon color="yellow-darken-2" size="20">mdi-star</v-icon>
-                  <span class="ml-1 font-weight-bold">{{ musica.nota }}</span>
+                  <v-icon color="orange" size="24">mdi-star</v-icon>
+                  <span class="font-weight-normal">{{ musica.nota }}</span>
                 </div>
               </template>
             </v-list-item>
@@ -44,8 +44,8 @@
             <v-list-item
               v-for="(item, index) in ouvidasRecentemente"
               :key="index"
-              class="mb-3 rounded-lg"
-              style="background-color: #E6E0FF;"
+              class="mb-2 rounded-xl"
+              style="background-color: #EEE8FF; padding: 12px 16px; margin: 8px;"
             >
               <template v-slot:prepend>
                 <v-avatar size="50">
@@ -53,15 +53,15 @@
                 </v-avatar>
               </template>
 
-              <v-list-item-title class="font-weight-medium mb-1">
+              <v-list-item-title class="text-body-2 font-weight-bold text-grey-darken-4">
                 {{ item.usuarioNome }}
               </v-list-item-title>
-              <v-list-item-subtitle class="text-grey-darken-1 mb-2">
+              <v-list-item-subtitle class="text-caption text-grey-darken-1">
                 {{ item.usuarioHandle }}
               </v-list-item-subtitle>
               
               <div class="d-flex align-center mt-1">
-                <v-icon size="18" class="mr-1">mdi-music-note</v-icon>
+                <v-icon size="25" class="mr-1">mdi-music-note</v-icon>
                 <span class="text-body-2 text-grey-darken-1">
                   ouvindo {{ item.musica }} - {{ item.artista }}
                 </span>
@@ -153,15 +153,12 @@ const ouvidasRecentemente = ref([
 <style scoped>
 .musicas-page {
   min-height: 100vh;
-  background-color: #FFFFFF;
+  background-color: #f8f9fa;
 }
 
 .v-list-item {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.v-list-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
+
 </style>
