@@ -17,7 +17,7 @@
       <v-spacer></v-spacer>
 
       <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }" to="/">Página Inicial</v-btn>
-      <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }">Músicas</v-btn>
+      <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }" to="/musicas">Músicas</v-btn>
 
       <div v-if="!usuario">
         <v-dialog max-width="550" v-model="dialog" persistent>

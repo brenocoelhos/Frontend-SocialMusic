@@ -5,6 +5,7 @@ import Index from '../pages/index.vue'
 import Perfil from '../pages/Perfil.vue'
 import Avaliacao from '../pages/Avaliacao.vue'
 import Busca from '../pages/Busca.vue'
+import Musicas from '../pages/Musicas.vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend'
 
@@ -18,7 +19,9 @@ const routes = [
   { path: '/admin', name: 'Admin', component: Admin, meta: {requiresAdmin: true }},
   { path: '/perfil', name: 'Perfil', component: Perfil },
   { path: '/avaliacao', component: Avaliacao },
-  { path: '/busca', name:'Busca', component: Busca }
+  { path: '/busca', name:'Busca', component: Busca },
+  { path: '/musicas', name: 'Musicas', component: Musicas }
+  
 ]
 
 const router = createRouter({

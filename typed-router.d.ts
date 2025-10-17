@@ -22,6 +22,7 @@ declare module 'vue-router/auto-routes' {
     '/Admin': RouteRecordInfo<'/Admin', '/Admin', Record<never, never>, Record<never, never>>,
     '/Avaliacao': RouteRecordInfo<'/Avaliacao', '/Avaliacao', Record<never, never>, Record<never, never>>,
     '/Busca': RouteRecordInfo<'/Busca', '/Busca', Record<never, never>, Record<never, never>>,
+    '/Musicas': RouteRecordInfo<'/Musicas', '/Musicas', Record<never, never>, Record<never, never>>,
     '/Perfil': RouteRecordInfo<'/Perfil', '/Perfil', Record<never, never>, Record<never, never>>,
   }
 
@@ -50,6 +51,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/Busca.vue': {
       routes: '/Busca'
+      views: never
+    }
+    'src/pages/Musicas.vue': {
+      routes: '/Musicas'
       views: never
     }
     'src/pages/Perfil.vue': {
