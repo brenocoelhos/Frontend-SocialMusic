@@ -1,13 +1,67 @@
 <template>
   <v-app>
+    <!-- Navigation Drawer para Mobile -->
+    <v-navigation-drawer v-model="drawer" temporary>
+      <v-list>
+        <v-list-item class="pa-4">
+          <v-list-item-title class="text-h6 font-weight-bold">SocialMusic</v-list-item-title>
+        </v-list-item>
+      </v-list>
+
+      <v-divider></v-divider>
+
+      <!-- Campo de busca para mobile -->
+      <div class="pa-4">
+        <form @submit.prevent="goToBusca(); drawer = false">
+          <v-text-field v-model="searchQuery" placeholder="Busque no SocialMusic" variant="outlined" 
+            density="compact" hide-details append-inner-icon="mdi-magnify" 
+            @click:append-inner="goToBusca(); drawer = false">
+          </v-text-field>
+        </form>
+      </div>
+
+      <v-divider></v-divider>
+
+      <v-list nav>
+        <v-list-item prepend-icon="mdi-home" title="Página Inicial" value="home" to="/" @click="drawer = false">
+        </v-list-item>
+        <v-list-item prepend-icon="mdi-music" title="Músicas" value="musicas" to="/musicas" @click="drawer = false">
+        </v-list-item>
+      </v-list>
+
+      <template v-slot:append>
+        <div class="pa-4">
+          <div v-if="!usuario">
+            <v-btn block variant="outlined" class="mb-2" @click="openLoginDialog(); drawer = false">
+              Entre ou Cadastre-se
+            </v-btn>
+          </div>
+          <div v-else>
+            <div class="text-center mb-3">
+              <div class="text-subtitle-1 font-weight-medium">{{ usuario.nome }}</div>
+            </div>
+            <v-btn v-if="usuario.perfil === 'admin'" block variant="flat" color="error" class="mb-2" to="/admin" @click="drawer = false">
+              Painel Admin
+            </v-btn>
+            <v-btn block variant="flat" color="red-lighten-1" @click="logout(); drawer = false">
+              Sair
+            </v-btn>
+          </div>
+        </div>
+      </template>
+    </v-navigation-drawer>
 
     <v-app-bar elevation="0" :style="{ backgroundColor: appBarBackground }" :dark="!isScrolled"
       class="transition-background" app>
+      <!-- Botão do menu (só aparece no mobile) -->
+      <v-app-bar-nav-icon class="d-md-none" :style="{ color: textColor }" @click="drawer = !drawer"></v-app-bar-nav-icon>
+      
       <v-app-bar-title class="font-weight-normal" :style="{ color: textColor }">SocialMusic</v-app-bar-title>
 
       <v-spacer></v-spacer>
 
-      <div class="d-flex align-center" style="max-width: 500px; width: 100%;">
+      <!-- Campo de busca (só aparece no desktop) -->
+      <div class="d-none d-md-flex align-center" style="max-width: 500px; width: 100%;">
         <form @submit.prevent="goToBusca" style="width: 100%;"><v-text-field v-model="searchQuery"
             placeholder="Busque no SocialMusic" variant="solo-filled" bg-color="#E6E0FF" rounded="pill"
             density="compact" hide-details append-inner-icon="mdi-magnify" @click:append-inner="goToBusca" class="mx-4"
@@ -16,10 +70,14 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }" to="/">Página Inicial</v-btn>
-      <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }" to="/musicas">Músicas</v-btn>
+      <!-- Botões de navegação (só aparecem no desktop) -->
+      <div class="d-none d-md-flex">
+        <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }" to="/">Página Inicial</v-btn>
+        <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }" to="/musicas">Músicas</v-btn>
+      </div>
 
-      <div v-if="!usuario">
+      <!-- Botão de login (só aparece no desktop) -->
+      <div v-if="!usuario" class="d-none d-md-block">
         <v-dialog max-width="550" v-model="dialog" persistent>
           <template v-slot:activator="{ props: activatorProps }">
             <v-btn v-bind="activatorProps" text="Entre ou Cadastre-se" variant="outlined" class="text-none mr-8 ml-2"
@@ -81,7 +139,8 @@
         </v-dialog>
       </div>
 
-      <div v-else class="d-flex align-center ml-4">
+      <!-- Área do usuário logado (só aparece no desktop) -->
+      <div v-else class="d-none d-md-flex align-center ml-4">
         <span class="text-subtitle-1 mr-4" :style="{ color: textColor }">Olá, {{ usuario.nome }}!</span>
         <v-btn v-if="usuario.perfil === 'admin'" to="/admin" text="Painel Admin" variant="flat" color="error"
           class="text-none mr-2" rounded="lg"></v-btn>
@@ -151,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute(); // Rota atual
@@ -217,6 +276,11 @@ watch(isHomePage, (newVal) => {
   }
 });
 
+// Observa mudanças de rota e faz scroll para o topo
+watch(() => route.path, () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
 // Inicializa e limpa os event listeners
 onMounted(() => {
   handleScroll();
@@ -241,6 +305,9 @@ const dialog = ref(false);
 const form = ref(null);
 const loading = ref(false);
 const view = ref('login');
+
+// --- CONTROLE DO NAVIGATION DRAWER ---
+const drawer = ref(false);
 
 const formData = reactive({
   nome: '',
@@ -275,6 +342,21 @@ function closeDialog() {
     form.value.resetValidation();
   }, 300);
 }
+
+function openLoginDialog() {
+  // Reseta o formulário primeiro
+  if (form.value) {
+    form.value.reset();
+    form.value.resetValidation();
+  }
+  // Define a view como login
+  view.value = 'login';
+  // Abre o diálogo
+  dialog.value = true;
+}
+
+// Disponibiliza a função globalmente
+provide('openLoginDialog', openLoginDialog);
 
 // --- FUNÇÃO DE LOGOUT ---
 async function logout() {

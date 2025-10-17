@@ -11,7 +11,7 @@
               <p class="text-h6 mb-6 text-grey-lighten-2" style="max-width: 500px;">
                 Entre com sua conta Spotify, avalie e comente músicas, visualize as avaliações de seus amigos.
               </p>
-              <v-btn size="x-large" variant="outlined" rounded="lg" style="color: #EEE8FF;">Junte-se agora</v-btn>
+              <v-btn size="x-large" variant="outlined" rounded="lg" style="color: #EEE8FF;" @click="openLoginDialog">Junte-se agora</v-btn>
             </v-col>
           </v-row>
         </v-container>
@@ -138,8 +138,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import fundoUrl from '@/assets/fundoArrumado.png'
+
+// Injeta a função para abrir o diálogo de login
+const openLoginDialog = inject('openLoginDialog');
 
 const musicasPopulares = ref([
   { titulo: 'Cardigan', artista: 'Taylor Swift', capa: 'https://akamai.sscdn.co/uploadfile/letras/albuns/6/f/6/e/971021601472784.jpg' },
