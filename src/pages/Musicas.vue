@@ -127,7 +127,7 @@ const ouvidasRecentemente = ref([
     artista: 'IRMAS DE PAU'
   },
   {
-    usuarioNome: 'White',
+    usuarioNome: 'Pedro',
     usuarioHandle: '@white',
     usuarioFoto: 'https://i.pravatar.cc/150?img=2',
     musica: 'FOOD FOOD',
