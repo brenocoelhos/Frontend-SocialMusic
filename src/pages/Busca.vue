@@ -119,7 +119,7 @@ async function fetchResults(query) {
   searched.value = true;
   results.value = []; // Limpa antes de uma nova busca
 
-  const apiUrl = `http://localhost/socialmusic_backend/api_spotify/search.php?q=${encodeURIComponent(query)}`;
+  const apiUrl = `http://localhost/socialmusic_backend/api/search.php?q=${encodeURIComponent(query)}`;
   try {
     const response = await axios.get(apiUrl);
     results.value = response.data; // Armazena todos os resultados
