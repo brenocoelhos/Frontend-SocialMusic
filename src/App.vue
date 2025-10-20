@@ -104,6 +104,22 @@
                       style="background-color: #B39DDB; color: white;">
                       Criar conta
                     </v-btn>
+                    
+                    <v-divider class="my-4">
+                      <span class="text-caption text-grey">ou</span>
+                    </v-divider>
+                    
+                    <v-btn 
+                      @click="loginWithSpotify" 
+                      block 
+                      size="large" 
+                      variant="outlined" 
+                      class="text-none mb-4"
+                      style="border-color: #1DB954; color: #1DB954;"
+                      prepend-icon="mdi-spotify">
+                      Cadastrar com Spotify
+                    </v-btn>
+                    
                     <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao"
                       @click="changeView('login')" style="text-decoration: underline;">
                       Já possuo uma conta
@@ -122,6 +138,22 @@
                       style="background-color: #B39DDB; color: white;">
                       Entrar
                     </v-btn>
+                    
+                    <v-divider class="my-4">
+                      <span class="text-caption text-grey">ou</span>
+                    </v-divider>
+                    
+                    <v-btn 
+                      @click="loginWithSpotify" 
+                      block 
+                      size="large" 
+                      variant="outlined" 
+                      class="text-none mb-4"
+                      style="border-color: #1DB954; color: #1DB954;"
+                      prepend-icon="mdi-spotify">
+                      Entrar com Spotify
+                    </v-btn>
+                    
                     <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" color="black"
                       @click="changeView('register')" style="text-decoration: underline;">
                       Cadastre-se
@@ -371,6 +403,25 @@ async function logout() {
     loading.value = false;
     alert("Você saiu com sucesso!");
   }
+}
+
+// --- FUNÇÃO DE LOGIN COM SPOTIFY ---
+function loginWithSpotify() {
+  // Configurações do Spotify OAuth
+  const spotifyClientId = 'SEU_SPOTIFY_CLIENT_ID'; // Você precisará configurar isso
+  const redirectUri = encodeURIComponent(window.location.origin + '/callback');
+  const scopes = encodeURIComponent('user-read-private user-read-email playlist-read-private user-top-read');
+  
+  // URL de autorização do Spotify
+  const spotifyAuthUrl = `https://accounts.spotify.com/authorize?` +
+    `client_id=${spotifyClientId}&` +
+    `response_type=code&` +
+    `redirect_uri=${redirectUri}&` +
+    `scope=${scopes}&` +
+    `show_dialog=true`;
+  
+  // Redireciona para a página de autorização do Spotify
+  window.location.href = spotifyAuthUrl;
 }
 
 // --- LÓGICA DE SUBMISSÃO ---

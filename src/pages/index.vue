@@ -21,7 +21,7 @@
 
     <div id="populares" style="background-color: #f8f9fa;">
       <v-container>
-        <h2 class="text-h4 font-weight-bold my-8 text-grey-darken-3">Populares essa semana - Spotify</h2>
+        <h2 class="text-h4 font-weight-bold my-8 text-grey-darken-3">Populares essa semana</h2>
 
         <v-sheet color="#EEE8FF" rounded="xl" class="pa-md-10 pa-5">
           <v-row>
@@ -144,14 +144,7 @@ import fundoUrl from '@/assets/fundoArrumado.png'
 // Injeta a função para abrir o diálogo de login
 const openLoginDialog = inject('openLoginDialog');
 
-const musicasPopulares = ref([
-  { titulo: 'Cardigan', artista: 'Taylor Swift', capa: 'https://akamai.sscdn.co/uploadfile/letras/albuns/6/f/6/e/971021601472784.jpg' },
-  { titulo: 'Blinding Lights', artista: 'The Weeknd', capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36' },
-  { titulo: 'As It Was', artista: 'Harry Styles', capa: 'https://i.scdn.co/image/ab67616d0000b273b46f74097655d7f353caab14' },
-  { titulo: 'Levitating', artista: 'Dua Lipa', capa: 'https://images.genius.com/4136ca8f6c03bd2fbc30c8d75407de75.1000x1000x1.png' },
-  { titulo: 'good 4 u', artista: 'Olivia Rodrigo', capa: 'https://i.scdn.co/image/ab67616d0000b273a91c10fe9472d9bd89802e5a' },
-  { titulo: 'MONTERO', artista: 'Lil Nas X', capa: 'https://cdn-images.dzcdn.net/images/cover/18e6daf0a1c70c1346c44670ff70645d/0x1900-000000-80-0-0.jpg' },
-]);
+const musicasPopulares = ref([]);
 
 const musicasAvaliadas = ref([
   { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Ferrari', artista: 'Frank Ocean', nota: '4.5/5' },
@@ -175,19 +168,6 @@ onMounted(async () => {
     
     if (dataPopulares.sucesso) {
       musicasPopulares.value = dataPopulares.musicas;
-    }
-
-    // Busca top músicas
-    const resTop = await fetch(
-      'http://localhost/socialmusic_backend/api/spotify_musicas.php?tipo=top&limit=6'
-    );
-    const dataTop = await resTop.json();
-    
-    if (dataTop.sucesso) {
-      musicasAvaliadas.value = dataTop.musicas.map(m => ({
-        ...m,
-        nota: (m.popularidade / 20).toFixed(1) + '/5'
-      }));
     }
     
   } catch (error) {
