@@ -18,7 +18,7 @@ const routes = [
   { path: '/', name: 'Página Inicial', component: Index},
   { path: '/admin', name: 'Admin', component: Admin, meta: {requiresAdmin: true }},
   { path: '/perfil', name: 'Perfil', component: Perfil },
-  { path: '/avaliacao', component: Avaliacao },
+  { path: '/avaliacao', name: 'Avaliacao', component: Avaliacao },
   { path: '/busca', name:'Busca', component: Busca },
   { path: '/musicas', name: 'Musicas', component: Musicas }
   
