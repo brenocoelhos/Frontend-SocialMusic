@@ -56,7 +56,9 @@
       <!-- Botão do menu (só aparece no mobile) -->
       <v-app-bar-nav-icon class="d-md-none" :style="{ color: textColor }" @click="drawer = !drawer"></v-app-bar-nav-icon>
       
-      <v-app-bar-title class="font-weight-normal" :style="{ color: textColor }">SocialMusic</v-app-bar-title>
+      <v-app-bar-title class="font-weight-normal" :style="{ color: textColor, cursor: 'pointer' }" @click="router.push('/')">
+        SocialMusic
+      </v-app-bar-title>
 
       <v-spacer></v-spacer>
 

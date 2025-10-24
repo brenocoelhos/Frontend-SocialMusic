@@ -1,7 +1,7 @@
 <template>
   <div>
-    <v-img :src="fundoUrl" cover height="85vh">
-      <div class="fill-height" style="background-color: rgba(0, 0, 0, 0.5);">
+    <v-img :src="fundoUrl" cover height="85vh" class="hero-banner">
+      <div class="fill-height hero-overlay">
         <v-container id="intro" class="fill-height">
           <v-row align-content="end" justify="start" class="fill-height">
             <v-col cols="12" md="8" lg="6">
@@ -227,5 +227,23 @@ const avaliacoes = ref([
 <style scoped>
 #intro {
   margin-left: 0px;
+}
+
+/* Mobile: Esconder imagem e mostrar cor sólida */
+@media (max-width: 959px) {
+  .hero-banner :deep(.v-img__img) {
+    display: none !important;
+  }
+  
+  .hero-overlay {
+    background-color: #3e281b !important; /* 👈 COR SÓLIDA AQUI - Azul acinzentado escuro */
+  }
+}
+
+/* Desktop: Manter overlay semi-transparente */
+@media (min-width: 960px) {
+  .hero-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
 }
 </style>
