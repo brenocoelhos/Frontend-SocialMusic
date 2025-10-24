@@ -31,17 +31,13 @@
 
           <div v-else>
             <v-card v-if="firstTrack" class="mb-6 pa-4 d-flex align-center" variant="flat" color="#EEE8FF" rounded="lg"
-              :href="firstTrack.spotify_url" target="_blank">
+              :to="getAvaliacaoUrl(firstTrack)">
               <v-img :src="firstTrack.image_url" min-width="130" max-width="170" min-height="170" max-height="120" cover
                 class="rounded-lg mr-4"></v-img>
 
               <div class="d-flex flex-column flex-grow-1">
-                <v-card-title class="pa-0 text-h6 font-weight-bold">{{
-                  firstTrack.track_name
-                }}</v-card-title>
-                <v-card-subtitle class="pa-0 text-body-2">{{
-                  firstTrack.artist_name
-                }}</v-card-subtitle>
+                <v-card-title class="pa-0 text-h6 font-weight-bold">{{ firstTrack.track_name }}</v-card-title>
+                <v-card-subtitle class="pa-0 text-body-2">{{ firstTrack.artist_name }}</v-card-subtitle>
               </div>
 
               <div class="d-flex ml-4">
@@ -50,19 +46,15 @@
               </div>
             </v-card>
 
-            <v-card v-for="track in otherTracks" :key="track.spotify_url" class="mb-4" :href="track.spotify_url"
-              target="_blank">
+            <v-card v-for="track in otherTracks" :key="track.spotify_url" class="mb-4"
+              :to="getAvaliacaoUrl(track)">
               <div class="d-flex">
                 <div>
                   <v-img :src="track.image_url" :width="80" :height="80" cover class="ma-2 rounded"></v-img>
                 </div>
                 <div class="d-flex flex-column justify-center">
-                  <v-card-title class="pa-0 text-body-1 font-weight-bold">{{
-                    track.track_name
-                  }}</v-card-title>
-                  <v-card-subtitle class="pa-0">{{
-                    track.artist_name
-                  }}</v-card-subtitle>
+                  <v-card-title class="pa-0 text-body-1 font-weight-bold">{{ track.track_name }}</v-card-title>
+                  <v-card-subtitle class="pa-0">{{ track.artist_name }}</v-card-subtitle>
                 </div>
               </div>
             </v-card>
@@ -89,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from "vue"; // Adicione 'computed' aqui
+import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 
@@ -111,6 +103,25 @@ const firstTrack = computed(() => {
 const otherTracks = computed(() => {
   return results.value.slice(1);
 });
+
+// URL para a página de avaliação com todos os dados
+function getAvaliacaoUrl(track) {
+  if (!track) return "/";
+
+  const params = new URLSearchParams();
+  params.append('id', track.id);
+  params.append('name', track.track_name);
+  params.append('artist', track.artist_name);
+  params.append('image', track.image_url);
+  params.append('spotify', track.spotify_url);
+  params.append('duration_ms', track.duration_ms);
+  params.append('release_date', track.release_date);
+  params.append('popularity', track.popularity);
+  params.append('explicit', track.explicit);  
+  params.append('album_name', track.album_name); 
+  params.append('album_type', track.album_type); 
+  return `/avaliacao?${params.toString()}`;
+}
 
 async function fetchResults(query) {
   if (!query) {

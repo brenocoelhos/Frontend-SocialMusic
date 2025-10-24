@@ -1,41 +1,39 @@
 <template>
-  <div style="min-height: 100vh">
-    <!-- Para o conteúdo ficar em baixo da navbar -->
+  <div style="
+      background-color: #f8f9fa;
+      min-height: 100vh;
+      padding-top: 80px;
+      position: relative;
+      z-index: 0;
+    ">
+    <div v-if="isLoading" class="text-center pa-16">
+      <v-progress-circular indeterminate color="#EEE8FF" size="64"></v-progress-circular>
+    </div>
 
-    <v-main class="bg-grey-lighten-4">
-      <!-- Cor de fundo da página -->
+    <div v-else-if="!isLoading && error" class="pa-16">
+      <v-card-text class="text-center text-grey">
+        Erro ao carregar {{ error }}
+      </v-card-text>
+    </div>
 
+    <div v-else-if="track">
       <!-- Seção de introdução -->
       <v-container class="py-8">
         <v-row justify="center" align="start">
           <!-- Música -->
           <v-col cols="12" md="4" lg="3">
-            <v-img
-              src="https://i.scdn.co/image/ab67616d00001e028863bc11d2aa12b54f5aeb36"
-              alt="Capa do Música After Hours"
-              aspect-ratio="1"
-              rounded="lg"
-              class="mb-4"
-              cover
-            >
+            <v-img :src="track.image_url" alt="Capa da Música" aspect-ratio="1" rounded="lg" class="mb-4" cover>
               <template #placeholder>
                 <v-row class="fill-height ma-0" align="center" justify="center">
-                  <v-progress-circular indeterminate color="primary" />
+                  <v-progress-circular indeterminate color="#EEE8FF" />
                 </v-row>
               </template>
             </v-img>
             <div class="d-flex flex-column align-center">
-              <h1 class="text-h4 font-weight-bold mb-2">After Hours</h1>
-              <h2 class="text-h6 text-grey-darken-1 mb-4">The Weeknd</h2>
-              <v-btn
-                prepend-icon="mdi-spotify"
-                variant="flat"
-                class="text-none"
-                rounded="lg"
-                color="#1DB954"
-                size="large"
-                block
-              >
+              <h1 class="text-h4 font-weight-bold mb-2">{{ track.track_name }}</h1>
+              <h2 class="text-h6 text-grey-darken-1 mb-4">{{ track.artist_name }}</h2>
+              <v-btn prepend-icon="mdi-spotify" variant="flat" class="text-none" rounded="lg" color="#1DB954"
+                size="large" block :href="track.spotify_url" target="_blank">
                 Escutar no Spotify
               </v-btn>
             </div>
@@ -47,12 +45,7 @@
               <v-row class="text-center">
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
-                    <v-icon
-                      icon="mdi-comment-text"
-                      color="grey"
-                      size="32"
-                      class="mb-2"
-                    />
+                    <v-icon icon="mdi-comment-text" color="grey" size="32" class="mb-2" />
                     <h3 class="text-h5 font-weight-bold">2,923</h3>
                     <p class="text-grey text-body-2">Avaliações</p>
                   </div>
@@ -60,12 +53,7 @@
 
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
-                    <v-icon
-                      icon="mdi-star"
-                      color="orange"
-                      size="32"
-                      class="mb-2"
-                    />
+                    <v-icon icon="mdi-star" color="orange" size="32" class="mb-2" />
                     <h3 class="text-h5 font-weight-bold">4.5/5</h3>
                     <p class="text-grey text-body-2">Média geral</p>
                   </div>
@@ -73,12 +61,7 @@
 
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
-                    <v-icon
-                      icon="mdi-star-outline"
-                      color="grey"
-                      size="32"
-                      class="mb-2"
-                    />
+                    <v-icon icon="mdi-star-outline" color="grey" size="32" class="mb-2" />
                     <h3 class="text-h5 font-weight-bold">--</h3>
                     <p class="text-grey text-body-2">Sua avaliação</p>
                   </div>
@@ -88,14 +71,8 @@
               <v-divider class="my-4" />
 
               <div class="text-center">
-                <v-btn
-                  class="text-none"
-                  rounded="lg"
-                  size="large"
-                  color="#EEE8FF"
-                  variant="flat"
-                  prepend-icon="mdi-pencil"
-                >
+                <v-btn class="text-none" rounded="lg" size="large" color="#EEE8FF" variant="flat"
+                  prepend-icon="mdi-pencil">
                   Escrever avaliação
                 </v-btn>
               </div>
@@ -109,32 +86,43 @@
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
                     <p class="text-grey text-caption mb-1">Duração</p>
-                    <p class="font-weight-medium">6 minutos, 2 segundos</p>
+                    <p class="font-weight-medium">{{ track.duration }}</p>
                   </div>
                 </v-col>
 
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
                     <p class="text-grey text-caption mb-1">Lançamento</p>
-                    <p class="font-weight-medium">20 de Março, 2020</p>
+                    <p class="font-weight-medium">{{ track.release_date }}</p>
                   </div>
                 </v-col>
 
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
-                    <p class="text-grey text-caption mb-1">Idioma</p>
-                    <p class="font-weight-medium">Inglês</p>
+                    <p class="text-grey text-caption mb-1">Popularidade do Spotify</p>
+                    <p class="font-weight-medium">{{ track.popularity }} / 100</p>
                   </div>
                 </v-col>
 
-                <v-col cols="12">
+                <v-col cols="12" sm="6">
+                  <div class="mb-3">
+                    <p class="text-grey text-caption mb-1">Álbum</p>
+                    <p class="font-weight-medium">{{ track.album_name }}</p>
+                  </div>
+                </v-col>
+
+                <v-col cols="12" sm="6">
                   <div>
-                    <p class="text-grey text-caption mb-1">Compositores</p>
-                    <p class="font-weight-medium">
-                      Jason "DaHeala" Quenneville, Mario Winans, Abel "The
-                      Weeknd" Tesfaye, Ahmad Balshe, Carlo "Illangelo"
-                      Montagnese
-                    </p>
+                    <p class="text-grey text-caption mb-1">Tipo de Lançamento</p>
+                    <p class="font-weight-medium">{{ track.album_type }}</p>
+                  </div>
+                </v-col>
+
+                <v-col cols="12" sm="6">
+                  <div>
+                    <p class="text-grey text-caption mb-1">Conteúdo Explícito</p>
+                    <p v-if="track.explicit" class="font-weight-medium">Sim</p>
+                    <p v-else class="font-weight-medium">Não</p>
                   </div>
                 </v-col>
               </v-row>
@@ -153,10 +141,7 @@
               <v-card-text class="pa-6">
                 <div class="d-flex align-start">
                   <v-avatar size="56" class="mr-4">
-                    <v-img
-                      src="https://randomuser.me/api/portraits/men/1.jpg"
-                      alt="Avatar do usuário"
-                    />
+                    <v-img src="https://randomuser.me/api/portraits/men/1.jpg" alt="Avatar do usuário" />
                   </v-avatar>
 
                   <div class="flex-grow-1">
@@ -165,24 +150,13 @@
                         <h3 class="text-h6 font-weight-bold">João Silva</h3>
                         <p class="text-grey text-caption">Há 2 dias</p>
                       </div>
-                      <v-btn
-                        variant="outlined"
-                        color="EEE8FF"
-                        class="text-none"
-                        rounded="lg"
-                      >
+                      <v-btn variant="outlined" color="EEE8FF" class="text-none" rounded="lg">
                         Seguir
                       </v-btn>
                     </div>
 
                     <div class="mb-2">
-                      <v-rating
-                        :model-value="4.5"
-                        color="amber"
-                        half-increments
-                        readonly
-                        size="small"
-                      />
+                      <v-rating :model-value="4.5" color="amber" half-increments readonly size="small" />
                     </div>
 
                     <p class="text-body-1">
@@ -207,10 +181,7 @@
               <v-card-text class="pa-6">
                 <div class="d-flex align-start">
                   <v-avatar size="56" class="mr-4">
-                    <v-img
-                      src="https://randomuser.me/api/portraits/women/2.jpg"
-                      alt="Avatar do usuário"
-                    />
+                    <v-img src="https://randomuser.me/api/portraits/women/2.jpg" alt="Avatar do usuário" />
                   </v-avatar>
 
                   <div class="flex-grow-1">
@@ -219,23 +190,13 @@
                         <h3 class="text-h6 font-weight-bold">Maria Santos</h3>
                         <p class="text-grey text-caption">Há 5 dias</p>
                       </div>
-                      <v-btn
-                        variant="outlined"
-                        color="EEE8FF"
-                        class="text-none"
-                        rounded="lg"
-                      >
+                      <v-btn variant="outlined" color="EEE8FF" class="text-none" rounded="lg">
                         Seguir
                       </v-btn>
                     </div>
 
                     <div class="mb-2">
-                      <v-rating
-                        :model-value="5"
-                        color="amber"
-                        readonly
-                        size="small"
-                      />
+                      <v-rating :model-value="5" color="amber" readonly size="small" />
                     </div>
 
                     <p class="text-body-1">
@@ -257,22 +218,103 @@
             </v-card>
 
             <div class="text-center mt-6">
-              <v-btn
-                variant="outlined"
-                class="text-none"
-                rounded="lg"
-                size="large"
-              >
+              <v-btn variant="outlined" class="text-none" rounded="lg" size="large">
                 Carregar mais avaliações
               </v-btn>
             </div>
           </v-col>
         </v-row>
       </v-container>
-    </v-main>
+    </div>
+
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { ref, watch } from "vue";
+import { useRoute } from "vue-router";
 
-<style scoped></style>
+const route = useRoute();
+const track = ref(null); // Armazena os detalhes da música
+const isLoading = ref(false);
+const error = ref(null);
+
+// Função para formatar Duração
+function formatDuration(ms) {
+  if (!ms || isNaN(ms)) return '--';
+  const secondsTotal = Math.floor(ms / 1000);
+  const minutes = Math.floor(secondsTotal / 60);
+  const seconds = secondsTotal % 60;
+  return `${minutes} minutos, ${seconds} segundos`;
+}
+
+// Função para formatar Data
+function formatDate(dateString) {
+  if (!dateString) return '--';
+  try {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC'
+    }).format(date);
+  } catch (e) {
+    return '--';
+  }
+}
+
+// Função para formatar Tipo de Álbum
+function formatAlbumType(type) {
+  if (!type || type === 'N/A') return '--';
+  if (type === 'single') return 'Single';
+  if (type === 'album') return 'Álbum';
+  if (type === 'compilation') return 'Coletânea';
+  // Capitaliza a primeira letra
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+// Função que lê os dados da URL e monta o objeto 'track'
+async function loadTrackFromQuery(query) {
+  if (!query.id) {
+    track.value = null;
+    error.value = "Nenhum ID de música fornecido.";
+    return;
+  }
+
+  isLoading.value = true;
+  track.value = null;
+  error.value = null;
+
+  try {
+    track.value = {
+      id: query.id,
+      track_name: query.name,
+      artist_name: query.artist,
+      image_url: query.image,
+      spotify_url: query.spotify,
+      // Formata os dados que vieram da URL
+      duration: formatDuration(query.duration_ms),
+      release_date: formatDate(query.release_date),
+      popularity: query.popularity,
+      explicit: query.explicit === 'true',
+      album_name: query.album_name,
+      album_type: formatAlbumType(query.album_type)
+    };
+  } catch (err) {
+    console.error("Erro ao processar dados da URL:", err);
+    error.value = err.message || "Erro desconhecido";
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+watch(
+  () => route.query,
+  (newQuery) => {
+    loadTrackFromQuery(newQuery);
+  },
+  { immediate: true, deep: true },
+);
+
+</script>
