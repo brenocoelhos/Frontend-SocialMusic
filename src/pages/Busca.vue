@@ -93,6 +93,9 @@ import { ref, watch, computed } from "vue"; // Adicione 'computed' aqui
 import { useRoute } from "vue-router";
 import axios from "axios";
 
+// Configuração da API URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
+
 const route = useRoute();
 const searchTerm = ref(route.query?.q || "");
 const results = ref([]); // Todos os resultados brutos da API
@@ -119,7 +122,7 @@ async function fetchResults(query) {
   searched.value = true;
   results.value = []; // Limpa antes de uma nova busca
 
-  const apiUrl = `http://localhost/socialmusic_backend/api/search.php?q=${encodeURIComponent(query)}`;
+  const apiUrl = `${API_URL}/api/search.php?q=${encodeURIComponent(query)}`;
   try {
     const response = await axios.get(apiUrl);
     results.value = response.data; // Armazena todos os resultados

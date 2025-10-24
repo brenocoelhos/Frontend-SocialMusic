@@ -141,6 +141,9 @@
 import { ref, onMounted, inject } from 'vue';
 import fundoUrl from '@/assets/fundoArrumado.png'
 
+// Configuração da API URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
+
 // Injeta a função para abrir o diálogo de login
 const openLoginDialog = inject('openLoginDialog');
 
@@ -162,7 +165,7 @@ onMounted(async () => {
   try {
     // Busca músicas populares
     const resPopulares = await fetch(
-      'http://localhost/socialmusic_backend/api/spotify_musicas.php?tipo=populares&limit=6'
+      `${API_URL}/api/spotify_musicas.php?tipo=populares&limit=6`
     );
     const dataPopulares = await resPopulares.json();
     

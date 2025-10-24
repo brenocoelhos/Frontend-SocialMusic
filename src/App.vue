@@ -245,6 +245,9 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+// Configuração da API URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
+
 const route = useRoute(); // Rota atual
 const router = useRouter(); // Roteador para navegação programática
 const searchQuery = ref('');
@@ -394,7 +397,7 @@ provide('openLoginDialog', openLoginDialog);
 async function logout() {
   loading.value = true;
   try {
-    await fetch("http://localhost/socialmusic_backend/api/logout.php", { method: "POST" });
+    await fetch(`${API_URL}/api/logout.php`, { method: "POST" });
   } catch (err) {
     console.error("Erro ao fazer logout:", err);
   } finally {
@@ -433,7 +436,7 @@ async function submitForm() {
 
   try {
     if (view.value === 'register') {
-      const res = await fetch("http://localhost/socialmusic_backend/api/cadastro.php", {
+      const res = await fetch(`${API_URL}/api/cadastro.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -450,7 +453,7 @@ async function submitForm() {
         changeView('login');
       }
     } else {
-      const res = await fetch("http://localhost/socialmusic_backend/api/autentica.php", {
+      const res = await fetch(`${API_URL}/api/autentica.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
