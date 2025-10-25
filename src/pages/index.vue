@@ -11,7 +11,7 @@
               <p class="text-h6 mb-6 text-grey-lighten-2" style="max-width: 500px;">
                 Entre com sua conta Spotify, avalie e comente músicas, visualize as avaliações de seus amigos.
               </p>
-              <v-btn size="x-large" variant="outlined" rounded="lg" style="color: #EEE8FF;" @click="openLoginDialog">Junte-se agora</v-btn>
+              <v-btn v-if="!usuario" size="x-large" variant="outlined" rounded="lg" style="color: #EEE8FF;" @click="openLoginDialog">Junte-se agora</v-btn>
             </v-col>
           </v-row>
         </v-container>
@@ -156,6 +156,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_ba
 
 // Injeta a função para abrir o diálogo de login
 const openLoginDialog = inject('openLoginDialog');
+
+// Verifica se o usuário está logado
+const usuario = ref(null);
+onMounted(() => {
+  const usuarioSalvo = localStorage.getItem('usuario');
+  if (usuarioSalvo) {
+    usuario.value = JSON.parse(usuarioSalvo);
+  }
+});
 
 const musicasPopulares = ref([]);
 

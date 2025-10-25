@@ -178,23 +178,44 @@
 
       <!-- Área do usuário logado (só aparece no desktop) -->
       <div v-else class="d-none d-md-flex align-center ml-4">
-        <v-menu offset-y>
+        <v-menu offset-y min-width="200">
           <template v-slot:activator="{ props }">
-            <v-avatar size="40" class="mr-8" style="cursor: pointer;" v-bind="props">
-              <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário"></v-img>
-              <v-icon v-else :color="textColor" size="40">mdi-account-circle</v-icon>
-            </v-avatar>
+            <div class="d-flex align-center mr-8" style="cursor: pointer;" v-bind="props">
+              <v-avatar size="32">
+                <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário" cover></v-img>
+                <v-icon v-else :color="textColor" size="32">mdi-account-circle</v-icon>
+              </v-avatar>
+              <span class="text-subtitle-2 ml-2" :style="{ color: textColor }">{{ usuario.nome }}</span>
+            </div>
           </template>
-          <v-list>
-            <v-list-item prepend-icon="mdi-account" to="/perfil">
-              <v-list-item-title>Perfil</v-list-item-title>
+          <v-list class="py-2">
+            <!-- Header com informações do usuário -->
+            <v-list-item class="px-4 pb-2">
+              <template v-slot:prepend>
+                <v-avatar size="48" class="mr-3">
+                  <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário" cover></v-img>
+                  <v-icon v-else size="48" color="grey">mdi-account-circle</v-icon>
+                </v-avatar>
+              </template>
+              <v-list-item-title class="text-subtitle-2 font-weight-bold">{{ usuario.nome }}</v-list-item-title>
+              <v-list-item-subtitle class="text-caption">{{ usuario.email }}</v-list-item-subtitle>
             </v-list-item>
-            <v-list-item v-if="usuario.perfil === 'admin'" prepend-icon="mdi-shield-account" to="/admin">
-              <v-list-item-title>Painel Admin</v-list-item-title>
+            
+            <v-divider class="my-2"></v-divider>
+            
+            <!-- Opções do menu -->
+            <v-list-item prepend-icon="mdi-account" to="/perfil" class="px-4">
+              <v-list-item-title class="text-body-2">Perfil</v-list-item-title>
             </v-list-item>
-            <v-divider></v-divider>
-            <v-list-item prepend-icon="mdi-logout" @click="logout">
-              <v-list-item-title>Sair</v-list-item-title>
+            
+            <v-list-item v-if="usuario.perfil === 'admin'" prepend-icon="mdi-shield-account" to="/admin" class="px-4">
+              <v-list-item-title class="text-body-2">Painel Admin</v-list-item-title>
+            </v-list-item>
+            
+            <v-divider class="my-2"></v-divider>
+            
+            <v-list-item prepend-icon="mdi-logout" @click="logout" class="px-4">
+              <v-list-item-title class="text-body-2">Sair</v-list-item-title>
             </v-list-item>
           </v-list>
         </v-menu>
