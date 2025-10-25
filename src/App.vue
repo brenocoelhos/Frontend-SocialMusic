@@ -12,9 +12,10 @@
 
       <!-- Campo de busca para mobile -->
       <div class="pa-4">
-        <form @submit.prevent="goToBusca(); drawer = false">
+        <form @submit.prevent="goToBusca(); drawer = false" autocomplete="off">
           <v-text-field v-model="searchQuery" placeholder="Busque no SocialMusic" variant="outlined" 
             density="compact" hide-details append-inner-icon="mdi-magnify" 
+            autocomplete="off"
             @click:append-inner="goToBusca(); drawer = false">
           </v-text-field>
         </form>
@@ -64,9 +65,11 @@
 
       <!-- Campo de busca (só aparece no desktop) -->
       <div class="d-none d-md-flex align-center" style="max-width: 500px; width: 100%;">
-        <form @submit.prevent="goToBusca" style="width: 100%;"><v-text-field v-model="searchQuery"
+        <form @submit.prevent="goToBusca" style="width: 100%;" autocomplete="off"><v-text-field v-model="searchQuery"
             placeholder="Busque no SocialMusic" variant="solo-filled" bg-color="#E6E0FF" rounded="pill"
-            density="compact" hide-details append-inner-icon="mdi-magnify" @click:append-inner="goToBusca" class="mx-4"
+            density="compact" hide-details append-inner-icon="mdi-magnify" 
+            autocomplete="off"
+            @click:append-inner="goToBusca" class="mx-4"
             style="max-width: 450px;"></v-text-field></form>
       </div>
 

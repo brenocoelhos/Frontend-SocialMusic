@@ -24,15 +24,25 @@
         <h2 class="text-h4 font-weight-bold my-8 text-grey-darken-3">Populares essa semana</h2>
 
         <v-sheet color="#EEE8FF" rounded="xl" class="pa-md-10 pa-5">
-          <v-row>
-            <v-col v-for="musica in musicasPopulares" :key="musica.titulo" cols="6" sm="4" md="2">
-              <v-card hover color="transparent" flat>
-                <v-img :src="musica.capa" class="rounded-lg"></v-img>
-                <v-card-title class="text-subtitle-1 pa-1 mt-2">{{ musica.titulo }}</v-card-title>
-                <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista }}</v-card-subtitle>
-              </v-card>
+          <!-- Loading Skeleton -->
+          <v-row v-if="loading">
+            <v-col v-for="n in 6" :key="n" cols="6" sm="4" md="2">
+              <v-skeleton-loader type="image, article" color="transparent"></v-skeleton-loader>
             </v-col>
           </v-row>
+
+          <!-- Conteúdo Real com Transição -->
+          <v-fade-transition>
+            <v-row v-if="!loading">
+              <v-col v-for="musica in musicasPopulares" :key="musica.titulo" cols="6" sm="4" md="2">
+                <v-card hover color="transparent" flat>
+                  <v-img :src="musica.capa" class="rounded-lg"></v-img>
+                  <v-card-title class="text-subtitle-1 pa-1 mt-2">{{ musica.titulo }}</v-card-title>
+                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista }}</v-card-subtitle>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-fade-transition>
         </v-sheet>
 
         <h2 class="text-h4 font-weight-bold my-10 text-grey-darken-3">Principais Avaliações</h2>
