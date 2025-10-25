@@ -10,7 +10,8 @@ import Musicas from '../pages/Musicas.vue'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend'
 
 // Configuração global do axios
-axios.defaults.withCredentials = false
+axios.defaults.withCredentials = true
+axios.defaults.baseURL = API_URL
 axios.defaults.headers.common['Accept'] = 'application/json'
 axios.defaults.headers.common['Content-Type'] = 'application/json'
 
