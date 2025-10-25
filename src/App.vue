@@ -178,11 +178,26 @@
 
       <!-- Área do usuário logado (só aparece no desktop) -->
       <div v-else class="d-none d-md-flex align-center ml-4">
-        <span class="text-subtitle-1 mr-4" :style="{ color: textColor }">Olá, {{ usuario.nome }}!</span>
-        <v-btn v-if="usuario.perfil === 'admin'" to="/admin" text="Painel Admin" variant="flat" color="error"
-          class="text-none mr-2" rounded="lg"></v-btn>
-        <v-btn @click="logout" text="Sair" variant="flat" color="red-lighten-1" class="text-none mr-8 ml-2"
-          rounded="lg"></v-btn>
+        <v-menu offset-y>
+          <template v-slot:activator="{ props }">
+            <v-avatar size="40" class="mr-8" style="cursor: pointer;" v-bind="props">
+              <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário"></v-img>
+              <v-icon v-else :color="textColor" size="40">mdi-account-circle</v-icon>
+            </v-avatar>
+          </template>
+          <v-list>
+            <v-list-item prepend-icon="mdi-account" to="/perfil">
+              <v-list-item-title>Perfil</v-list-item-title>
+            </v-list-item>
+            <v-list-item v-if="usuario.perfil === 'admin'" prepend-icon="mdi-shield-account" to="/admin">
+              <v-list-item-title>Painel Admin</v-list-item-title>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item prepend-icon="mdi-logout" @click="logout">
+              <v-list-item-title>Sair</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </div>
     </v-app-bar>
 
@@ -408,6 +423,7 @@ async function logout() {
   } finally {
     usuario.value = null;
     localStorage.removeItem('usuario');
+    searchQuery.value = ''; // Limpa o input de busca
     loading.value = false;
     alert("Você saiu com sucesso!");
   }
