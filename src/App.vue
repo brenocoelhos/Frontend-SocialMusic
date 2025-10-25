@@ -13,9 +13,8 @@
       <!-- Campo de busca para mobile -->
       <div class="pa-4">
         <form @submit.prevent="goToBusca(); drawer = false" autocomplete="off">
-          <v-text-field v-model="searchQuery" placeholder="Busque no SocialMusic" variant="outlined" 
-            density="compact" hide-details append-inner-icon="mdi-magnify" 
-            autocomplete="off"
+          <v-text-field v-model="searchQuery" placeholder="Busque no SocialMusic" variant="outlined" density="compact"
+            hide-details append-inner-icon="mdi-magnify" autocomplete="off"
             @click:append-inner="goToBusca(); drawer = false">
           </v-text-field>
         </form>
@@ -41,7 +40,8 @@
             <div class="text-center mb-3">
               <div class="text-subtitle-1 font-weight-medium">{{ usuario.nome }}</div>
             </div>
-            <v-btn v-if="usuario.perfil === 'admin'" block variant="flat" color="error" class="mb-2" to="/admin" @click="drawer = false">
+            <v-btn v-if="usuario.perfil === 'admin'" block variant="flat" color="error" class="mb-2" to="/admin"
+              @click="drawer = false">
               Painel Admin
             </v-btn>
             <v-btn block variant="flat" color="red-lighten-1" @click="logout(); drawer = false">
@@ -55,9 +55,11 @@
     <v-app-bar elevation="0" :style="{ backgroundColor: appBarBackground }" :dark="!isScrolled"
       class="transition-background" app>
       <!-- Botão do menu (só aparece no mobile) -->
-      <v-app-bar-nav-icon class="d-md-none" :style="{ color: textColor }" @click="drawer = !drawer"></v-app-bar-nav-icon>
-      
-      <v-app-bar-title class="font-weight-normal" :style="{ color: textColor, cursor: 'pointer' }" @click="router.push('/')">
+      <v-app-bar-nav-icon class="d-md-none" :style="{ color: textColor }"
+        @click="drawer = !drawer"></v-app-bar-nav-icon>
+
+      <v-app-bar-title class="font-weight-normal" :style="{ color: textColor, cursor: 'pointer' }"
+        @click="router.push('/')">
         SocialMusic
       </v-app-bar-title>
 
@@ -67,10 +69,8 @@
       <div class="d-none d-md-flex align-center" style="max-width: 500px; width: 100%;">
         <form @submit.prevent="goToBusca" style="width: 100%;" autocomplete="off"><v-text-field v-model="searchQuery"
             placeholder="Busque no SocialMusic" variant="solo-filled" bg-color="#E6E0FF" rounded="pill"
-            density="compact" hide-details append-inner-icon="mdi-magnify" 
-            autocomplete="off"
-            @click:append-inner="goToBusca" class="mx-4"
-            style="max-width: 450px;"></v-text-field></form>
+            density="compact" hide-details append-inner-icon="mdi-magnify" autocomplete="off"
+            @click:append-inner="goToBusca" class="mx-4" style="max-width: 450px;"></v-text-field></form>
       </div>
 
       <v-spacer></v-spacer>
@@ -109,22 +109,16 @@
                       style="background-color: #B39DDB; color: white;">
                       Criar conta
                     </v-btn>
-                    
+
                     <v-divider class="my-4">
                       <span class="text-caption text-grey">ou</span>
                     </v-divider>
-                    
-                    <v-btn 
-                      @click="loginWithSpotify" 
-                      block 
-                      size="large" 
-                      variant="outlined" 
-                      class="text-none mb-4"
-                      style="border-color: #1DB954; color: #1DB954;"
-                      prepend-icon="mdi-spotify">
+
+                    <v-btn @click="loginWithSpotify" block size="large" variant="outlined" class="text-none mb-4"
+                      style="border-color: #1DB954; color: #1DB954;" prepend-icon="mdi-spotify">
                       Cadastrar com Spotify
                     </v-btn>
-                    
+
                     <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao"
                       @click="changeView('login')" style="text-decoration: underline;">
                       Já possuo uma conta
@@ -143,22 +137,16 @@
                       style="background-color: #B39DDB; color: white;">
                       Entrar
                     </v-btn>
-                    
+
                     <v-divider class="my-4">
                       <span class="text-caption text-grey">ou</span>
                     </v-divider>
-                    
-                    <v-btn 
-                      @click="loginWithSpotify" 
-                      block 
-                      size="large" 
-                      variant="outlined" 
-                      class="text-none mb-4"
-                      style="border-color: #1DB954; color: #1DB954;"
-                      prepend-icon="mdi-spotify">
+
+                    <v-btn @click="loginWithSpotify" block size="large" variant="outlined" class="text-none mb-4"
+                      style="border-color: #1DB954; color: #1DB954;" prepend-icon="mdi-spotify">
                       Entrar com Spotify
                     </v-btn>
-                    
+
                     <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" color="black"
                       @click="changeView('register')" style="text-decoration: underline;">
                       Cadastre-se
@@ -200,20 +188,20 @@
               <v-list-item-title class="text-subtitle-2 font-weight-bold">{{ usuario.nome }}</v-list-item-title>
               <v-list-item-subtitle class="text-caption">{{ usuario.email }}</v-list-item-subtitle>
             </v-list-item>
-            
+
             <v-divider class="my-2"></v-divider>
-            
+
             <!-- Opções do menu -->
             <v-list-item prepend-icon="mdi-account" to="/perfil" class="px-4">
               <v-list-item-title class="text-body-2">Perfil</v-list-item-title>
             </v-list-item>
-            
+
             <v-list-item v-if="usuario.perfil === 'admin'" prepend-icon="mdi-shield-account" to="/admin" class="px-4">
               <v-list-item-title class="text-body-2">Painel Admin</v-list-item-title>
             </v-list-item>
-            
+
             <v-divider class="my-2"></v-divider>
-            
+
             <v-list-item prepend-icon="mdi-logout" @click="logout" class="px-4">
               <v-list-item-title class="text-body-2">Sair</v-list-item-title>
             </v-list-item>
@@ -453,18 +441,12 @@ async function logout() {
 // --- FUNÇÃO DE LOGIN COM SPOTIFY ---
 function loginWithSpotify() {
   // Configurações do Spotify OAuth
-  const spotifyClientId = 'SEU_SPOTIFY_CLIENT_ID'; // Você precisará configurar isso
-  const redirectUri = encodeURIComponent(window.location.origin + '/callback');
-  const scopes = encodeURIComponent('user-read-private user-read-email playlist-read-private user-top-read');
-  
-  // URL de autorização do Spotify
-  const spotifyAuthUrl = `https://accounts.spotify.com/authorize?` +
-    `client_id=${spotifyClientId}&` +
-    `response_type=code&` +
-    `redirect_uri=${redirectUri}&` +
-    `scope=${scopes}&` +
-    `show_dialog=true`;
-  
+  const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID
+  const redirectUri = 'https://socialmusic.vercel.app/callback'
+  const scopes = 'user-read-private user-read-email playlist-read-private user-top-read'
+
+  const spotifyAuthUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&show_dialog=true`
+
   // Redireciona para a página de autorização do Spotify
   window.location.href = spotifyAuthUrl;
 }
