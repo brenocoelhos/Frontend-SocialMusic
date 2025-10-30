@@ -1,6 +1,5 @@
 <template>
   <v-app>
-    <!-- Navigation Drawer para Mobile -->
     <v-navigation-drawer v-model="drawer" temporary>
       <v-list>
         <v-list-item class="pa-4">
@@ -10,7 +9,6 @@
 
       <v-divider></v-divider>
 
-      <!-- Campo de busca para mobile -->
       <div class="pa-4">
         <form @submit.prevent="goToBusca(); drawer = false" autocomplete="off">
           <v-text-field v-model="searchQuery" placeholder="Busque no SocialMusic" variant="outlined" density="compact"
@@ -54,7 +52,6 @@
 
     <v-app-bar elevation="0" :style="{ backgroundColor: appBarBackground }" :dark="!isScrolled"
       class="transition-background" app>
-      <!-- Botão do menu (só aparece no mobile) -->
       <v-app-bar-nav-icon class="d-md-none" :style="{ color: textColor }"
         @click="drawer = !drawer"></v-app-bar-nav-icon>
 
@@ -65,7 +62,6 @@
 
       <v-spacer></v-spacer>
 
-      <!-- Campo de busca (só aparece no desktop) -->
       <div class="d-none d-md-flex align-center" style="max-width: 500px; width: 100%;">
         <form @submit.prevent="goToBusca" style="width: 100%;" autocomplete="off"><v-text-field v-model="searchQuery"
             placeholder="Busque no SocialMusic" variant="solo-filled" bg-color="#E6E0FF" rounded="pill"
@@ -75,13 +71,11 @@
 
       <v-spacer></v-spacer>
 
-      <!-- Botões de navegação (só aparecem no desktop) -->
       <div class="d-none d-md-flex">
         <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }" to="/">Página Inicial</v-btn>
         <v-btn variant="text" class="text-capitalize" :style="{ color: textColor }" to="/musicas">Músicas</v-btn>
       </div>
 
-      <!-- Botão de login (só aparece no desktop) -->
       <div v-if="!usuario" class="d-none d-md-block">
         <v-dialog max-width="550" v-model="dialog" persistent>
           <template v-slot:activator="{ props: activatorProps }">
@@ -164,7 +158,6 @@
         </v-dialog>
       </div>
 
-      <!-- Área do usuário logado (só aparece no desktop) -->
       <div v-else class="d-none d-md-flex align-center ml-4">
         <v-menu offset-y min-width="200">
           <template v-slot:activator="{ props }">
@@ -177,7 +170,6 @@
             </div>
           </template>
           <v-list class="py-2">
-            <!-- Header com informações do usuário -->
             <v-list-item class="px-4 pb-2">
               <template v-slot:prepend>
                 <v-avatar size="48" class="mr-3">
@@ -191,7 +183,6 @@
 
             <v-divider class="my-2"></v-divider>
 
-            <!-- Opções do menu -->
             <v-list-item prepend-icon="mdi-account" to="/perfil" class="px-4">
               <v-list-item-title class="text-body-2">Perfil</v-list-item-title>
             </v-list-item>
@@ -210,7 +201,6 @@
       </div>
     </v-app-bar>
 
-    <!-- ALERTA GLOBAL -->
     <v-alert
       v-model="alertVisible"
       :type="alertType"
@@ -230,18 +220,15 @@
       {{ alertMessage }}
     </v-alert>
 
-    <!-- CONTEÚDO DAS PÁGINAS - RouterView renderiza cada página aqui -->
     <v-main style="display: flex; flex-direction: column; min-height: calc(100vh - 64px);">
       <div style="flex: 1;">
         <router-view />
       </div>
     </v-main>
 
-    <!-- FOOTER - Sem "app" para ficar no final da página -->
     <v-footer class="bg-white text-black">
       <v-container>
         <v-row>
-          <!-- Coluna 1: Sobre -->
           <v-col cols="12" md="4">
             <h3 class="text-h6 mb-3">SocialMusic</h3>
             <p class="text-body-2 text-grey-darken-1">
@@ -249,7 +236,6 @@
             </p>
           </v-col>
 
-          <!-- Coluna 2: Links -->
           <v-col cols="12" md="4">
             <h3 class="text-h6 mb-3">Links Rápidos</h3>
             <v-list bg-color="transparent" density="compact">
@@ -265,7 +251,6 @@
             </v-list>
           </v-col>
 
-          <!-- Coluna 3: Redes Sociais -->
           <v-col cols="12" md="4">
             <h3 class="text-h6 mb-3">Siga-nos</h3>
             <div class="d-flex gap-2">
@@ -365,10 +350,27 @@ watch(() => route.path, () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
+// =================================================================
+// MUDANÇAS PARA SINCRONIZAR SESSÃO EXPIRADA
+// =================================================================
+
+// Função para lidar com a mudança de storage
+function handleStorageChange(event) {
+  if (event.key === 'usuario' && event.newValue === null) {
+    // Se o 'usuario' foi removido do localStorage (ex: pelo index.js)
+    // força o logout na interface.
+    usuario.value = null;
+    showAlert("A sua sessão expirou.", "warning");
+  }
+}
+
 // Inicializa e limpa os event listeners
 onMounted(() => {
   handleScroll();
   window.addEventListener('scroll', handleScroll);
+
+  // Ouve por mudanças no localStorage
+  window.addEventListener('storage', handleStorageChange);
 
   // Verifica se já existe uma sessão
   const usuarioSalvo = localStorage.getItem('usuario');
@@ -379,7 +381,15 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
+  
+  // Remove o ouvinte ao sair
+  window.removeEventListener('storage', handleStorageChange);
 });
+
+// =================================================================
+// FIM DAS MUDANÇAS
+// =================================================================
+
 
 // --- GERENCIAMENTO DE ESTADO E SESSÃO ---
 const usuario = ref(null);
@@ -463,7 +473,10 @@ function showAlert(message, type = 'success') {
 async function logout() {
   loading.value = true;
   try {
-    await fetch(`${API_URL}/api/logout.php`, { method: "POST" });
+    await fetch(`${API_URL}/api/logout.php`, { 
+    method: "POST", 
+    credentials: 'include'
+  });
   } catch (err) {
     console.error("Erro ao fazer logout:", err);
   } finally {
@@ -472,7 +485,9 @@ async function logout() {
     searchQuery.value = ''; // Limpa o input de busca
     loading.value = false;
     showAlert("Você saiu com sucesso!", "success");
+    router.push('/');
   }
+  
 }
 
 // --- FUNÇÃO DE LOGIN COM SPOTIFY ---
@@ -500,6 +515,7 @@ async function submitForm() {
       const res = await fetch(`${API_URL}/api/cadastro.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({
           nome: formData.nome,
           email: formData.email,
@@ -519,6 +535,7 @@ async function submitForm() {
       const res = await fetch(`${API_URL}/api/autentica.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({
           email: formData.email,
           senha: formData.password
@@ -530,7 +547,7 @@ async function submitForm() {
         showAlert(data.mensagem, "success");
         usuario.value = data.usuario;
         console.log(data.usuario.perfil);
-        localStorage.setItem("usuario", JSON.stringify(data.usuario.perfil));
+        localStorage.setItem("usuario", JSON.stringify(data.usuario));
         closeDialog();
       } else {
         showAlert(data.mensagem, "error");

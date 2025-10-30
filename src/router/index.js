@@ -33,12 +33,6 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAdmin) {
     try {
-      console.log('Dados do usuário no localStorage:', localStorage.getItem('usuario'));
-      console.log('Tentando acessar:', `${API_URL}/api/auth.admin.php`);
-      const isadmin = JSON.parse(localStorage.getItem('usuario'));
-      if (isadmin !== 'admin') {
-        return next('/');
-      }
 
       const response = await axios.get(`${API_URL}/api/auth.admin.php`, {
         withCredentials: true,
@@ -50,19 +44,18 @@ router.beforeEach(async (to, from, next) => {
 
       if (response.data.success && response.data.perfil === 'admin') {
         console.log('Acesso admin autorizado:', response.data);
-        next();
+        next(); // Permite o acesso
       } else {
-        console.log('Acesso negado:', response.data);
-        next('/');
+        console.log('Acesso negado (pela API):', response.data);
+        next('/'); // Redireciona se a API negar
       }
     } catch (error) {
-      console.log('Erro detalhado:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers
-      });
-      next('/');
+      
+      const errorData = (error.response && error.response.data) ? error.response.data : error.message;
+      console.log('Erro ao verificar auth admin:', errorData);
+      localStorage.removeItem('usuario');
+
+      next('/'); // Redireciona se a API der erro (ex: 403, 401)
     }
   } else {
     next();

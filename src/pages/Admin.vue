@@ -168,21 +168,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
+// URL da API (use a mesma configuração do seu App.vue)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
+
 // Estatísticas
-const totalUsers = ref(156);
-const totalSongs = ref(432);
-const totalReviews = ref(1287);
-const totalComments = ref(3456);
+const totalUsers = ref(0); // Começa em 0
+const totalSongs = ref(432); // Mockado
+const totalReviews = ref(1287); // Mockado
+const totalComments = ref(3456); // Mockado
 
 // Controle de usuários
-const users = ref([
-  { id: 1, nome: 'João Silva', email: 'joao@email.com', ativo: true },
-  { id: 2, nome: 'Maria Santos', email: 'maria@email.com', ativo: true },
-  { id: 3, nome: 'Pedro Souza', email: 'pedro@email.com', ativo: false },
-]);
+const users = ref([]); // Começa vazio
 const searchUsers = ref('');
 const editDialog = ref(false);
 const editedUser = ref({});
+const loading = ref(true); // Estado de carregamento
 
 const filteredUsers = computed(() => {
   return users.value.filter(user =>
@@ -191,29 +191,11 @@ const filteredUsers = computed(() => {
   );
 });
 
-// Atividades recentes
+// Atividades recentes (continua mockado por enquanto)
 const recentActivities = ref([
-  {
-    id: 1,
-    title: 'Novo usuário registrado',
-    description: 'João Silva criou uma conta',
-    time: '5 minutos atrás',
-    color: 'primary'
-  },
-  {
-    id: 2,
-    title: 'Nova avaliação',
-    description: 'Maria avaliou "Bohemian Rhapsody"',
-    time: '10 minutos atrás',
-    color: 'success'
-  },
-  {
-    id: 3,
-    title: 'Comentário reportado',
-    description: 'Comentário marcado como inadequado',
-    time: '30 minutos atrás',
-    color: 'error'
-  }
+  { id: 1, title: 'Novo usuário registrado', description: 'João Silva criou uma conta', time: '5 minutos atrás', color: 'primary' },
+  { id: 2, title: 'Nova avaliação', description: 'Maria avaliou "Bohemian Rhapsody"', time: '10 minutos atrás', color: 'success' },
+  { id: 3, title: 'Comentário reportado', description: 'Comentário marcado como inadequado', time: '30 minutos atrás', color: 'error' }
 ]);
 
 // Funções
@@ -222,32 +204,94 @@ function editUser(user) {
   editDialog.value = true;
 }
 
-function deleteUser(user) {
+async function deleteUser(user) {
   if (confirm(`Tem certeza que deseja excluir o usuário ${user.nome}?`)) {
-    users.value = users.value.filter(u => u.id !== user.id);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/usuario_delete.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // <-- ADICIONE ISTO
+        body: JSON.stringify({ id: user.id })
+      });
+      
+      const data = await res.json();
+      
+      if (data.sucesso) {
+        users.value = users.value.filter(u => u.id !== user.id);
+        totalUsers.value--;
+      } else {
+        alert(`Erro: ${data.mensagem}`);
+      }
+    } catch (error) {
+      console.error('Erro ao excluir usuário:', error);
+      alert('Não foi possível conectar à API.');
+    }
   }
 }
 
 async function saveUser() {
   try {
-    // Aqui você implementará a lógica para salvar no backend
-    const index = users.value.findIndex(u => u.id === editedUser.value.id);
-    if (index !== -1) {
-      users.value[index] = { ...editedUser.value };
+    const res = await fetch(`${API_URL}/api/admin/usuario_update.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // <-- ADICIONE ISTO
+      body: JSON.stringify(editedUser.value)
+    });
+
+    const data = await res.json();
+
+    if (data.sucesso) {
+      const index = users.value.findIndex(u => u.id === editedUser.value.id);
+      if (index !== -1) {
+        users.value[index] = { ...editedUser.value };
+      }
+      editDialog.value = false;
+    } else {
+       alert(`Erro: ${data.mensagem}`);
     }
-    editDialog.value = false;
   } catch (error) {
     console.error('Erro ao salvar usuário:', error);
+    alert('Não foi possível conectar à API.');
   }
 }
 
 // Carregar dados iniciais
+// ... no Admin.vue ...
+
+// Carregar dados iniciais
 onMounted(async () => {
+  loading.value = true;
   try {
-    // Aqui você implementará a lógica para carregar os dados do backend
-    console.log('Carregando dados do painel administrativo...');
+    const res = await fetch(`${API_URL}/api/admin/dashboard.php`, {
+      credentials: 'include' // Essencial para enviar o cookie de sessão
+    });
+
+    if (!res.ok) {
+       if (res.status === 403) {
+         console.error('Acesso negado. A sessão pode ter expirado.');
+         // O router.beforeEach (index.js) já deve ter tratado o redirecionamento
+       }
+       throw new Error(`Erro HTTP: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    if (data.sucesso) {
+      // --- MUDANÇA AQUI ---
+      // Atualiza todos os refs com os dados REAIS da API
+      totalUsers.value = data.stats.totalUsers;
+      totalSongs.value = data.stats.totalSongs;
+      totalReviews.value = data.stats.totalReviews;
+      totalComments.value = data.stats.totalComments;
+      // --- FIM DA MUDANÇA ---
+
+      users.value = data.users;
+    }
+
   } catch (error) {
-    console.error('Erro ao carregar dados:', error);
+    console.error('Erro ao carregar dados do painel:', error);
+  } finally {
+    loading.value = false;
   }
 });
 </script>
