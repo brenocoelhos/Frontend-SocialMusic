@@ -182,12 +182,11 @@ const loading = ref(true);
 
 onMounted(async () => {
   try {
-    // Busca músicas populares usando o novo cliente de API
-    const dataPopulares = await apiGet('/spotify_musicas.php', { 
-      tipo: 'populares', 
-      limit: 6 
-    });
-    
+   // Busca músicas populares
+    const resPopulares = await fetch(
+      `${API_URL}/api/spotify_musicas.php?tipo=populares&limit=6`
+    );
+    const dataPopulares = await resPopulares.json();
     if (dataPopulares.sucesso) {
       musicasPopulares.value = dataPopulares.musicas;
     }
