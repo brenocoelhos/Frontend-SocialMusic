@@ -208,7 +208,7 @@
       :type="alertType"
       closable
       class="ma-4"
-      style="position: fixed; top: 64px; right: 0; z-index: 9999; max-width: 400px;"
+      style="position: fixed; top:78px ;left: 50%; transform: translate(-50%, -50%); z-index: 9999; max-width: 400px;"
       elevation="4"
       rounded="lg"
     >
@@ -463,8 +463,9 @@ function openLoginDialog() {
   dialog.value = true;
 }
 
-// Disponibiliza a função globalmente
+// Disponibiliza as funções globalmente
 provide('openLoginDialog', openLoginDialog);
+provide('showAlert', showAlert);
 
 // --- FUNÇÃO PARA MOSTRAR ALERTAS ---
 function showAlert(message, type = 'success') {
@@ -492,7 +493,6 @@ async function logout() {
     localStorage.removeItem('usuario');
     searchQuery.value = ''; // Limpa o input de busca
     loading.value = false;
-    showAlert("Você saiu com sucesso!", "success");
     router.push('/');
   }
 }
