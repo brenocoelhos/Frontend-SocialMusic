@@ -210,6 +210,26 @@
       </div>
     </v-app-bar>
 
+    <!-- ALERTA GLOBAL -->
+    <v-alert
+      v-model="alertVisible"
+      :type="alertType"
+      closable
+      class="ma-4"
+      style="position: fixed; top: 64px; right: 0; z-index: 9999; max-width: 400px;"
+      elevation="4"
+      rounded="lg"
+    >
+      <template v-slot:prepend>
+        <v-icon 
+          :icon="alertType === 'success' ? 'mdi-check-circle' : 
+                alertType === 'error' ? 'mdi-alert-circle' : 
+                alertType === 'warning' ? 'mdi-alert' : 'mdi-information'"
+        ></v-icon>
+      </template>
+      {{ alertMessage }}
+    </v-alert>
+
     <!-- CONTEÚDO DAS PÁGINAS - RouterView renderiza cada página aqui -->
     <v-main style="display: flex; flex-direction: column; min-height: calc(100vh - 64px);">
       <div style="flex: 1;">
@@ -373,6 +393,11 @@ const view = ref('login');
 // --- CONTROLE DO NAVIGATION DRAWER ---
 const drawer = ref(false);
 
+// --- CONTROLE DOS ALERTAS ---
+const alertVisible = ref(false);
+const alertType = ref('success');
+const alertMessage = ref('');
+
 const formData = reactive({
   nome: '',
   email: '',
@@ -422,6 +447,18 @@ function openLoginDialog() {
 // Disponibiliza a função globalmente
 provide('openLoginDialog', openLoginDialog);
 
+// --- FUNÇÃO PARA MOSTRAR ALERTAS ---
+function showAlert(message, type = 'success') {
+  alertMessage.value = message;
+  alertType.value = type;
+  alertVisible.value = true;
+  
+  // Auto-esconder após 5 segundos
+  setTimeout(() => {
+    alertVisible.value = false;
+  }, 5000);
+}
+
 // --- FUNÇÃO DE LOGOUT ---
 async function logout() {
   loading.value = true;
@@ -434,7 +471,7 @@ async function logout() {
     localStorage.removeItem('usuario');
     searchQuery.value = ''; // Limpa o input de busca
     loading.value = false;
-    alert("Você saiu com sucesso!");
+    showAlert("Você saiu com sucesso!", "success");
   }
 }
 
@@ -471,10 +508,12 @@ async function submitForm() {
         })
       });
       const data = await res.json();
-      alert(data.mensagem);
-
+      
       if (data.sucesso) {
+        showAlert(data.mensagem, "success");
         changeView('login');
+      } else {
+        showAlert(data.mensagem, "error");
       }
     } else {
       const res = await fetch(`${API_URL}/api/autentica.php`, {
@@ -488,18 +527,18 @@ async function submitForm() {
       const data = await res.json();
 
       if (data.sucesso) {
-        alert(data.mensagem);
+        showAlert(data.mensagem, "success");
         usuario.value = data.usuario;
         console.log(data.usuario.perfil);
         localStorage.setItem("usuario", JSON.stringify(data.usuario.perfil));
         closeDialog();
       } else {
-        alert(data.mensagem);
+        showAlert(data.mensagem, "error");
       }
     }
   } catch (err) {
     console.error("Erro na comunicação com a API:", err);
-    alert("Ocorreu um erro. Verifique o console para mais detalhes.");
+    showAlert("Ocorreu um erro. Verifique sua conexão e tente novamente.", "error");
   } finally {
     loading.value = false;
   }
