@@ -6,6 +6,7 @@ import Perfil from '../pages/Perfil.vue'
 import Avaliacao from '../pages/Avaliacao.vue'
 import Busca from '../pages/Busca.vue'
 import Musicas from '../pages/Musicas.vue'
+import Sobre from '../pages/Sobre.vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend'
 
@@ -21,7 +22,8 @@ const routes = [
   { path: '/perfil', name: 'Perfil', component: Perfil },
   { path: '/avaliacao', name: 'Avaliacao', component: Avaliacao },
   { path: '/busca', name:'Busca', component: Busca },
-  { path: '/musicas', name: 'Musicas', component: Musicas }
+  { path: '/musicas', name: 'Musicas', component: Musicas },
+  { path: '/sobre', name: 'Sobre', component: Sobre }
   
 ]
 
