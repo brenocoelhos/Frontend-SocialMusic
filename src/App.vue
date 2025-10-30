@@ -99,6 +99,8 @@
                   <v-card-text>
                     <v-text-field v-model="formData.nome" :rules="rules.required" label="Nome Completo"
                       variant="outlined" density="compact" class="mb-2"></v-text-field>
+                    <v-text-field v-model="formData.username" :rules="rules.username" label="Nome de Usuário"
+                      variant="outlined" density="compact" class="mb-2"></v-text-field>
                     <v-text-field v-model="formData.email" :rules="rules.email" label="E-mail" variant="outlined"
                       density="compact" class="mb-2"></v-text-field>
                     <v-text-field v-model="formData.password" :rules="rules.required" label="Senha" variant="outlined"
@@ -400,6 +402,7 @@ const alertMessage = ref('');
 
 const formData = reactive({
   nome: '',
+  username: '',
   email: '',
   password: '',
   confirmPassword: ''
@@ -408,6 +411,12 @@ const formData = reactive({
 const rules = {
   required: [
     v => !!v || 'Este campo é obrigatório.'
+  ],
+  username: [
+    v => !!v || 'O nome de usuário é obrigatório.',
+    v => v.length >= 4 || 'O nome de usuário deve ter pelo menos 4 caracteres.',
+    v => v.length <= 15 || 'O nome de usuário deve ter no máximo 15 caracteres.',
+    v => /^[a-z]+$/.test(v) || 'O nome de usuário pode conter apenas letras minúsculas.',
   ],
   email: [
     v => !!v || 'O e-mail é obrigatório.',
@@ -501,9 +510,9 @@ async function submitForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome: formData.nome,
+          username: formData.username,
           email: formData.email,
-          senha: formData.password,
-          user: formData.email.split('@')[0]
+          senha: formData.password
         })
       });
       const data = await res.json();
