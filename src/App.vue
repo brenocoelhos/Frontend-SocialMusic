@@ -216,7 +216,7 @@
       :type="alertType"
       closable
       class="ma-4"
-      style="position: fixed; top: 64px; right: 0; z-index: 9999; max-width: 400px;"
+      style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; max-width: 400px;"
       elevation="4"
       rounded="lg"
     >
@@ -471,7 +471,6 @@ async function logout() {
     localStorage.removeItem('usuario');
     searchQuery.value = ''; // Limpa o input de busca
     loading.value = false;
-    showAlert("Você saiu com sucesso!", "success");
   }
 }
 
