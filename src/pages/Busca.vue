@@ -86,7 +86,7 @@ import { useRoute } from "vue-router";
 import axios from "axios";
 
 // Configuração da API URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
 
 const route = useRoute();
 const searchTerm = ref(route.query?.q || "");

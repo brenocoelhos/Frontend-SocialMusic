@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Backend SocialMusic</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        .test-section { 
+            border: 1px solid #ddd; 
+            margin: 20px 0; 
+            padding: 15px; 
+            border-radius: 5px; 
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .result { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            border-left: 4px solid #007bff;
+        }
+        .error { border-left-color: #dc3545; }
+        .success { border-left-color: #28a745; }
+    </style>
+</head>
+<body>
+    <h1>🎵 Teste de Conexão - Backend SocialMusic</h1>
+    <p><strong>Backend URL:</strong> https://backend-socialmusic.onrender.com</p>
+
+    <div class="test-section">
+        <h3>1. Teste de Cadastro</h3>
+        <button onclick="testCadastro()">Testar Cadastro</button>
+        <div id="cadastro-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Teste de Login</h3>
+        <button onclick="testLogin()">Testar Login</button>
+        <div id="login-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Teste de Busca</h3>
+        <input type="text" id="search-query" placeholder="Digite uma música para buscar" value="Bohemian Rhapsody">
+        <button onclick="testSearch()">Testar Busca</button>
+        <div id="search-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Console do Navegador</h3>
+        <p>Pressione <strong>F12</strong> para abrir o Console do navegador e ver detalhes das requisições.</p>
+    </div>
+
+    <script>
+        const API_URL = 'https://backend-socialmusic.onrender.com';
+
+        function displayResult(containerId, message, isSuccess = true) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="result ${isSuccess ? 'success' : 'error'}">${message}</div>`;
+        }
+
+        async function testCadastro() {
+            const container = document.getElementById('cadastro-result');
+            container.innerHTML = '<div class="result">Testando cadastro...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/cadastro.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        nome: 'Teste Usuario',
+                        username: 'testeusuario' + Date.now(),
+                        email: 'teste' + Date.now() + '@exemplo.com',
+                        senha: 'senha123'
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Resposta do cadastro:', data);
+
+                if (data.sucesso) {
+                    displayResult('cadastro-result', `✅ Cadastro realizado com sucesso! Mensagem: ${data.mensagem}`, true);
+                } else {
+                    displayResult('cadastro-result', `❌ Erro no cadastro: ${data.mensagem}`, false);
+                }
+            } catch (error) {
+                console.error('Erro no teste de cadastro:', error);
+                displayResult('cadastro-result', `❌ Erro de conexão: ${error.message}`, false);
+            }
+        }
+
+        async function testLogin() {
+            const container = document.getElementById('login-result');
+            container.innerHTML = '<div class="result">Testando login...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/autentica.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@admin.com',
+                        senha: 'admin123'
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Resposta do login:', data);
+
+                if (data.sucesso) {
+                    displayResult('login-result', `✅ Login realizado com sucesso! Usuário: ${data.usuario.nome} (${data.usuario.perfil})`, true);
+                } else {
+                    displayResult('login-result', `❌ Erro no login: ${data.mensagem}`, false);
+                }
+            } catch (error) {
+                console.error('Erro no teste de login:', error);
+                displayResult('login-result', `❌ Erro de conexão: ${error.message}`, false);
+            }
+        }
+
+        async function testSearch() {
+            const query = document.getElementById('search-query').value;
+            const container = document.getElementById('search-result');
+            container.innerHTML = '<div class="result">Buscando músicas...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/search.php?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                console.log('Resposta da busca:', data);
+
+                if (data && data.length > 0) {
+                    const firstResult = data[0];
+                    displayResult('search-result', `✅ Busca realizada com sucesso! Encontradas ${data.length} músicas. Primeira: "${firstResult.track_name}" por ${firstResult.artist_name}`, true);
+                } else {
+                    displayResult('search-result', `⚠️ Nenhuma música encontrada para "${query}"`, false);
+                }
+            } catch (error) {
+                console.error('Erro no teste de busca:', error);
+                displayResult('search-result', `❌ Erro de conexão: ${error.message}`, false);
+            }
+        }
+
+        // Testa a conexão básica ao carregar a página
+        window.onload = function() {
+            console.log('🎵 SocialMusic - Teste de Backend');
+            console.log('Backend URL:', API_URL);
+            console.log('Pressione F12 para ver os logs detalhados das requisições');
+        };
+    </script>
+</body>
+</html>

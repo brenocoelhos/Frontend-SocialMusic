@@ -282,7 +282,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch, provide } from 
 import { useRoute, useRouter } from 'vue-router';
 
 // Configuração da API URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
 
 const route = useRoute(); // Rota atual
 const router = useRouter(); // Roteador para navegação programática
@@ -482,10 +482,9 @@ function showAlert(message, type = 'success') {
 async function logout() {
   loading.value = true;
   try {
-    await fetch(`${API_URL}/api/logout.php`, { 
-    method: "POST", 
-    credentials: 'include'
-  });
+    // Como o backend no Render não tem endpoint de logout específico,
+    // apenas limpa os dados locais
+    console.log("Fazendo logout...");
   } catch (err) {
     console.error("Erro ao fazer logout:", err);
   } finally {
@@ -496,7 +495,6 @@ async function logout() {
     showAlert("Você saiu com sucesso!", "success");
     router.push('/');
   }
-  
 }
 
 // --- FUNÇÃO DE LOGIN COM SPOTIFY ---
@@ -524,7 +522,6 @@ async function submitForm() {
       const res = await fetch(`${API_URL}/api/cadastro.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include',
         body: JSON.stringify({
           nome: formData.nome,
           username: formData.username,
@@ -544,7 +541,6 @@ async function submitForm() {
       const res = await fetch(`${API_URL}/api/autentica.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include',
         body: JSON.stringify({
           email: formData.email,
           senha: formData.password
