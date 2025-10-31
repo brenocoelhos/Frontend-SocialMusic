@@ -168,7 +168,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
-// URL da API (use a mesma configuração do seu App.vue)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
 
 // Estatísticas
@@ -210,7 +209,7 @@ async function deleteUser(user) {
       const res = await fetch(`${API_URL}/api/admin/usuario_delete.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // <-- ADICIONE ISTO
+        credentials: 'include', 
         body: JSON.stringify({ id: user.id })
       });
       
@@ -234,7 +233,7 @@ async function saveUser() {
     const res = await fetch(`${API_URL}/api/admin/usuario_update.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // <-- ADICIONE ISTO
+      credentials: 'include', 
       body: JSON.stringify(editedUser.value)
     });
 
@@ -256,9 +255,6 @@ async function saveUser() {
 }
 
 // Carregar dados iniciais
-// ... no Admin.vue ...
-
-// Carregar dados iniciais
 onMounted(async () => {
   loading.value = true;
   try {
@@ -277,13 +273,11 @@ onMounted(async () => {
     const data = await res.json();
 
     if (data.sucesso) {
-      // --- MUDANÇA AQUI ---
       // Atualiza todos os refs com os dados REAIS da API
       totalUsers.value = data.stats.totalUsers;
       totalSongs.value = data.stats.totalSongs;
       totalReviews.value = data.stats.totalReviews;
       totalComments.value = data.stats.totalComments;
-      // --- FIM DA MUDANÇA ---
 
       users.value = data.users;
     }

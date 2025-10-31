@@ -1,3 +1,5 @@
+avaliação.vue
+
 <template>
   <div style="
       background-color: #f8f9fa;
@@ -72,7 +74,7 @@
 
               <div class="text-center">
                 <v-btn class="text-none" rounded="lg" size="large" color="#EEE8FF" variant="flat"
-                  prepend-icon="mdi-pencil">
+                  prepend-icon="mdi-pencil" @click="openComment">
                   Escrever avaliação
                 </v-btn>
               </div>
@@ -227,17 +229,64 @@
       </v-container>
     </div>
 
+    <!-- Caixa de diálogo de avaliação -->
+    <v-dialog v-model="dialog" persistent max-width="600px">
+      <v-card rounded="xl">
+        <v-card-title class="pa-4">
+          <span class="text-h5">Sua avaliação</span>
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <v-form ref="form" @submit.prevent="submitReview">
+            <p class="text-grey-darken-1 mb-2">Qual sua nota para esta música?</p>
+            <v-rating v-model="reviewForm.nota" color="amber" density="comfortable" half-increments hover size="large"
+              class="mb-4" :rules="[rules.required]" />
+
+            <p class="text-grey-darken-1 mb-2">Dê um título para sua avaliação:</p>
+            <v-text-field v-model="reviewForm.titulo" label="Título da avaliação" variant="outlined" maxlength="255"
+              rounded="lg" class="mb-4" />
+
+            <p class="text-grey-darken-1 mb-2">Escreva seu comentário:</p>
+            <v-textarea v-model="reviewForm.comentario" label="Seu comentário" variant="outlined" rows="5" counter
+              maxlength="1000" rounded="lg" />
+          </v-form>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="text" @click="closeComment" class="text-none" rounded="lg" size="large">
+            Cancelar
+          </v-btn>
+          <v-btn color="#EEE8FF" variant="flat" @click="submitReview" :loading="isSubmitting" class="text-none"
+            rounded="lg" size="large">
+            Postar Avaliação
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import axios from "axios";
+import { ar } from "vuetify/locale";
 
 const route = useRoute();
 const track = ref(null); // Armazena os detalhes da música
 const isLoading = ref(false);
 const error = ref(null);
+const dialog = ref(false);
+const form = ref(null);
+const isSubmitting = ref(false);
+const reviewForm = ref({
+  nota: null,
+  titulo: '',
+  comentario: '',
+});
+const rules = {
+  required: (v) => v > 0 || "A nota é obrigatória.",
+};
 
 // Função para formatar Duração
 function formatDuration(ms) {
@@ -309,6 +358,72 @@ async function loadTrackFromQuery(query) {
   }
 }
 
+// Função para fechar o diálogo de avaliação
+function closeComment() {
+  dialog.value = false;
+  setTimeout(() => {
+    reviewForm.value.nota = 0;
+    reviewForm.value.titulo = '';
+    reviewForm.value.comentario = '';
+    if (form.value) {
+      form.value.resetValidation();
+    }
+  }, 300);
+}
+
+// Função para abrir o diálogo de avaliação
+function openComment() {
+  // Reseta o formulário primeiro
+  reviewForm.value.nota = 0;
+  reviewForm.value.titulo = '';
+  reviewForm.value.comentario = '';
+  if (form.value) {
+    form.value.resetValidation();
+  }
+  dialog.value = true;
+}
+
+// Função para enviar a avaliação 
+async function submitReview() {
+  if (!form.value) return;
+  const { valid } = await form.value.validate();
+
+  if (!valid) {
+    return;
+  }
+
+  isSubmitting.value = true;
+  try {
+    // Monta o payload para enviar à API
+    const payload = {
+      // Dados da avaliação
+      nota: reviewForm.value.nota,
+      titulo: reviewForm.value.titulo,
+      comentario: reviewForm.value.comentario,
+
+      // Dados da música (para o "Get or Create" na API)
+      spotify_id: track.value.id,
+      track_name: track.value.track_name,
+      artist_name: track.value.artist_name,
+      image_url: track.value.image_url,
+    };
+
+    const response = await axios.post('/api/salvar_avaliacao.php', payload, {
+      withCredentials: true, // Inclui cookies de sessão
+    });
+
+    // Após o envio bem-sucedido
+    alert(response.data.mensagem);
+    closeComment();
+    // TODO: Atualizar a lista de avaliações na tela
+  } catch (err) {
+    console.error("Erro ao salvar avaliação:", err);
+    const mensagem = err.response?.data?.mensagem || "Erro ao conectar com o servidor.";
+    alert(`Erro: ${mensagem}`);
+  } finally {
+    isSubmitting.value = false;
+  }
+}
 watch(
   () => route.query,
   (newQuery) => {
