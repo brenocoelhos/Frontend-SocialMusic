@@ -522,6 +522,7 @@ async function submitForm() {
       const res = await fetch(`${API_URL}/api/cadastro.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({
           nome: formData.nome,
           username: formData.username,
@@ -541,6 +542,7 @@ async function submitForm() {
       const res = await fetch(`${API_URL}/api/autentica.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({
           email: formData.email,
           senha: formData.password
