@@ -15,6 +15,7 @@
         </v-alert>
         <v-btn to="/" color="primary" class="mt-4">Voltar à Página Inicial</v-btn>
       </v-container>
+
       
       <v-container v-else class="py-8">
         <v-row>
@@ -27,7 +28,7 @@
                 </h1>
                 <p class="text-body-2 text-grey-darken-1">{{ perfilUsuario.email }}</p>
               </div>
-              <v-btn color="primary" variant="flat" rounded="lg" size="default">
+              <v-btn color="primary" variant="flat" rounded="lg" size="default" @click="openEditDialog">
                 Editar Perfil
               </v-btn>
             </div>
@@ -116,16 +117,34 @@
             </div>
           </v-col>
         </v-row>
-      </v-container>
-    </div>
-  </div>
-</template>
+      </v-container> <v-dialog v-model="editDialog" max-width="500px" persistent>
+        <v-form @submit.prevent="saveProfile">
+          <v-card>
+            <v-card-title>Editar Perfil</v-card-title>
+            <v-card-text>
+              <v-text-field
+                v-model="editForm.nome"
+                label="Nome"
+                variant="outlined"
+                :rules="[v => !!v || 'Nome é obrigatório']"
+                required
+              ></v-text-field>
+              </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn text @click="closeEditDialog" :disabled="isSaving">Cancelar</v-btn>
+              <v-btn color="primary" type="submit" :loading="isSaving">Salvar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-form>
+      </v-dialog>
+      </div> </div> </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
-// Configuração da API URL (como nos outros ficheiros)
+// Configuração da API URL
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
 const router = useRouter();
 
@@ -138,56 +157,100 @@ const errorMessage = ref('');
 const perfilUsuario = ref({});
 const avaliacoes = ref([]);
 
-// --- DADOS ESTÁTICOS (Mockados - Spotify API, etc.) ---
-// (Estes NÃO vêm da nossa BD, por isso mantemo-los mockados por agora)
+// --- DADOS ESTÁTICOS (Mockados) ---
 const musicasRecentes = ref([
-  {
-    titulo: 'Venice Bitch - Lana Del Rey',
-    artista: 'Lana Del Rey',
-    capa: 'https://cdn-images.dzcdn.net/images/cover/c0f4f022fa51f13e877aae2e758e241d/1900x1900-000000-80-0-0.jpg'
-  },
-  {
-    titulo: 'Shapeshifter - Lorde',
-    artista: 'Lorde',
-    capa: 'https://cdn-images.dzcdn.net/images/cover/c3a274f07eeeba58aa3cc00e83d55c81a/0x1900-000000-80-0-0.jpg'
-  }
+{ titulo: 'Venice Bitch - Lana Del Rey', artista: 'Lana Del Rey', capa: '...' },
+{ titulo: 'Shapeshifter - Lorde', artista: 'Lorde', capa: '...' }
 ]);
 const usuariosOnline = ref([
-  {
-    nome: 'White',
-    handle: '@white',
-    avatar: 'https://randomuser.me/api/portraits/women/45.jpg',
-    ouvindo: 'ouvindo FOOD FOOD - IRMAS DE PAU'
-  }
+{ nome: 'White', handle: '@white', avatar: '...', ouvindo: '...' }
 ]);
+
+// =======================================================
+// VARIÁVEIS PARA EDIÇÃO DE PERFIL (JÁ EXISTIAM)
+// =======================================================
+const editDialog = ref(false);
+const isSaving = ref(false);
+const editForm = reactive({
+  nome: ''
+});
+
+// Função para ABRIR o diálogo
+function openEditDialog() {
+  // Preenche o formulário com o nome atual
+  editForm.nome = perfilUsuario.value.nome;
+  editDialog.value = true;
+}
+
+// Função para FECHAR o diálogo
+function closeEditDialog() {
+  editDialog.value = false;
+}
+
+// Função para SALVAR o perfil
+async function saveProfile() {
+  if (!editForm.nome.trim()) return; // Validação simples
+
+  isSaving.value = true;
+  try {
+    const res = await fetch(`${API_URL}/api/perfil_update.php`, {
+      method: 'POST',
+      credentials: 'include', // Envia o cookie de sessão
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome: editForm.nome })
+    });
+
+    const data = await res.json();
+
+    if (data.sucesso) {
+      // 1. Atualiza o nome na página
+      perfilUsuario.value.nome = data.nome_atualizado;
+      
+      // 2. (MUITO IMPORTANTE) Atualiza o localStorage
+      // para que a barra de topo (App.vue) atualize no próximo refresh.
+      const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
+      if (usuarioLocal) {
+        usuarioLocal.nome = data.nome_atualizado;
+        localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
+      }
+
+      closeEditDialog();
+    } else {
+      alert(`Erro: ${data.mensagem}`);
+    }
+
+  } catch (err) {
+    console.error('Erro ao salvar perfil:', err);
+    alert('Erro de rede ao tentar salvar.');
+  } finally {
+    isSaving.value = false;
+  }
+}
+// =======================================================
+// FIM DAS VARIÁVEIS DE EDIÇÃO
+// =======================================================
 
 
 // --- LÓGICA AO CARREGAR A PÁGINA ---
 onMounted(async () => {
-  // 1. Verificar se o utilizador está "logado" no localStorage.
-  // Se não estiver, não podemos carregar um perfil.
   const usuarioLocal = localStorage.getItem('usuario');
   if (!usuarioLocal) {
-    // Redireciona para a página inicial se não estiver logado
     router.push('/');
     return;
   }
 
-  // 2. Se estiver logado, buscar os dados completos da API
   try {
     loading.value = true;
     error.value = false;
 
     const res = await fetch(`${API_URL}/api/perfil.php`, {
       method: 'GET',
-      credentials: 'include' // ESSENCIAL para enviar o cookie de sessão PHPSESSID
+      credentials: 'include' 
     });
 
     if (!res.ok) {
       if (res.status === 401) {
-        // A sessão expirou ou é inválida
         errorMessage.value = 'A sua sessão expirou. Por favor, faça login novamente.';
-        // (O seu index.js e App.vue já devem ter tratado de limpar o localStorage)
         router.push('/');
       } else {
         errorMessage.value = 'Não foi possível carregar o seu perfil.';
