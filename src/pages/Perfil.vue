@@ -1,53 +1,47 @@
 <template>
   <div style="min-height: 100vh;">
-    <!-- Área branca para a navbar -->
     <div style="background-color: white; height: 80px; position: fixed; top: 0; left: 0; right: 0; z-index: 1;"></div>
 
-    <!-- Conteúdo da página -->
     <div style="background-color: #f8f9fa; min-height: 100vh; padding-top: 80px; position: relative; z-index: 0;">
-      <v-container class="py-8">
+      
+      <v-container v-if="loading" class="py-8">
+        <v-skeleton-loader type="article, actions"></v-skeleton-loader>
+        <v-skeleton-loader type="list-item-avatar-three-line@3"></v-skeleton-loader>
+      </v-container>
+
+      <v-container v-else-if="error" class="py-8 text-center">
+        <v-alert type="error" border="start" prominent>
+          {{ errorMessage }}
+        </v-alert>
+        <v-btn to="/" color="primary" class="mt-4">Voltar à Página Inicial</v-btn>
+      </v-container>
+      
+      <v-container v-else class="py-8">
         <v-row>
-          <!-- COLUNA ESQUERDA -->
           <v-col cols="12" md="7">
-            <!-- CABEÇALHO DO PERFIL -->
+      
             <div class="d-flex justify-space-between align-center mb-6">
               <div>
-                <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">Perfil de Isabella</h1>
-                <p class="text-body-2 text-grey-darken-1">@isa.s</p>
+                <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">
+                  Perfil de {{ perfilUsuario.nome }}
+                </h1>
+                <p class="text-body-2 text-grey-darken-1">{{ perfilUsuario.email }}</p>
               </div>
-              <v-btn color="#EEE8FF" rounded="lg" size="default">Seguir</v-btn>
+              <v-btn color="primary" variant="flat" rounded="lg" size="default">
+                Editar Perfil
+              </v-btn>
             </div>
 
-            <!-- ÁLBUNS MAIS OUVIDOS -->
-            <div class="mb-8">
-              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Álbuns mais ouvidos</h2>
-              <v-row>
-                <v-col v-for="album in albumsOuvidos" :key="album.titulo" cols="4">
-                  <v-card hover color="white" rounded="lg" flat class="pa-0">
-                    <v-img :src="album.capa" aspect-ratio="1" cover></v-img>
-                    <v-card-text class="pa-2">
-                      <div class="text-caption text-grey-darken-2">
-                        {{ album.titulo }} · {{ album.artista }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
-            </div>
-
-            <!-- MÚSICAS OUVIDAS RECENTEMENTE -->
             <div class="mb-8">
               <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Músicas ouvidas recentemente</h2>
               <v-sheet color="white" rounded="lg" class="pa-0">
                 <v-list bg-color="transparent" class="py-2">
-                  <v-list-item v-for="(musica, index) in musicasRecentes" :key="musica.titulo" class="px-4"
-                    :class="{ 'mb-0': index < musicasRecentes.length - 1 }">
+                  <v-list-item v-for="(musica, index) in musicasRecentes" :key="index" class="px-4">
                     <template v-slot:prepend>
                       <v-avatar size="48" rounded="lg" class="mr-3">
                         <v-img :src="musica.capa"></v-img>
                       </v-avatar>
                     </template>
-
                     <v-list-item-title class="text-body-2 font-weight-regular text-grey-darken-3">
                       {{ musica.titulo }}
                     </v-list-item-title>
@@ -59,9 +53,13 @@
               </v-sheet>
             </div>
 
-            <!-- AVALIAÇÕES -->
             <div>
-              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Avaliações</h2>
+              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Minhas Avaliações</h2>
+              
+              <v-alert v-if="avaliacoes.length === 0" type="info" variant="tonal">
+                Ainda não fez nenhuma avaliação.
+              </v-alert>
+
               <div v-for="(avaliacao, i) in avaliacoes" :key="i" class="mb-4">
                 <v-card rounded="lg" flat>
                   <v-card-text class="pa-5">
@@ -78,14 +76,12 @@
                         </div>
                       </div>
                     </div>
-
                     <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">
                       {{ avaliacao.titulo }}
                     </h3>
                     <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">
                       {{ avaliacao.comentario }}
                     </p>
-
                     <div class="d-flex align-center">
                       <v-icon icon="mdi-heart" size="20"></v-icon>
                       <span class="text-body-2 ml-2 text-grey-darken-3 font-weight-medium">{{ avaliacao.likes }}</span>
@@ -96,9 +92,8 @@
             </div>
           </v-col>
 
-          <!-- COLUNA DIREITA -->
+          
           <v-col cols="12" md="5">
-            <!-- AVATAR E GÊNEROS -->
             <v-card rounded="xl" class="mb-6 pa-8 text-center" color="white" flat elevation="0">
               <div class="d-flex justify-center mb-4">
                 <v-avatar size="160">
@@ -112,39 +107,11 @@
               </div>
             </v-card>
 
-            <!-- ONLINE AGORA -->
             <div>
               <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Online Agora</h2>
               <v-sheet rounded="xl" color="#EEE8FF" class="pa-4">
                 <div v-for="usuario in usuariosOnline" :key="usuario.handle" class="mb-3">
-                  <div class="d-flex align-center pa-2">
-                    <v-avatar size="48" class="mr-3">
-                      <v-img :src="usuario.avatar"></v-img>
-                    </v-avatar>
-
-                    <div class="flex-grow-1">
-                      <div class="text-body-2 font-weight-bold text-grey-darken-4">
-                        {{ usuario.nome }}
-                      </div>
-                      <div class="text-caption text-grey-darken-1">
-                        {{ usuario.handle }}
-                      </div>
-                    </div>
                   </div>
-
-                  <div class="d-flex align-center ml-2 mt-1">
-                    <v-icon icon="mdi-music-note" size="16" class="mr-2 text-grey-darken-2"></v-icon>
-                    <div class="text-caption text-grey-darken-2">
-                      {{ usuario.ouvindo }}
-                    </div>
-                  </div>
-                </div>
-
-                <div class="text-center mt-4 pt-2">
-                  <a href="#" class="text-caption text-grey-darken-2 text-decoration-underline">
-                    Adicionar novos Membros
-                  </a>
-                </div>
               </v-sheet>
             </div>
           </v-col>
@@ -155,28 +122,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
-const perfilUsuario = ref({
-  nome: 'Isabella',
-  handle: '@isa.s',
-  avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-  generosPreferidos: 'pop, eletrônico'
-});
+// Configuração da API URL (como nos outros ficheiros)
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
+const router = useRouter();
 
-const albumsOuvidos = ref([
-  {
-    titulo: 'Sabrina Carpenter',
-    artista: 'Short n\' Sweet',
-    capa: 'https://i.scdn.co/image/ab67616d0000b273fd8d7a8d96871e791cb1f626'
-  },
-  {
-    titulo: 'Lorde',
-    artista: 'Virgin',
-    capa: 'https://cdn-images.dzcdn.net/images/cover/c3a27407eeeba58aa3cc00e83d55c81a/0x1900-000000-80-0-0.jpg'
-  }
-]);
+// --- ESTADO DA PÁGINA ---
+const loading = ref(true);
+const error = ref(false);
+const errorMessage = ref('');
 
+// --- DADOS DINÂMICOS (Vêm da API) ---
+const perfilUsuario = ref({});
+const avaliacoes = ref([]);
+
+// --- DADOS ESTÁTICOS (Mockados - Spotify API, etc.) ---
+// (Estes NÃO vêm da nossa BD, por isso mantemo-los mockados por agora)
 const musicasRecentes = ref([
   {
     titulo: 'Venice Bitch - Lana Del Rey',
@@ -186,64 +149,74 @@ const musicasRecentes = ref([
   {
     titulo: 'Shapeshifter - Lorde',
     artista: 'Lorde',
-    capa: 'https://cdn-images.dzcdn.net/images/cover/c3a27407eeeba58aa3cc00e83d55c81a/0x1900-000000-80-0-0.jpg'
-  },
-  {
-    titulo: 'New Romantics - Taylor Swift',
-    artista: 'Taylor Swift',
-    capa: 'https://cdn-images.dzcdn.net/images/cover/8c39b232a5edecdf5fffc14f551fa42b/0x1900-000000-80-0-0.jpg'
+    capa: 'https://cdn-images.dzcdn.net/images/cover/c3a274f07eeeba58aa3cc00e83d55c81a/0x1900-000000-80-0-0.jpg'
   }
 ]);
-
-const avaliacoes = ref([
-  {
-    musica: {
-      titulo: 'Billie Jean',
-      artista: 'Michael Jackson',
-      capa: 'https://cdn-images.dzcdn.net/images/cover/544862aa5be45bc82ad4ab1a14daf63a/1900x1900-000000-80-0-0.jpg'
-    },
-    titulo: 'A batida que mudou a história do pop',
-    comentario: 'Produção visionária, linha de baixo icônica e performance magnética. Se há uma crítica possível, é que a narrativa lírica...',
-    likes: 117
-  },
-  {
-    musica: {
-      titulo: 'Billie Jean',
-      artista: 'Michael Jackson',
-      capa: 'https://cdn-images.dzcdn.net/images/cover/544862aa5be45bc82ad4ab1a14daf63a/1900x1900-000000-80-0-0.jpg'
-    },
-    titulo: 'A batida que mudou a história do pop',
-    comentario: 'Produção visionária, linha de baixo icônica e performance magnética. Se há uma crítica possível, é que a narrativa lírica...',
-    likes: 117
-  }
-]);
-
 const usuariosOnline = ref([
   {
     nome: 'White',
     handle: '@white',
     avatar: 'https://randomuser.me/api/portraits/women/45.jpg',
     ouvindo: 'ouvindo FOOD FOOD - IRMAS DE PAU'
-  },
-  {
-    nome: 'White',
-    handle: '@white',
-    avatar: 'https://randomuser.me/api/portraits/women/46.jpg',
-    ouvindo: 'ouvindo FOOD FOOD - IRMAS DE PAU'
-  },
-  {
-    nome: 'White',
-    handle: '@white',
-    avatar: 'https://randomuser.me/api/portraits/men/47.jpg',
-    ouvindo: 'ouvindo FOOD FOOD - IRMAS DE PAU'
-  },
-  {
-    nome: 'White',
-    handle: '@white',
-    avatar: 'https://randomuser.me/api/portraits/women/48.jpg',
-    ouvindo: 'ouvindo FOOD FOOD - IRMAS DE PAU'
   }
 ]);
+
+
+// --- LÓGICA AO CARREGAR A PÁGINA ---
+onMounted(async () => {
+  // 1. Verificar se o utilizador está "logado" no localStorage.
+  // Se não estiver, não podemos carregar um perfil.
+  const usuarioLocal = localStorage.getItem('usuario');
+  if (!usuarioLocal) {
+    // Redireciona para a página inicial se não estiver logado
+    router.push('/');
+    return;
+  }
+
+  // 2. Se estiver logado, buscar os dados completos da API
+  try {
+    loading.value = true;
+    error.value = false;
+
+    const res = await fetch(`${API_URL}/api/perfil.php`, {
+      method: 'GET',
+      credentials: 'include' // ESSENCIAL para enviar o cookie de sessão PHPSESSID
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        // A sessão expirou ou é inválida
+        errorMessage.value = 'A sua sessão expirou. Por favor, faça login novamente.';
+        // (O seu index.js e App.vue já devem ter tratado de limpar o localStorage)
+        router.push('/');
+      } else {
+        errorMessage.value = 'Não foi possível carregar o seu perfil.';
+      }
+      throw new Error('Falha ao buscar dados');
+    }
+
+    const data = await res.json();
+
+    if (data.sucesso) {
+      perfilUsuario.value = data.perfil;
+      avaliacoes.value = data.avaliacoes;
+    } else {
+      errorMessage.value = data.mensagem;
+      error.value = true;
+    }
+
+  } catch (err) {
+    console.error('Erro em onMounted (Perfil.vue):', err);
+    error.value = true;
+    if (!errorMessage.value) {
+      errorMessage.value = 'Erro de rede ao tentar carregar o perfil.';
+    }
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
 
-<style scoped></style>
+<style scoped>
+/* (Os seus estilos <style scoped> podem ir aqui) */
+</style>
