@@ -22,9 +22,9 @@
             <div class="d-flex justify-space-between align-center mb-6">
               <div>
                 <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">
-                  Perfil de {{ perfilUsuario.nome }}
+               {{ perfilUsuario.nome }}
                 </h1>
-                <p class="text-body-2 text-grey-darken-1">{{ perfilUsuario.email }}</p>
+                <p class="text-body-2 text-grey-darken-1">{{ perfilUsuario.username }}</p>
               </div>
               
               <v-btn 
