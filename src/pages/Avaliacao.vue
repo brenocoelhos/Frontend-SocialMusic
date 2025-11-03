@@ -202,7 +202,7 @@
                 </v-btn>
               </div>
             </div>
-            
+
           </v-col>
         </v-row>
       </v-container>
@@ -276,7 +276,7 @@ function formatTimeAgo(dateString) {
   if (!dateString) return '--';
   const date = new Date(dateString);
   const now = new Date();
-  const seconds = Math.floor((now - past) / 1000);
+  const seconds = Math.floor((now - date) / 1000);
 
   let interval = seconds / 31536000;
   if (interval > 1) return `Há ${Math.floor(interval)} anos`;
