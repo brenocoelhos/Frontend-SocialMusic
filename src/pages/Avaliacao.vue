@@ -64,7 +64,11 @@ avaliação.vue
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
                     <v-icon icon="mdi-star-outline" color="grey" size="32" class="mb-2" />
-                    <h3 class="text-h5 font-weight-bold">--</h3>
+                    <h3 v-if="hasUserReview" class="text-h5 font-weight-bold">{{ userReview.nota }} / 5.0</h3>
+                    <h3 v-else-if="isLoadingReview" class="text-h5 font-weight-bold">
+                      <v-progress-circular indeterminate size="24" />
+                    </h3>
+                    <h3 v-else class="text-h5 font-weight-bold">--</h3>
                     <p class="text-grey text-body-2">Sua avaliação</p>
                   </div>
                 </v-col>
@@ -73,8 +77,12 @@ avaliação.vue
               <v-divider class="my-4" />
 
               <div class="text-center">
-                <v-btn class="text-none" rounded="lg" size="large" color="#EEE8FF" variant="flat"
-                  prepend-icon="mdi-pencil" @click="openComment">
+                <v-btn v-if="hasUserReview" class="text-none" rounded="lg" size="large" color="#EEE8FF" variant="flat"
+                  prepend-icon="mdi-pencil" @click="openEditComment">
+                  Editar sua avaliação
+                </v-btn>
+                <v-btn v-else class="text-none" rounded="lg" size="large" color="#EEE8FF" variant="flat"
+                  prepend-icon="mdi-pencil" @click="openComment" :disabled="isLoadingReview">
                   Escrever avaliação
                 </v-btn>
               </div>
@@ -270,7 +278,6 @@ avaliação.vue
 import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
-import { ar } from "vuetify/locale";
 
 const route = useRoute();
 const track = ref(null); // Armazena os detalhes da música
@@ -279,6 +286,8 @@ const error = ref(null);
 const dialog = ref(false);
 const form = ref(null);
 const isSubmitting = ref(false);
+const isLoadingReview = ref(true);
+const userReview = ref(null); // Para guardar a avaliação existente
 const reviewForm = ref({
   nota: null,
   titulo: '',
@@ -323,6 +332,27 @@ function formatAlbumType(type) {
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
+// Função para checar se o usuário já avaliou esta música
+async function checkExistingReview(spotifyId) {
+  isLoadingReview.value = true;
+  userReview.value = null;
+  try {
+    const response = await axios.get(
+      `/api/verificar_avaliacao.php?spotify_id=${spotifyId}`,
+      { withCredentials: true }
+    );
+
+    if (response.data.existe) {
+      userReview.value = response.data.avaliacao;
+    }
+  } catch (err) {
+    console.warn("Erro ao verificar avaliação (pode ser 401)", err);
+    userReview.value = null;
+  } finally {
+    isLoadingReview.value = false;
+  }
+}
+
 // Função que lê os dados da URL e monta o objeto 'track'
 async function loadTrackFromQuery(query) {
   if (!query.id) {
@@ -334,6 +364,7 @@ async function loadTrackFromQuery(query) {
   isLoading.value = true;
   track.value = null;
   error.value = null;
+  userReview.value = null;
 
   try {
     track.value = {
@@ -350,6 +381,9 @@ async function loadTrackFromQuery(query) {
       album_name: query.album_name,
       album_type: formatAlbumType(query.album_type)
     };
+
+    await checkExistingReview(track.value.id);
+
   } catch (err) {
     console.error("Erro ao processar dados da URL:", err);
     error.value = err.message || "Erro desconhecido";
@@ -374,9 +408,21 @@ function closeComment() {
 // Função para abrir o diálogo de avaliação
 function openComment() {
   // Reseta o formulário primeiro
-  reviewForm.value.nota = 0;
+  reviewForm.value.nota = null;
   reviewForm.value.titulo = '';
   reviewForm.value.comentario = '';
+  if (form.value) {
+    form.value.resetValidation();
+  }
+  dialog.value = true;
+}
+
+function openEditComment() {
+  if (!userReview.value) return;
+  reviewForm.value.nota = parseFloat(userReview.value.nota);
+  reviewForm.value.titulo = userReview.value.titulo;
+  reviewForm.value.comentario = userReview.value.comentario;
+
   if (form.value) {
     form.value.resetValidation();
   }
