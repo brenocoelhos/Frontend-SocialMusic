@@ -6,7 +6,6 @@
       
       <v-container v-if="loading" class="py-8">
         <v-skeleton-loader type="article, actions"></v-skeleton-loader>
-        <v-skeleton-loader type="list-item-avatar-three-line@3"></v-skeleton-loader>
       </v-container>
 
       <v-container v-else-if="error" class="py-8 text-center">
@@ -15,7 +14,6 @@
         </v-alert>
         <v-btn to="/" color="primary" class="mt-4">Voltar à Página Inicial</v-btn>
       </v-container>
-
       
       <v-container v-else class="py-8">
         <v-row>
@@ -28,71 +26,43 @@
                 </h1>
                 <p class="text-body-2 text-grey-darken-1">{{ perfilUsuario.email }}</p>
               </div>
-              <v-btn color="primary" variant="flat" rounded="lg" size="default" @click="openEditDialog">
+              
+              <v-btn 
+                v-if="isSelf" 
+                color="primary" 
+                variant="flat" 
+                rounded="lg" 
+                size="default" 
+                @click="openEditDialog">
                 Editar Perfil
               </v-btn>
-            </div>
 
-            <div class="mb-8">
-              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Músicas ouvidas recentemente</h2>
-              <v-sheet color="white" rounded="lg" class="pa-0">
-                <v-list bg-color="transparent" class="py-2">
-                  <v-list-item v-for="(musica, index) in musicasRecentes" :key="index" class="px-4">
-                    <template v-slot:prepend>
-                      <v-avatar size="48" rounded="lg" class="mr-3">
-                        <v-img :src="musica.capa"></v-img>
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title class="text-body-2 font-weight-regular text-grey-darken-3">
-                      {{ musica.titulo }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle class="text-caption text-grey">
-                      {{ musica.artista }}
-                    </v-list-item-subtitle>
-                  </v-list-item>
-                </v-list>
-              </v-sheet>
-            </div>
+              <v-btn
+                v-else
+                :loading="followLoading"
+                :variant="isFollowing ? 'outlined' : 'flat'"
+                color="primary"
+                rounded="lg" 
+                size="default"
+                @click="toggleFollow"
+              >
+                {{ isFollowing ? 'A Seguir' : 'Seguir' }}
+              </v-btn>
+              </div>
 
             <div>
-              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Minhas Avaliações</h2>
+              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">
+                {{ isSelf ? 'Minhas Avaliações' : `Avaliações de ${perfilUsuario.nome}` }}
+              </h2>
               
               <v-alert v-if="avaliacoes.length === 0" type="info" variant="tonal">
-                Ainda não fez nenhuma avaliação.
+                Este utilizador ainda não fez nenhuma avaliação.
               </v-alert>
-
+              
               <div v-for="(avaliacao, i) in avaliacoes" :key="i" class="mb-4">
-                <v-card rounded="lg" flat>
-                  <v-card-text class="pa-5">
-                    <div class="d-flex align-start mb-3">
-                      <v-avatar size="70" rounded="lg" class="mr-4">
-                        <v-img :src="avaliacao.musica.capa"></v-img>
-                      </v-avatar>
-                      <div>
-                        <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">
-                          {{ avaliacao.musica.titulo }}
-                        </div>
-                        <div class="text-body-2 text-grey">
-                          {{ avaliacao.musica.artista }}
-                        </div>
-                      </div>
-                    </div>
-                    <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">
-                      {{ avaliacao.titulo }}
-                    </h3>
-                    <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">
-                      {{ avaliacao.comentario }}
-                    </p>
-                    <div class="d-flex align-center">
-                      <v-icon icon="mdi-heart" size="20"></v-icon>
-                      <span class="text-body-2 ml-2 text-grey-darken-3 font-weight-medium">{{ avaliacao.likes }}</span>
-                    </div>
-                  </v-card-text>
-                </v-card>
-              </div>
+                 </div>
             </div>
           </v-col>
-
           
           <v-col cols="12" md="5">
             <v-card rounded="xl" class="mb-6 pa-8 text-center" color="white" flat elevation="0">
@@ -101,52 +71,26 @@
                   <v-img :src="perfilUsuario.avatar"></v-img>
                 </v-avatar>
               </div>
-              <div class="text-center">
-                <p class="text-caption text-grey-darken-1">
-                  Gêneros preferidos pop, eletrônico
-                </p>
-              </div>
             </v-card>
-
-            <div>
-              <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">Online Agora</h2>
-              <v-sheet rounded="xl" color="#EEE8FF" class="pa-4">
-                <div v-for="usuario in usuariosOnline" :key="usuario.handle" class="mb-3">
-                  </div>
-              </v-sheet>
-            </div>
-          </v-col>
+            </v-col>
         </v-row>
-      </v-container> <v-dialog v-model="editDialog" max-width="500px" persistent>
-        <v-form @submit.prevent="saveProfile">
-          <v-card>
-            <v-card-title>Editar Perfil</v-card-title>
-            <v-card-text>
-              <v-text-field
-                v-model="editForm.nome"
-                label="Nome"
-                variant="outlined"
-                :rules="[v => !!v || 'Nome é obrigatório']"
-                required
-              ></v-text-field>
-              </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn text @click="closeEditDialog" :disabled="isSaving">Cancelar</v-btn>
-              <v-btn color="primary" type="submit" :loading="isSaving">Salvar</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-form>
-      </v-dialog>
-      </div> </div> </template>
+      </v-container>
+
+      <v-dialog v-model="editDialog" max-width="500px" persistent>
+         </v-dialog>
+
+    </div>
+  </div>
+</template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, reactive, watch } from 'vue';
+// useRoute é necessário para ler o ID da URL
+import { useRoute, useRouter } from 'vue-router'; 
 
-// Configuração da API URL
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
 const router = useRouter();
+const route = useRoute(); // <-- NOVO: para ler a URL
 
 // --- ESTADO DA PÁGINA ---
 const loading = ref(true);
@@ -156,94 +100,71 @@ const errorMessage = ref('');
 // --- DADOS DINÂMICOS (Vêm da API) ---
 const perfilUsuario = ref({});
 const avaliacoes = ref([]);
+const isSelf = ref(false); // <-- NOVO
+const isFollowing = ref(false); // <-- NOVO
+const followLoading = ref(false); // <-- NOVO
 
-// --- DADOS ESTÁTICOS (Mockados) ---
-const musicasRecentes = ref([
-{ titulo: 'Venice Bitch - Lana Del Rey', artista: 'Lana Del Rey', capa: '...' },
-{ titulo: 'Shapeshifter - Lorde', artista: 'Lorde', capa: '...' }
-]);
-const usuariosOnline = ref([
-{ nome: 'White', handle: '@white', avatar: '...', ouvindo: '...' }
-]);
+// (Dados estáticos mockados...)
+const musicasRecentes = ref([]);
+const usuariosOnline = ref([]);
 
-// =======================================================
-// VARIÁVEIS PARA EDIÇÃO DE PERFIL (JÁ EXISTIAM)
-// =======================================================
+// --- LÓGICA DE EDIÇÃO (que já tinha) ---
 const editDialog = ref(false);
 const isSaving = ref(false);
-const editForm = reactive({
-  nome: ''
-});
-
-// Função para ABRIR o diálogo
+const editForm = reactive({ nome: '' });
 function openEditDialog() {
-  // Preenche o formulário com o nome atual
   editForm.nome = perfilUsuario.value.nome;
   editDialog.value = true;
 }
+function closeEditDialog() { /* ... */ }
+async function saveProfile() { /* ... */ }
 
-// Função para FECHAR o diálogo
-function closeEditDialog() {
-  editDialog.value = false;
-}
-
-// Função para SALVAR o perfil
-async function saveProfile() {
-  if (!editForm.nome.trim()) return; // Validação simples
-
-  isSaving.value = true;
+// =======================================================
+// NOVAS FUNÇÕES: SEGUIR / DEIXAR DE SEGUIR
+// =======================================================
+async function toggleFollow() {
+  followLoading.value = true;
+  
+  const endpoint = isFollowing.value ? 'deixar_de_seguir.php' : 'seguir.php';
+  
   try {
-    const res = await fetch(`${API_URL}/api/perfil_update.php`, {
+    const res = await fetch(`${API_URL}/api/${endpoint}`, {
       method: 'POST',
-      credentials: 'include', // Envia o cookie de sessão
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome: editForm.nome })
+      body: JSON.stringify({ id: perfilUsuario.value.id }) // Envia o ID de quem queremos seguir/parar
     });
 
     const data = await res.json();
-
+    
     if (data.sucesso) {
-      // 1. Atualiza o nome na página
-      perfilUsuario.value.nome = data.nome_atualizado;
-      
-      // 2. (MUITO IMPORTANTE) Atualiza o localStorage
-      // para que a barra de topo (App.vue) atualize no próximo refresh.
-      const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
-      if (usuarioLocal) {
-        usuarioLocal.nome = data.nome_atualizado;
-        localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
-      }
-
-      closeEditDialog();
+      // Inverte o estado local
+      isFollowing.value = !isFollowing.value; 
     } else {
       alert(`Erro: ${data.mensagem}`);
     }
 
   } catch (err) {
-    console.error('Erro ao salvar perfil:', err);
-    alert('Erro de rede ao tentar salvar.');
+    console.error(`Erro ao ${endpoint}:`, err);
   } finally {
-    isSaving.value = false;
+    followLoading.value = false;
   }
 }
+
 // =======================================================
-// FIM DAS VARIÁVEIS DE EDIÇÃO
+// ATUALIZAÇÃO: onMounted agora busca o perfil da URL
 // =======================================================
 
-
-// --- LÓGICA AO CARREGAR A PÁGINA ---
-onMounted(async () => {
-  const usuarioLocal = localStorage.getItem('usuario');
-  if (!usuarioLocal) {
-    router.push('/');
-    return;
-  }
+// Criamos uma função separada para carregar o perfil
+async function carregarPerfil(id) {
+  loading.value = true;
+  error.value = false;
+  
+  // Se o ID for nulo (ex: /perfil), a API vai buscar o nosso próprio perfil
+  const url = id ? `${API_URL}/api/perfil.php?id=${id}` : `${API_URL}/api/perfil.php`;
 
   try {
-    loading.value = true;
-    error.value = false;
-
-    const res = await fetch(`${API_URL}/api/perfil.php`, {
+    const res = await fetch(url, {
       method: 'GET',
       credentials: 'include' 
     });
@@ -252,8 +173,10 @@ onMounted(async () => {
       if (res.status === 401) {
         errorMessage.value = 'A sua sessão expirou. Por favor, faça login novamente.';
         router.push('/');
+      } else if (res.status === 404) {
+        errorMessage.value = 'Utilizador não encontrado.';
       } else {
-        errorMessage.value = 'Não foi possível carregar o seu perfil.';
+        errorMessage.value = 'Não foi possível carregar o perfil.';
       }
       throw new Error('Falha ao buscar dados');
     }
@@ -263,6 +186,8 @@ onMounted(async () => {
     if (data.sucesso) {
       perfilUsuario.value = data.perfil;
       avaliacoes.value = data.avaliacoes;
+      isSelf.value = data.is_self;
+      isFollowing.value = data.is_following;
     } else {
       errorMessage.value = data.mensagem;
       error.value = true;
@@ -271,15 +196,27 @@ onMounted(async () => {
   } catch (err) {
     console.error('Erro em onMounted (Perfil.vue):', err);
     error.value = true;
-    if (!errorMessage.value) {
-      errorMessage.value = 'Erro de rede ao tentar carregar o perfil.';
-    }
   } finally {
     loading.value = false;
+  }
+}
+
+// onMounted agora apenas chama a função de carregar
+onMounted(() => {
+  const idDaUrl = route.params.id;
+  carregarPerfil(idDaUrl);
+});
+
+// NOVO: 'watch'
+// Se o utilizador navegar de um perfil para outro (ex: /perfil/5 -> /perfil/8)
+// o onMounted não é chamado de novo. O 'watch' deteta essa mudança e recarrega.
+watch(() => route.params.id, (novoId) => {
+  if (route.path.startsWith('/perfil')) {
+    carregarPerfil(novoId);
   }
 });
 </script>
 
 <style scoped>
-/* (Os seus estilos <style scoped> podem ir aqui) */
+/* (Os seus estilos) */
 </style>

@@ -19,7 +19,7 @@ axios.defaults.headers.common['Content-Type'] = 'application/json'
 const routes = [
   { path: '/', name: 'Página Inicial', component: Index},
   { path: '/admin', name: 'Admin', component: Admin, meta: {requiresAdmin: true }},
-  { path: '/perfil', name: 'Perfil', component: Perfil },
+  { path: '/perfil/:id?', name: 'Perfil', component: Perfil },
   { path: '/avaliacao', name: 'Avaliacao', component: Avaliacao },
   { path: '/busca', name:'Busca', component: Busca },
   { path: '/musicas', name: 'Musicas', component: Musicas },
