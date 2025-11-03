@@ -46,7 +46,7 @@
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
                     <v-icon icon="mdi-comment-text" color="grey" size="32" class="mb-2" />
-                    <h3 class="text-h5 font-weight-bold">2,923</h3>
+                    <h3 class="text-h5 font-weight-bold">{{ stats.total }}</h3>
                     <p class="text-grey text-body-2">Avaliações</p>
                   </div>
                 </v-col>
@@ -54,7 +54,8 @@
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
                     <v-icon icon="mdi-star" color="orange" size="32" class="mb-2" />
-                    <h3 class="text-h5 font-weight-bold">4.5/5</h3>
+                    <h3 class="text-h5 font-weight-bold">{{ stats.media > 0 ? stats.media.toFixed(1) : '--' }} / 5.0
+                    </h3>
                     <p class="text-grey text-body-2">Média geral</p>
                   </div>
                 </v-col>
@@ -145,91 +146,63 @@
           <v-col cols="12" lg="9">
             <h2 class="text-h4 font-weight-bold mb-6">Avaliações</h2>
 
-            <v-card rounded="xl" elevation="2" class="mb-4">
-              <v-card-text class="pa-6">
-                <div class="d-flex align-start">
-                  <v-avatar size="56" class="mr-4">
-                    <v-img src="https://randomuser.me/api/portraits/men/1.jpg" alt="Avatar do usuário" />
-                  </v-avatar>
-
-                  <div class="flex-grow-1">
-                    <div class="d-flex align-center justify-space-between mb-2">
-                      <div>
-                        <h3 class="text-h6 font-weight-bold">João Silva</h3>
-                        <p class="text-grey text-caption">Há 2 dias</p>
-                      </div>
-                      <v-btn variant="outlined" color="EEE8FF" class="text-none" rounded="lg">
-                        Seguir
-                      </v-btn>
-                    </div>
-
-                    <div class="mb-2">
-                      <v-rating :model-value="4.5" color="amber" half-increments readonly size="small" />
-                    </div>
-
-                    <p class="text-body-1">
-                      Uma obra-prima do The Weeknd! A produção é impecável e as
-                      letras são profundas. Definitivamente um dos melhores
-                      álbuns dos últimos anos. Altamente recomendado para quem
-                      aprecia música de qualidade.
-                    </p>
-
-                    <div class="d-flex gap-2 mt-3">
-                      <v-btn variant="text" size="small" class="text-none">
-                        <v-icon start>mdi-heart-outline</v-icon>
-                        Curtir (200)
-                      </v-btn>
-                    </div>
-                  </div>
-                </div>
-              </v-card-text>
-            </v-card>
-
-            <v-card rounded="xl" elevation="2" class="mb-4">
-              <v-card-text class="pa-6">
-                <div class="d-flex align-start">
-                  <v-avatar size="56" class="mr-4">
-                    <v-img src="https://randomuser.me/api/portraits/women/2.jpg" alt="Avatar do usuário" />
-                  </v-avatar>
-
-                  <div class="flex-grow-1">
-                    <div class="d-flex align-center justify-space-between mb-2">
-                      <div>
-                        <h3 class="text-h6 font-weight-bold">Maria Santos</h3>
-                        <p class="text-grey text-caption">Há 5 dias</p>
-                      </div>
-                      <v-btn variant="outlined" color="EEE8FF" class="text-none" rounded="lg">
-                        Seguir
-                      </v-btn>
-                    </div>
-
-                    <div class="mb-2">
-                      <v-rating :model-value="5" color="amber" readonly size="small" />
-                    </div>
-
-                    <p class="text-body-1">
-                      Simplesmente perfeito! Cada faixa é única e mostra a
-                      evolução artística do The Weeknd. A atmosfera sombria
-                      combinada com melodias cativantes cria uma experiência
-                      auditiva inesquecível.
-                    </p>
-
-                    <div class="d-flex gap-2 mt-3">
-                      <v-btn variant="text" size="small" class="text-none">
-                        <v-icon start>mdi-heart-outline</v-icon>
-                        Curtir (200)
-                      </v-btn>
-                    </div>
-                  </div>
-                </div>
-              </v-card-text>
-            </v-card>
-
-            <div class="text-center mt-6">
-              <v-btn variant="outlined" class="text-none" rounded="lg" size="large">
-                Carregar mais avaliações
-              </v-btn>
+            <div v-if="isLoading" class="text-center pa-16">
+              <v-progress-circular indeterminate color="#EEE8FF" size="48"></v-progress-circular>
+              <p class="text-grey mt-4">Carregando avaliações...</p>
             </div>
+
+            <div v-else-if="!isLoading && reviewsList.length === 0" class="text-center pa-16">
+              <v-icon icon="mdi-comment-off-outline" size="48" color="grey-lighten-1"></v-icon>
+              <p class="text-grey mt-4">Ninguém avaliou esta música ainda.</p>
+              <p class="text-grey">Seja o primeiro a avaliar!</p>
+            </div>
+
+            <div v-else>
+              <v-card v-for="review in reviewsList" :key="review.id" rounded="xl" elevation="2" class="mb-4">
+                <v-card-text class="pa-6">
+                  <div class="d-flex align-start">
+                    <v-avatar size="56" class="mr-4">
+                      <v-img v-if="review.usuario_avatar" :src="review.usuario_avatar" alt="Avatar do usuário" cover />
+                      <v-icon v-else size="56" color="grey-lighten-1">mdi-account-circle</v-icon>
+                    </v-avatar>
+
+                    <div class="flex-grow-1">
+                      <div class="d-flex align-center justify-space-between mb-2">
+                        <div>
+                          <h3 class="text-h6 font-weight-bold">{{ review.usuario_nome }}</h3>
+                          <p class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</p>
+                        </div>
+                        <v-btn variant="outlined" color="EEE8FF" class="text-none" rounded="lg">
+                          Seguir
+                        </v-btn>
+                      </div>
+
+                      <div class="mb-2">
+                        <v-rating :model-value="parseFloat(review.nota)" color="amber" half-increments readonly
+                          size="small" density="compact" />
+                      </div>
+
+                      <h4 v-if="review.titulo" class="text-body-1 font-weight-bold mb-1">{{ review.titulo }}</h4>
+                      <p class="text-body-1">{{ review.comentario }}</p>
+
+                      <div class="d-flex gap-2 mt-3">
+                        <v-btn variant="text" size="small" class="text-none">
+                          <v-icon start>mdi-heart-outline</v-icon>
+                          Curtir (200)
+                        </v-btn>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+
+              <div class="text-center mt-6">
+                <v-btn variant="outlined" class="text-none" rounded="lg" size="large">
+                  Carregar mais avaliações
+                </v-btn>
+              </div>
+            </div>
+            
           </v-col>
         </v-row>
       </v-container>
@@ -287,6 +260,8 @@ const isSubmitting = ref(false);
 const isLoadingReview = ref(true);
 const userReview = ref(null); // Para guardar a avaliação existente
 const hasUserReview = computed(() => userReview.value !== null);
+const stats = ref({ total: 0, media: 0.0 });
+const reviewsList = ref([]);
 const reviewForm = ref({
   nota: null,
   titulo: '',
@@ -295,6 +270,26 @@ const reviewForm = ref({
 const rules = {
   required: (v) => v > 0 || "A nota é obrigatória.",
 };
+
+// Função para formatar "tempo atrás"
+function formatTimeAgo(dateString) {
+  if (!dateString) return '--';
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now - past) / 1000);
+
+  let interval = seconds / 31536000;
+  if (interval > 1) return `Há ${Math.floor(interval)} anos`;
+  interval = seconds / 2592000;
+  if (interval > 1) return `Há ${Math.floor(interval)} meses`;
+  interval = seconds / 86400;
+  if (interval > 1) return `Há ${Math.floor(interval)} dias`;
+  interval = seconds / 3600;
+  if (interval > 1) return `Há ${Math.floor(interval)} horas`;
+  interval = seconds / 60;
+  if (interval > 1) return `Há ${Math.floor(interval)} minutos`;
+  return "Agora mesmo";
+}
 
 // Função para formatar Duração
 function formatDuration(ms) {
@@ -352,6 +347,21 @@ async function checkExistingReview(spotifyId) {
   }
 }
 
+// Função para buscar as avaliações da página
+async function fetchPageReviews(spotifyId) {
+  try {
+    const response = await axios.get(
+      `/api/buscar_avaliacoes.php?spotify_id=${spotifyId}`
+    );
+    stats.value = response.data.stats;
+    reviewsList.value = response.data.avaliacoes;
+  } catch (err) {
+    console.error("Erro ao buscar avaliações:", err);
+    stats.value = { total: 0, media: 0.0 };
+    reviewsList.value = [];
+  }
+}
+
 // Função que lê os dados da URL e monta o objeto 'track'
 async function loadTrackFromQuery(query) {
   if (!query.id) {
@@ -364,6 +374,8 @@ async function loadTrackFromQuery(query) {
   track.value = null;
   error.value = null;
   userReview.value = null;
+  stats.value = { total: 0, media: 0.0 };
+  reviewsList.value = [];
 
   try {
     track.value = {
@@ -381,7 +393,10 @@ async function loadTrackFromQuery(query) {
       album_type: formatAlbumType(query.album_type)
     };
 
-    await checkExistingReview(track.value.id);
+    await Promise.all([
+      checkExistingReview(track.value.id),
+      fetchPageReviews(track.value.id)
+    ]);
 
   } catch (err) {
     console.error("Erro ao processar dados da URL:", err);
@@ -416,6 +431,7 @@ function openComment() {
   dialog.value = true;
 }
 
+// Função para abrir o diálogo de edição de avaliação
 function openEditComment() {
   if (!userReview.value) return;
   reviewForm.value.nota = parseFloat(userReview.value.nota);
@@ -461,7 +477,10 @@ async function submitReview() {
     alert(response.data.mensagem);
     closeComment();
 
-    await checkExistingReview(track.value.id);
+    await Promise.all([
+      checkExistingReview(track.value.id),
+      fetchPageReviews(track.value.id)
+    ]);
 
   } catch (err) {
     console.error("Erro ao salvar avaliação:", err);
