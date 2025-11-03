@@ -203,21 +203,13 @@
       </div>
     </v-app-bar>
 
-    <v-alert
-      v-model="alertVisible"
-      :type="alertType"
-      closable
-      class="ma-4"
+    <v-alert v-model="alertVisible" :type="alertType" closable class="ma-4"
       style="position: fixed; top:78px ;left: 50%; transform: translate(-50%, -50%); z-index: 9999; max-width: 400px;"
-      elevation="4"
-      rounded="lg"
-    >
+      elevation="4" rounded="lg">
       <template v-slot:prepend>
-        <v-icon 
-          :icon="alertType === 'success' ? 'mdi-check-circle' : 
-                alertType === 'error' ? 'mdi-alert-circle' : 
-                alertType === 'warning' ? 'mdi-alert' : 'mdi-information'"
-        ></v-icon>
+        <v-icon :icon="alertType === 'success' ? 'mdi-check-circle' :
+          alertType === 'error' ? 'mdi-alert-circle' :
+            alertType === 'warning' ? 'mdi-alert' : 'mdi-information'"></v-icon>
       </template>
       {{ alertMessage }}
     </v-alert>
@@ -383,7 +375,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
-  
+
   // Remove o ouvinte ao sair
   window.removeEventListener('storage', handleStorageChange);
 });
@@ -472,7 +464,7 @@ function showAlert(message, type = 'success') {
   alertMessage.value = message;
   alertType.value = type;
   alertVisible.value = true;
-  
+
   // Auto-esconder após 5 segundos
   setTimeout(() => {
     alertVisible.value = false;
@@ -483,9 +475,14 @@ function showAlert(message, type = 'success') {
 async function logout() {
   loading.value = true;
   try {
-    // Como o backend no Render não tem endpoint de logout específico,
-    // apenas limpa os dados locais
-    console.log("Fazendo logout...");
+    // Chama a API de logout
+    const res = await fetch(`${API_URL}/api/logout.php`, {
+      method: "POST",
+      credentials: 'include'
+    });
+
+    await res.json();
+
   } catch (err) {
     console.error("Erro ao fazer logout:", err);
   } finally {
@@ -493,7 +490,7 @@ async function logout() {
     localStorage.removeItem('usuario');
     searchQuery.value = ''; // Limpa o input de busca
     loading.value = false;
-    router.push('/');
+    location.reload();
   }
 }
 
@@ -531,7 +528,7 @@ async function submitForm() {
         })
       });
       const data = await res.json();
-      
+
       if (data.sucesso) {
         showAlert(data.mensagem, "success");
         changeView('login');
