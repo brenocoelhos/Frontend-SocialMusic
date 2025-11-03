@@ -1,5 +1,3 @@
-avaliação.vue
-
 <template>
   <div style="
       background-color: #f8f9fa;
@@ -275,7 +273,7 @@ avaliação.vue
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 
@@ -288,6 +286,7 @@ const form = ref(null);
 const isSubmitting = ref(false);
 const isLoadingReview = ref(true);
 const userReview = ref(null); // Para guardar a avaliação existente
+const hasUserReview = computed(() => userReview.value !== null);
 const reviewForm = ref({
   nota: null,
   titulo: '',
@@ -461,7 +460,9 @@ async function submitReview() {
     // Após o envio bem-sucedido
     alert(response.data.mensagem);
     closeComment();
-    // TODO: Atualizar a lista de avaliações na tela
+
+    await checkExistingReview(track.value.id);
+
   } catch (err) {
     console.error("Erro ao salvar avaliação:", err);
     const mensagem = err.response?.data?.mensagem || "Erro ao conectar com o servidor.";
