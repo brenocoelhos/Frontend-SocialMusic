@@ -71,9 +71,26 @@
                   <v-img :src="perfilUsuario.avatar"></v-img>
                 </v-avatar>
               </div>
+
+              <v-row class="mb-4">
+                <v-col class="text-center">
+                  <div class="text-h5 font-weight-bold">{{ perfilUsuario.followers_count }}</div>
+                  <div class="text-caption text-grey">Seguidores</div>
+                </v-col>
+                <v-col class="text-center">
+                  <div class="text-h5 font-weight-bold">{{ perfilUsuario.following_count }}</div>
+                  <div class="text-caption text-grey">A Seguir</div>
+                </v-col>
+              </v-row>
+              <div class="text-center">
+                <p class="text-caption text-grey-darken-1">
+                  Gêneros preferidos pop, eletrônico
+                </p>
+              </div>
             </v-card>
             </v-col>
         </v-row>
+        
       </v-container>
 
       <v-dialog v-model="editDialog" max-width="500px" persistent>
