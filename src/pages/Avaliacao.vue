@@ -172,11 +172,14 @@
                           <h3 class="text-h6 font-weight-bold">{{ review.usuario_nome }}</h3>
                           <p class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</p>
                         </div>
-                        <v-btn v-if="loggedInUserId && loggedInUserId !== review.usuario_id"
-                          :loading="followLoadingId === review.id" :variant="review.is_following ? 'outlined' : 'flat'"
-                          color="EEE8FF" class="text-none" rounded="lg" @click="toggleFollow(review)">
-                          {{ review.is_following ? 'A Seguir' : 'Seguir' }}
-                        </v-btn>
+                        <div>
+                          <v-btn v-if="loggedInUserId && loggedInUserId !== review.usuario_id"
+                            :loading="followLoadingId === review.id"
+                            :variant="review.is_following ? 'outlined' : 'flat'" color="EEE8FF" class="text-none"
+                            rounded="lg" @click="toggleFollow(review)">
+                            {{ review.is_following ? 'A Seguir' : 'Seguir' }}
+                          </v-btn>
+                        </div>
                       </div>
 
                       <div class="mb-2">
@@ -185,14 +188,19 @@
                       </div>
 
                       <h4 v-if="review.titulo" class="text-body-1 font-weight-bold mb-1">{{ review.titulo }}</h4>
-                      <p class="text-body-1">{{ review.comentario }}</p>
 
-                      <div class="d-flex gap-2 mt-3">
-                        <v-btn variant="text" size="small" class="text-none">
-                          <v-icon start>mdi-heart-outline</v-icon>
-                          Curtir (200)
+                      <div class="d-flex align-center justify-space-between mb-2">
+                        <p class="text-body-1">{{ review.comentario }}</p>
+
+                        <v-btn variant="text" size="small" class="text-none"
+                          :color="review.usuario_curtiu ? 'red' : 'grey-darken-1'"
+                          :loading="likeLoadingId === review.id" @click="toggleLike(review)"
+                          :disabled="likeLoadingId === review.id">
+                          <v-icon start>{{ review.usuario_curtiu ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
+                          {{ review.total_curtidas }}
                         </v-btn>
                       </div>
+
                     </div>
                   </div>
                 </v-card-text>
@@ -270,6 +278,7 @@ const followLoadingId = ref(null); // Para saber qual botão está carregando
 const currentPage = ref(1); // Página atual para paginação
 const reviewsPerPage = 3; // Número de avaliações por página igual ao limit do PHP
 const isLoadingMore = ref(false); // Indica se está carregando mais avaliações
+const likeLoadingId = ref(null); // Para saber qual avaliação está sendo curtida
 const hasMoreReviews = computed(() => {
   return reviewsList.value.length < stats.value.total;
 });
@@ -471,6 +480,34 @@ async function toggleFollow(review) {
     alert("Ocorreu um erro na solicitação.");
   } finally {
     followLoadingId.value = null; // Desativa o loading
+  }
+}
+
+async function toggleLike(review) {
+  if (!loggedInUserId.value) {
+    alert("Você precisa estar logado para curtir avaliações.");
+    return;
+  }
+
+  likeLoadingId.value = review.id;
+
+  try {
+    const response = await axios.post(
+      '/api/curtir_avaliacao.php',
+      { avaliacao_id: review.id }, // Envia o ID da avaliação
+      { withCredentials: true }
+    );
+    if (response.data.sucesso) {
+      review.usuario_curtiu = response.data.curtido;
+      review.total_curtidas = response.data.total_curtidas;
+    } else {
+      alert(`Erro: ${response.data.mensagem}`);
+    }
+  } catch (err) {
+    console.error("Erro ao curtir:", err);
+    alert("Ocorreu um erro na solicitação de curtida.");
+  } finally {
+    likeLoadingId.value = null; // Desativa o loading
   }
 }
 
