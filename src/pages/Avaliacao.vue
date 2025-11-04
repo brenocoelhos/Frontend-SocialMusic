@@ -172,8 +172,10 @@
                           <h3 class="text-h6 font-weight-bold">{{ review.usuario_nome }}</h3>
                           <p class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</p>
                         </div>
-                        <v-btn variant="outlined" color="EEE8FF" class="text-none" rounded="lg">
-                          Seguir
+                        <v-btn v-if="loggedInUserId && loggedInUserId !== review.usuario_id"
+                          :loading="followLoadingId === review.id" :variant="review.is_following ? 'outlined' : 'flat'"
+                          color="EEE8FF" class="text-none" rounded="lg" @click="toggleFollow(review)">
+                          {{ review.is_following ? 'A Seguir' : 'Seguir' }}
                         </v-btn>
                       </div>
 
@@ -262,6 +264,8 @@ const userReview = ref(null); // Para guardar a avaliação existente
 const hasUserReview = computed(() => userReview.value !== null);
 const stats = ref({ total: 0, media: 0.0 });
 const reviewsList = ref([]);
+const loggedInUserId = ref(null); // ID do usuário logado
+const followLoadingId = ref(null); // Para saber qual botão está carregando
 const reviewForm = ref({
   nota: null,
   titulo: '',
@@ -364,6 +368,11 @@ async function fetchPageReviews(spotifyId) {
 
 // Função que lê os dados da URL e monta o objeto 'track'
 async function loadTrackFromQuery(query) {
+  const usuarioLocal = localStorage.getItem('usuario');
+  if (usuarioLocal) {
+    loggedInUserId.value = JSON.parse(usuarioLocal).id;
+  }
+
   if (!query.id) {
     track.value = null;
     error.value = "Nenhum ID de música fornecido.";
@@ -403,6 +412,35 @@ async function loadTrackFromQuery(query) {
     error.value = err.message || "Erro desconhecido";
   } finally {
     isLoading.value = false;
+  }
+}
+
+// Função para seguir/deixar de seguir o autor da avaliação
+async function toggleFollow(review) {
+  if (!loggedInUserId.value) {
+    alert("Você precisa estar logado para seguir usuários.");
+    return;
+  }
+
+  followLoadingId.value = review.id;
+  const endpoint = review.isFollowing ? 'deixar_de_seguir.php' : 'seguir.php';
+
+  try {
+    const response = await axios.post(
+      `/api/${endpoint}`,
+      { id: review.usuario_id }, // Envia o ID do *autor da avaliação*
+      { withCredentials: true }
+    );
+    if (response.data.sucesso) {
+      review.is_following = !review.is_following;
+    } else {
+      alert(`Erro: ${response.data.mensagem}`);
+    }
+  } catch (err) {
+    console.error(`Erro ao ${endpoint}:`, err);
+    alert("Ocorreu um erro na solicitação.");
+  } finally {
+    followLoadingId.value = null; // Desativa o loading
   }
 }
 

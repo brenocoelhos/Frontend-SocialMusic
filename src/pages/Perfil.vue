@@ -126,8 +126,6 @@
 </template>
 
 <script setup>
-// O seu <script setup> está 100% correto e não precisa de NENHUMA alteração.
-// Todas as funções (carregarPerfil, saveProfile, toggleFollow, etc.) estão perfeitas.
 import { ref, onMounted, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router'; 
 
@@ -260,7 +258,3 @@ watch(() => route.params.id, (novoId) => {
   }
 });
 </script>
-
-<style scoped>
-/* (Os seus estilos) */
-</style>
