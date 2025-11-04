@@ -268,7 +268,7 @@ const reviewsList = ref([]);
 const loggedInUserId = ref(null); // ID do usuário logado
 const followLoadingId = ref(null); // Para saber qual botão está carregando
 const currentPage = ref(1); // Página atual para paginação
-const reviewsPerPage = 5; // Número de avaliações por página igual ao limit do PHP
+const reviewsPerPage = 3; // Número de avaliações por página igual ao limit do PHP
 const isLoadingMore = ref(false); // Indica se está carregando mais avaliações
 const hasMoreReviews = computed(() => {
   return reviewsList.value.length < stats.value.total;
