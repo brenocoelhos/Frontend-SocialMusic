@@ -547,7 +547,7 @@ async function submitReview() {
 
     await Promise.all([
       checkExistingReview(track.value.id),
-      fetchPageReviews(track.value.id)
+      fetchPageReviews(track.value.id, 1)
     ]);
 
   } catch (err) {
