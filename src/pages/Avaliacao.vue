@@ -198,8 +198,9 @@
                 </v-card-text>
               </v-card>
 
-              <div class="text-center mt-6">
-                <v-btn variant="outlined" class="text-none" rounded="lg" size="large">
+              <div v-if="hasMoreReviews" class="text-center mt-6">
+                <v-btn :loading="isLoadingMore" variant="outlined" class="text-none" rounded="lg" size="large"
+                  @click="loadMoreReviews">
                   Carregar mais avaliações
                 </v-btn>
               </div>
@@ -266,6 +267,12 @@ const stats = ref({ total: 0, media: 0.0 });
 const reviewsList = ref([]);
 const loggedInUserId = ref(null); // ID do usuário logado
 const followLoadingId = ref(null); // Para saber qual botão está carregando
+const currentPage = ref(1); // Página atual para paginação
+const reviewsPerPage = 5; // Número de avaliações por página igual ao limit do PHP
+const isLoadingMore = ref(false); // Indica se está carregando mais avaliações
+const hasMoreReviews = computed(() => {
+  return reviewsList.value.length < stats.value.total;
+});
 const reviewForm = ref({
   nota: null,
   titulo: '',
@@ -352,13 +359,20 @@ async function checkExistingReview(spotifyId) {
 }
 
 // Função para buscar as avaliações da página
-async function fetchPageReviews(spotifyId) {
+async function fetchPageReviews(spotifyId, page = 1) {
   try {
     const response = await axios.get(
-      `/api/buscar_avaliacoes.php?spotify_id=${spotifyId}`
+      `/api/buscar_avaliacoes.php?spotify_id=${spotifyId}&page=${page}&limit=${reviewsPerPage}`
     );
     stats.value = response.data.stats;
-    reviewsList.value = response.data.avaliacoes;
+
+    if (page === 1) {
+      // Primeira página, substitui a lista
+      reviewsList.value = response.data.avaliacoes;
+    } else {
+      // Se for páginas subsequentes, adiciona no final da lista
+      reviewsList.value.push(...response.data.avaliacoes);
+    }
   } catch (err) {
     console.error("Erro ao buscar avaliações:", err);
     stats.value = { total: 0, media: 0.0 };
@@ -385,6 +399,7 @@ async function loadTrackFromQuery(query) {
   userReview.value = null;
   stats.value = { total: 0, media: 0.0 };
   reviewsList.value = [];
+  currentPage.value = 1;
 
   try {
     track.value = {
@@ -404,7 +419,7 @@ async function loadTrackFromQuery(query) {
 
     await Promise.all([
       checkExistingReview(track.value.id),
-      fetchPageReviews(track.value.id)
+      fetchPageReviews(track.value.id, 1)
     ]);
 
   } catch (err) {
@@ -412,6 +427,21 @@ async function loadTrackFromQuery(query) {
     error.value = err.message || "Erro desconhecido";
   } finally {
     isLoading.value = false;
+  }
+}
+
+//
+async function loadMoreReviews() {
+  isLoadingMore.value = true;
+  currentPage.value++; // Incrementa a página
+  try {
+    // Busca a próxima página de avaliações
+    await fetchPageReviews(track.value.id, currentPage.value);
+  } catch (err) {
+    console.error("Erro ao carregar mais avaliações:", err);
+    currentPage.value--; // Reverte a página em caso de erro
+  } finally {
+    isLoadingMore.value = false;
   }
 }
 
