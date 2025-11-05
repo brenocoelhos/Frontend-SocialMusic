@@ -548,11 +548,11 @@ async function submitForm() {
       const data = await res.json();
 
       if (data.sucesso) {
-        showAlert(data.mensagem, "success");
         usuario.value = data.usuario;
         console.log(data.usuario.perfil);
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
         closeDialog();
+        location.reload(); // Recarrega a página para atualizar o estado global da sessão
       } else {
         showAlert(data.mensagem, "error");
       }

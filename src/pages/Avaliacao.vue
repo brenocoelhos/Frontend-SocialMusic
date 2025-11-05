@@ -257,7 +257,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, inject } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 
@@ -279,6 +279,7 @@ const currentPage = ref(1); // Página atual para paginação
 const reviewsPerPage = 3; // Número de avaliações por página igual ao limit do PHP
 const isLoadingMore = ref(false); // Indica se está carregando mais avaliações
 const likeLoadingId = ref(null); // Para saber qual avaliação está sendo curtida
+const showAlert = inject("showAlert");// Função global para mostrar alertas
 const hasMoreReviews = computed(() => {
   return reviewsList.value.length < stats.value.total;
 });
@@ -457,7 +458,7 @@ async function loadMoreReviews() {
 // Função para seguir/deixar de seguir o autor da avaliação
 async function toggleFollow(review) {
   if (!loggedInUserId.value) {
-    alert("Você precisa estar logado para seguir usuários.");
+    showAlert("Você precisa estar logado para seguir usuários.", 'warning');
     return;
   }
 
@@ -473,11 +474,11 @@ async function toggleFollow(review) {
     if (response.data.sucesso) {
       review.is_following = !review.is_following;
     } else {
-      alert(`Erro: ${response.data.mensagem}`);
+      showAlert(response.data.mensagem, 'error');
     }
   } catch (err) {
     console.error(`Erro ao ${endpoint}:`, err);
-    alert("Ocorreu um erro na solicitação.");
+    showAlert("Ocorreu um erro na solicitação.", 'error');
   } finally {
     followLoadingId.value = null; // Desativa o loading
   }
@@ -485,7 +486,7 @@ async function toggleFollow(review) {
 
 async function toggleLike(review) {
   if (!loggedInUserId.value) {
-    alert("Você precisa estar logado para curtir avaliações.");
+    showAlert("Você precisa estar logado para curtir avaliações.", 'warning');
     return;
   }
 
@@ -501,11 +502,11 @@ async function toggleLike(review) {
       review.usuario_curtiu = response.data.curtido;
       review.total_curtidas = response.data.total_curtidas;
     } else {
-      alert(`Erro: ${response.data.mensagem}`);
+      showAlert(response.data.mensagem, 'error');
     }
   } catch (err) {
     console.error("Erro ao curtir:", err);
-    alert("Ocorreu um erro na solicitação de curtida.");
+    showAlert("Ocorreu um erro na solicitação de curtida.", 'error');
   } finally {
     likeLoadingId.value = null; // Desativa o loading
   }
@@ -579,7 +580,7 @@ async function submitReview() {
     });
 
     // Após o envio bem-sucedido
-    alert(response.data.mensagem);
+    showAlert(response.data.mensagem, 'success');
     closeComment();
 
     await Promise.all([
@@ -590,7 +591,7 @@ async function submitReview() {
   } catch (err) {
     console.error("Erro ao salvar avaliação:", err);
     const mensagem = err.response?.data?.mensagem || "Erro ao conectar com o servidor.";
-    alert(`Erro: ${mensagem}`);
+    showAlert(mensagem, 'error');
   } finally {
     isSubmitting.value = false;
   }
