@@ -81,7 +81,7 @@
                   Editar sua avaliação
                 </v-btn>
                 <v-btn v-else class="text-none" rounded="lg" size="large" color="#EEE8FF" variant="flat"
-                  prepend-icon="mdi-pencil" @click="openComment" :disabled="isLoadingReview">
+                  prepend-icon="mdi-pencil" @click="handleWriteReviewClick" :disabled="isLoadingReview">
                   Escrever avaliação
                 </v-btn>
               </div>
@@ -173,7 +173,7 @@
                           <p class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</p>
                         </div>
                         <div>
-                          <v-btn v-if="loggedInUserId && loggedInUserId !== review.usuario_id"
+                          <v-btn v-if="loggedInUserId !== review.usuario_id"
                             :loading="followLoadingId === review.id"
                             :variant="review.is_following ? 'outlined' : 'flat'" color="EEE8FF" class="text-none"
                             rounded="lg" @click="toggleFollow(review)">
@@ -280,6 +280,7 @@ const reviewsPerPage = 3; // Número de avaliações por página igual ao limit 
 const isLoadingMore = ref(false); // Indica se está carregando mais avaliações
 const likeLoadingId = ref(null); // Para saber qual avaliação está sendo curtida
 const showAlert = inject("showAlert");// Função global para mostrar alertas
+const openLoginDialog = inject("openLoginDialog");// Função global para abrir o diálogo de login
 const hasMoreReviews = computed(() => {
   return reviewsList.value.length < stats.value.total;
 });
@@ -291,6 +292,15 @@ const reviewForm = ref({
 const rules = {
   required: (v) => v > 0 || "A nota é obrigatória.",
 };
+
+// Função para lidar com o clique no botão de escrever avaliação
+function handleWriteReviewClick() {
+  if (loggedInUserId.value) {
+    openComment(); // Abre o diálogo de avaliação se estiver logado
+  } else {
+    openLoginDialog(); // Abre o diálogo de login se não estiver logado
+  }
+}
 
 // Função para formatar "tempo atrás"
 function formatTimeAgo(dateString) {
@@ -458,7 +468,7 @@ async function loadMoreReviews() {
 // Função para seguir/deixar de seguir o autor da avaliação
 async function toggleFollow(review) {
   if (!loggedInUserId.value) {
-    showAlert("Você precisa estar logado para seguir usuários.", 'warning');
+    openLoginDialog();
     return;
   }
 
@@ -486,7 +496,7 @@ async function toggleFollow(review) {
 
 async function toggleLike(review) {
   if (!loggedInUserId.value) {
-    showAlert("Você precisa estar logado para curtir avaliações.", 'warning');
+    openLoginDialog();
     return;
   }
 
