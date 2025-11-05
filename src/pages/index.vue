@@ -80,7 +80,8 @@
 
               <v-card-actions>
                 <v-avatar size="32" class="mr-2">
-                  <v-img :src="avaliacao.usuario.avatar"></v-img>
+                  <v-img v-if="review.usuario_avatar" :src="review.usuario_avatar" alt="Avatar do usuário" cover />
+                  <v-icon v-else size="56" color="grey-lighten-1">mdi-account-circle</v-icon>
                 </v-avatar>
                 <span class="text-subtitle-2">{{ avaliacao.usuario.nome }}</span>
 
