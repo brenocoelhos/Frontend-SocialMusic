@@ -78,25 +78,34 @@
               <v-card-title>{{ avaliacao.titulo }}</v-card-title>
               <v-card-text class="text-grey-darken-1">{{ avaliacao.comentario }}</v-card-text>
 
-              <v-card-actions>
-                <v-avatar size="32" class="mr-2">
-                  <v-img v-if="avaliacao.usuario_avatar" :src="avaliacao.usuario.avatar" alt="Avatar do usuário" cover />
-                  <v-icon v-else size="32" color="grey-lighten-1">mdi-account-circle</v-icon>
-                </v-avatar>
-                <span class="text-subtitle-2">{{ avaliacao.usuario.nome }}</span>
+              <v-card-actions class="pa-4">
+                <v-btn :to="`/perfil/${avaliacao.usuario.id}`" variant="text" rounded="lg" class="text-none pa-1"
+                  style="color: inherit; letter-spacing: normal;">
+                  <template v-slot:prepend>
+                    <v-avatar size="32">
+                      <v-img v-if="avaliacao.usuario.avatar" :src="avaliacao.usuario.avatar"></v-img>
+                      <v-icon v-else size="32" color="grey-lighten-1">mdi-account-circle</v-icon>
+                    </v-avatar>
+                  </template>
+                  <span class="text-subtitle-2 ml-1">{{ avaliacao.usuario.nome }}</span>
+                </v-btn>
 
                 <v-btn v-if="loggedInUserId !== avaliacao.usuario.id" size="small"
-                  :variant="avaliacao.is_following ? 'outlined' : 'flat'" color="#EEE8FF" rounded="lg" class="ml-2"
-                  :loading="followLoadingId === avaliacao.id" @click="toggleFollow(avaliacao)">
+                  :variant="avaliacao.is_following ? 'outlined' : 'flat'" color="#EEE8FF" rounded="lg"
+                  class="ml-2 text-none" :loading="followLoadingId === avaliacao.id"
+                  @click.prevent="toggleFollow(avaliacao)">
                   {{ avaliacao.is_following ? 'A Seguir' : 'Seguir' }}
                 </v-btn>
 
                 <v-spacer></v-spacer>
 
-                <v-btn :icon="avaliacao.usuario_curtiu ? 'mdi-heart' : 'mdi-heart-outline'"
-                  :color="avaliacao.usuario_curtiu ? 'red' : 'grey-darken-1'" variant="text" size="small"
-                  :loading="likeLoadingId === avaliacao.id" @click="toggleLike(avaliacao)"></v-btn>
-                <span class="text-body-2 text-grey">{{ avaliacao.likes }}</span>
+                <v-btn :color="avaliacao.usuario_curtiu ? 'red' : 'grey-darken-1'" variant="text" size="small"
+                  class="text-none" :loading="likeLoadingId === avaliacao.id" @click.prevent="toggleLike(avaliacao)">
+                  <v-icon start>
+                    {{ avaliacao.usuario_curtiu ? 'mdi-heart' : 'mdi-heart-outline' }}
+                  </v-icon>
+                  {{ avaliacao.likes }}
+                </v-btn>
               </v-card-actions>
             </v-card>
           </v-col>
