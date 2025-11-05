@@ -11,7 +11,8 @@
               <p class="text-h6 mb-6 text-grey-lighten-2" style="max-width: 500px;">
                 Entre com sua conta Spotify, avalie e comente músicas, visualize as avaliações de seus amigos.
               </p>
-              <v-btn v-if="!usuario" size="x-large" variant="outlined" rounded="lg" style="color: #EEE8FF;" @click="openLoginDialog">Junte-se agora</v-btn>
+              <v-btn v-if="!usuario" size="x-large" variant="outlined" rounded="lg" style="color: #EEE8FF;"
+                @click="openLoginDialog">Junte-se agora</v-btn>
             </v-col>
           </v-row>
         </v-container>
@@ -25,7 +26,7 @@
 
         <v-sheet color="#EEE8FF" rounded="xl" class="pa-md-10 pa-5">
           <!-- Loading Skeleton -->
-          <v-row v-if="loading">
+          <v-row v-if="loadingPopulares">
             <v-col v-for="n in 6" :key="n" cols="6" sm="4" md="2">
               <v-skeleton-loader type="image, article" color="transparent"></v-skeleton-loader>
             </v-col>
@@ -33,22 +34,30 @@
 
           <!-- Conteúdo Real com Transição -->
           <v-fade-transition>
-            <v-row v-if="!loading">
+            <v-row v-if="!loadingPopulares">
               <v-col v-for="musica in musicasPopulares" :key="musica.titulo" cols="6" sm="4" md="2">
                 <v-card hover color="transparent" flat>
                   <v-img :src="musica.capa" class="rounded-lg"></v-img>
                   <v-card-title class="text-subtitle-1 pa-1 mt-2">{{ musica.titulo }}</v-card-title>
-                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista }}</v-card-subtitle>
+                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista
+                  }}</v-card-subtitle>
                 </v-card>
               </v-col>
             </v-row>
           </v-fade-transition>
         </v-sheet>
 
+        <!--Principais Avaliações-->
         <h2 class="text-h4 font-weight-bold my-10 text-grey-darken-3">Principais Avaliações</h2>
 
-        <v-row>
-          <v-col v-for="(avaliacao, i) in avaliacoes" :key="i" cols="12" md="6" lg="4">
+        <v-row v-if="loadingAvaliacoes">
+          <v-col v-for="n in 3" :key="n" cols="12" md="6" lg="4">
+            <v-skeleton-loader type="list-item-avatar-two-line, article, actions"></v-skeleton-loader>
+          </v-col>
+        </v-row>
+
+        <v-row v-else>
+          <v-col v-for="avaliacao in avaliacoes" :key="avaliacao.id" cols="12" md="6" lg="4">
             <v-card rounded="lg" class="d-flex flex-column" height="300">
               <v-card-text>
                 <div class="d-flex justify-space-between align-center">
@@ -61,20 +70,31 @@
                       <div class="text-caption text-grey">{{ avaliacao.musica.artista }}</div>
                     </div>
                   </div>
-                  <v-rating :model-value="avaliacao.nota" color="orange" density="compact" half-increments readonly></v-rating>
+                  <v-rating :model-value="avaliacao.nota" color="orange" density="compact" half-increments
+                    readonly></v-rating>
                 </div>
               </v-card-text>
               <v-divider class="mx-4"></v-divider>
               <v-card-title>{{ avaliacao.titulo }}</v-card-title>
               <v-card-text class="text-grey-darken-1">{{ avaliacao.comentario }}</v-card-text>
+
               <v-card-actions>
                 <v-avatar size="32" class="mr-2">
                   <v-img :src="avaliacao.usuario.avatar"></v-img>
                 </v-avatar>
                 <span class="text-subtitle-2">{{ avaliacao.usuario.nome }}</span>
-                <v-btn size="small" variant="outlined" rounded="lg" class="ml-2">Seguir</v-btn>
+
+                <v-btn v-if="loggedInUserId !== avaliacao.usuario.id" size="small"
+                  :variant="avaliacao.is_following ? 'outlined' : 'flat'" color="#EEE8FF" rounded="lg" class="ml-2"
+                  :loading="followLoadingId === avaliacao.id" @click="toggleFollow(avaliacao)">
+                  {{ avaliacao.is_following ? 'A Seguir' : 'Seguir' }}
+                </v-btn>
+
                 <v-spacer></v-spacer>
-                <v-btn icon="mdi-heart-outline" variant="text" size="small"></v-btn>
+
+                <v-btn :icon="avaliacao.usuario_curtiu ? 'mdi-heart' : 'mdi-heart-outline'"
+                  :color="avaliacao.usuario_curtiu ? 'red' : 'grey-darken-1'" variant="text" size="small"
+                  :loading="likeLoadingId === avaliacao.id" @click="toggleLike(avaliacao)"></v-btn>
                 <span class="text-body-2 text-grey">{{ avaliacao.likes }}</span>
               </v-card-actions>
             </v-card>
@@ -148,25 +168,134 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject } from 'vue';
+import { ref, onMounted, inject, computed } from 'vue';
 import fundoUrl from '@/assets/fundoArrumado.png'
 
 // Configuração da API URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
 
-// Injeta a função para abrir o diálogo de login
+// Injeta a função para abrir o diálogo de login e mostrar alertas
 const openLoginDialog = inject('openLoginDialog');
+const showAlert = inject('showAlert');
 
-// Verifica se o usuário está logado
+// estado do usuário
 const usuario = ref(null);
-onMounted(() => {
+const loggedInUserId = ref(null);
+
+// estado das musicas populares
+const musicasPopulares = ref([]);
+const loadingPopulares = ref(true);
+
+// estado das avaliações principais 
+const avaliacoes = ref([]);
+const loadingAvaliacoes = ref(true);
+const followLoadingId = ref(null);
+const likeLoadingId = ref(null);
+
+onMounted(async () => {
+  // Verifica se o usuário está logado
   const usuarioSalvo = localStorage.getItem('usuario');
   if (usuarioSalvo) {
-    usuario.value = JSON.parse(usuarioSalvo);
+    const user = JSON.parse(usuarioSalvo);
+    usuario.value = user;
+    loggedInUserId.value = user.id
   }
+  fetchMusicasPopulares();
+  fetchPrincipaisAvaliacoes();
 });
 
-const musicasPopulares = ref([]);
+// Funções para buscar dados da API
+async function fetchMusicasPopulares() {
+  loadingPopulares.value = true;
+  try {
+    const resPopulares = await fetch(
+      `${API_URL}/api/spotify_musicas.php?tipo=populares&limit=6`
+    );
+    const dataPopulares = await resPopulares.json();
+    if (dataPopulares.sucesso) {
+      musicasPopulares.value = dataPopulares.musicas;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar músicas do Spotify:', error);
+  } finally {
+    loadingPopulares.value = false;
+  }
+}
+
+// Função para buscar as principais avaliações
+async function fetchPrincipaisAvaliacoes() {
+  loadingAvaliacoes.value = true;
+  try {
+    const res = await fetch(
+      `${API_URL}/api/principais_avaliacoes.php?limit=3`, {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (data.sucesso) {
+      avaliacoes.value = data.avaliacoes;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar principais avaliações:', error);
+  } finally {
+    loadingAvaliacoes.value = false;
+  }
+}
+
+// Função para seguir/deixar de seguir o autor da avaliação
+async function toggleFollow(review) {
+  if (!loggedInUserId.value) return openLoginDialog();
+
+  followLoadingId.value = review.id;
+  const endpoint = review.is_following ? 'deixar_de_seguir.php' : 'seguir.php';
+
+  try {
+    const res = await fetch(`${API_URL}/api/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ id: review.usuario.id }),
+    });
+    const data = await res.json();
+    if (data.sucesso) {
+      review.is_following = !review.is_following;
+    } else {
+      showAlert(data.mensagem, 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao seguir/deixar de seguir:', error);
+    showAlert('Erro ao seguir/deixar de seguir.', 'error');
+  } finally {
+    followLoadingId.value = null;
+  }
+}
+
+async function toggleLike(review) {
+  if (!loggedInUserId.value) return openLoginDialog();
+
+  likeLoadingId.value = review.id;
+  try {
+    const res = await fetch(`${API_URL}/api/curtir_avaliacao.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ avaliacao_id: review.id }),
+    });
+    const data = await res.json();
+    if (data.sucesso) {
+      review.usuario_curtiu = data.curtido;
+      review.likes = data.total_curtidas;
+    } else {
+      showAlert(data.mensagem, 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao curtir avaliação:', error);
+    showAlert('Erro ao curtir avaliação.', 'error');
+  } finally {
+    likeLoadingId.value = null;
+  }
+}
+
+// Dados estáticos 
 
 const musicasAvaliadas = ref([
   { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Ferrari', artista: 'Frank Ocean', nota: '4.5/5' },
@@ -176,28 +305,6 @@ const musicasAvaliadas = ref([
   { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Horse', artista: 'Chris Stapleton', nota: '4.5/5' },
   { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Rabbit', artista: 'Jefferson Airplane', nota: '4.5/5' },
 ]);
-
-
-const loading = ref(true);
-
-onMounted(async () => {
-  try {
-   // Busca músicas populares
-    const resPopulares = await fetch(
-      `${API_URL}/api/spotify_musicas.php?tipo=populares&limit=6`
-    );
-    const dataPopulares = await resPopulares.json();
-    if (dataPopulares.sucesso) {
-      musicasPopulares.value = dataPopulares.musicas;
-    }
-    
-  } catch (error) {
-    console.error('Erro ao carregar músicas do Spotify:', error);
-    // Se der erro, mantém os dados mockados que já estão definidos acima
-  } finally {
-    loading.value = false;
-  }
-});
 
 const ultimaAvaliacao = ref({
   usuario: {
@@ -214,32 +321,6 @@ const usuariosRecomendados = ref([
   { nome: 'White Orange', handle: '@orange_white', avatar: 'https://randomuser.me/api/portraits/men/47.jpg' },
 ]);
 
-const avaliacoes = ref([
-  {
-    musica: { titulo: 'Billie Jean', artista: 'Michael Jackson', capa: 'https://cdn-images.dzcdn.net/images/cover/544862aa5be45bc82ad4ab1a14daf63a/1900x1900-000000-80-0-0.jpg' },
-    nota: 5,
-    titulo: 'A batida que mudou a história',
-    comentario: 'Produção visionária, linha de baixo icônica e performance magnética. Um clássico atemporal.',
-    usuario: { nome: 'IsaBarbosa', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
-    likes: 117
-  },
-  {
-    musica: { titulo: 'Bohemian Rhapsody', artista: 'Queen', capa: 'https://upload.wikimedia.org/wikipedia/pt/9/9f/Bohemian_Rhapsody.png' },
-    nota: 4.5,
-    titulo: 'Uma ópera rock genial',
-    comentario: 'Inovadora, complexa e emocionante. Uma obra-prima que desafia qualquer classificação.',
-    usuario: { nome: 'CarlosF', avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    likes: 204
-  },
-  {
-    musica: { titulo: 'Smells Like Teen Spirit', artista: 'Nirvana', capa: 'https://cdn-images.dzcdn.net/images/cover/f0282817b697279e56df13909962a54a/1900x1900-000000-80-0-0.jpg' },
-    nota: 4,
-    titulo: 'O hino de uma geração',
-    comentario: 'A energia crua e a letra apática capturaram perfeitamente o espírito dos anos 90. Essencial.',
-    usuario: { nome: 'JulianaM', avatar: 'https://randomuser.me/api/portraits/women/55.jpg' },
-    likes: 98
-  }
-]);
 </script>
 
 <style scoped>
@@ -252,9 +333,10 @@ const avaliacoes = ref([
   .hero-banner :deep(.v-img__img) {
     display: none !important;
   }
-  
+
   .hero-overlay {
-    background-color: #3e281b !important; /* 👈 COR SÓLIDA AQUI - Azul acinzentado escuro */
+    background-color: #3e281b !important;
+    /* 👈 COR SÓLIDA AQUI - Azul acinzentado escuro */
   }
 }
 
