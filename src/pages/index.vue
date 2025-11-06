@@ -137,8 +137,10 @@
 
                 <template v-slot:append>
                   <div class="d-flex align-center">
+
                     <v-icon color="orange" icon="mdi-star" class="mr-1"></v-icon>
-                    <span class="font-weight-normal">{{ musica.media_nota }}</span>
+                    <span class="font-weight-normal">{{ musica.media_nota.toFixed(1) }}</span>
+
                   </div>
                 </template>
               </v-list-item>
@@ -160,8 +162,8 @@
             <v-sheet v-else-if="usuario && ultimaAvaliacao" rounded="xl" class="pa-5" color="#EEE8FF">
               <div class="d-flex align-center mb-3">
                 <v-avatar class="mr-3">
-                      <v-img v-if="ultimaAvaliacao.usuario_avatar" :src="ultimaAvaliacao.usuario_avatar"></v-img>
-                      <v-icon v-else size="32" color="grey-lighten-1">mdi-account-circle</v-icon>
+                  <v-img v-if="ultimaAvaliacao.usuario_avatar" :src="ultimaAvaliacao.usuario_avatar"></v-img>
+                  <v-icon v-else size="48" color="grey-lighten-1">mdi-account-circle</v-icon>
                 </v-avatar>
                 <div>
                   <div class="font-weight-normal">{{ ultimaAvaliacao.usuario_nome }}</div>
@@ -181,17 +183,26 @@
 
             <!--SEÇÃO DE USUÁRIOS RECOMENDADOS-->
             <h2 class="text-h5 font-weight-bold mb-4 mt-8">Usuários recomendados</h2>
-            <v-list bg-color="transparent">
-              <v-list-item v-for="usuario in usuariosRecomendados" :key="usuario.handle" class="px-1">
+
+            <div v-if="loadingRecomendados">
+              <v-skeleton-loader v-for="n in 5" :key="n" type="list-item-avatar" class="mb-2"></v-skeleton-loader>
+            </div>
+
+            <v-list v-else bg-color="transparent">
+              <v-list-item v-for="usuario in usuariosRecomendados" :key="usuario.id" :to="`/perfil/${usuario.id}`"
+                class="px-1">
+
                 <template v-slot:prepend>
                   <v-avatar class="mr-3">
                     <v-img :src="usuario.avatar"></v-img>
                   </v-avatar>
                 </template>
+
                 <v-list-item-title class="font-weight-normal">{{ usuario.nome }}</v-list-item-title>
-                <v-list-item-subtitle>{{ usuario.handle }}</v-list-item-subtitle>
+                <v-list-item-subtitle>{{ usuario.username }}</v-list-item-subtitle>
               </v-list-item>
             </v-list>
+
           </v-col>
         </v-row>
       </v-container>
@@ -228,9 +239,13 @@ const likeLoadingId = ref(null);
 const musicasDestaque = ref([]);
 const loadingMusicasDestaque = ref(true);
 
-//
+// estado da última avaliação do usuário
 const ultimaAvaliacao = ref(null);
 const loadingUltimaAvaliacao = ref(true);
+
+// estado dos usuários recomendados
+const usuariosRecomendados = ref([]);
+const loadingRecomendados = ref(true);
 
 onMounted(async () => {
   // Verifica se o usuário está logado
@@ -243,6 +258,7 @@ onMounted(async () => {
   fetchMusicasPopulares();
   fetchPrincipaisAvaliacoes();
   fetchMusicasDestaque();
+  fetchUsuariosRecomendados();
 
   if (loggedInUserId.value) {
     fetchUltimaAvaliacao();
@@ -361,6 +377,7 @@ async function fetchMusicasDestaque() {
   }
 }
 
+// Função para buscar a última avaliação do usuário
 async function fetchUltimaAvaliacao() {
   loadingUltimaAvaliacao.value = true;
   try {
@@ -379,13 +396,23 @@ async function fetchUltimaAvaliacao() {
   }
 }
 
-// Dados estáticos 
-
-const usuariosRecomendados = ref([
-  { nome: 'White', handle: '@white', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
-  { nome: 'White Mustang', handle: '@white_lana', avatar: 'https://randomuser.me/api/portraits/men/46.jpg' },
-  { nome: 'White Orange', handle: '@orange_white', avatar: 'https://randomuser.me/api/portraits/men/47.jpg' },
-]);
+async function fetchUsuariosRecomendados() {
+  loadingRecomendados.value = true;
+  try {
+    const res = await fetch(
+      `${API_URL}/api/usuarios_recomendados.php?limit=5`, {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (data.sucesso) {
+      usuariosRecomendados.value = data.usuarios;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar usuários recomendados:', error);
+  } finally {
+    loadingRecomendados.value = false;
+  }
+}
 
 </script>
 
