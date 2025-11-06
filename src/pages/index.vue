@@ -190,11 +190,12 @@
 
             <v-list v-else bg-color="transparent">
               <v-list-item v-for="usuario in usuariosRecomendados" :key="usuario.id" :to="`/perfil/${usuario.id}`"
-                class="px-1">
+                class="px-1 mb-2">
 
                 <template v-slot:prepend>
-                  <v-avatar class="mr-3">
-                    <v-img :src="usuario.avatar"></v-img>
+                  <v-avatar class="mr-1">
+                    <v-img v-if="usuario.avatar" :src="usuario.avatar"></v-img>
+                    <v-icon v-else size="45" color="grey-lighten-1">mdi-account-circle</v-icon>
                   </v-avatar>
                 </template>
 
