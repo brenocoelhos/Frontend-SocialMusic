@@ -177,7 +177,7 @@
                             :loading="followLoadingId === review.id"
                             :variant="review.is_following ? 'outlined' : 'flat'" color="EEE8FF" class="text-none"
                             rounded="lg" @click="toggleFollow(review)">
-                            {{ review.is_following ? 'A Seguir' : 'Seguir' }}
+                            {{ review.is_following ? 'Seguindo' : 'Seguir' }}
                           </v-btn>
                         </div>
                       </div>

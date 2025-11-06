@@ -35,12 +35,11 @@
           <!-- Conteúdo Real com Transição -->
           <v-fade-transition>
             <v-row v-if="!loadingPopulares">
-              <v-col v-for="musica in musicasPopulares" :key="musica.titulo" cols="6" sm="4" md="2">
-                <v-card hover color="transparent" flat>
+              <v-col v-for="musica in musicasPopulares" :key="musica.id" cols="6" sm="4" md="2">
+                <v-card hover color="transparent" flat :to="getAvalaiacaoUrl(musica)">
                   <v-img :src="musica.capa" class="rounded-lg"></v-img>
                   <v-card-title class="text-subtitle-1 pa-1 mt-2">{{ musica.titulo }}</v-card-title>
-                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista
-                  }}</v-card-subtitle>
+                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista }}</v-card-subtitle>
                 </v-card>
               </v-col>
             </v-row>
@@ -94,7 +93,7 @@
                   :variant="avaliacao.is_following ? 'outlined' : 'flat'" color="#EEE8FF" rounded="lg"
                   class="ml-2 text-none" :loading="followLoadingId === avaliacao.id"
                   @click.prevent="toggleFollow(avaliacao)">
-                  {{ avaliacao.is_following ? 'A Seguir' : 'Seguir' }}
+                  {{ avaliacao.is_following ? 'Seguindo' : 'Seguir' }}
                 </v-btn>
 
                 <v-spacer></v-spacer>
@@ -413,6 +412,24 @@ async function fetchUsuariosRecomendados() {
   } finally {
     loadingRecomendados.value = false;
   }
+}
+
+function getAvalaiacaoUrl(musica) {
+  if (!musica) return '/';
+
+  const params = new URLSearchParams();
+  params.append('id', musica.id);
+  params.append('name', musica.titulo);
+  params.append('artist', musica.artista);
+  params.append('image', musica.capa);
+  params.append('spotify', musica.spotify_url);
+  params.append('duration_ms', musica.duration_ms);
+  params.append('release_date', musica.release_date);
+  params.append('popularity', musica.popularity);
+  params.append('explicit', musica.explicit); 
+  params.append('album_name', musica.album_name); 
+  params.append('album_type', musica.album_type); 
+  return `/avaliacao?${params.toString()}`;
 }
 
 </script>
