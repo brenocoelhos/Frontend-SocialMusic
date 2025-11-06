@@ -148,7 +148,16 @@
           <!--SEÇÃO DE ÚLTIMA AVALIAÇÃO-->
           <v-col cols="12" md="4">
             <h2 class="text-h5 font-weight-bold mb-4">Minha última avaliação</h2>
-            <v-sheet rounded="xl" class="pa-5" color="#EEE8FF">
+
+            <v-skeleton-loader v-if="loadingUltimaAvaliacao" type="list-item-avatar, text"></v-skeleton-loader>
+
+            <v-sheet v-else-if="!usuario" rounded="xl" class="pa-5 text-center" color="#EEE8FF" height="150">
+              <v-icon size="32" color="grey-darken-1">mdi-login-variant</v-icon>
+              <p class="text-body-2 text-grey-darken-2 my-3">Faça login para ver sua avaliacão</p>
+              <v-btn variant="flat" color="#EEE8FF" @click="openLoginDialog">Realize seu login</v-btn>
+            </v-sheet>
+
+            <v-sheet v-else-if="usuario && ultimaAvaliacao" rounded="xl" class="pa-5" color="#EEE8FF">
               <div class="d-flex align-center mb-3">
                 <v-avatar class="mr-3">
                   <v-img :src="ultimaAvaliacao.usuario.avatar"></v-img>
@@ -161,6 +170,12 @@
               <p class="text-body-2 text-grey-darken-2">
                 {{ ultimaAvaliacao.texto }}
               </p>
+            </v-sheet>
+
+            <v-sheet v-else rounded="xl" class="pa-5 text-center" color="#EEE8FF" height="150">
+              <v-icon size="32" color="grey-darken-1">mdi-music-note-plus</v-icon>
+              <p class="text-body-2 text-grey-darken-2 my-3">Você ainda não avaliou nenhuma música</p>
+              <v-btn variant="flat" color="#EEE8FF" to="/musicas">Comece a avaliar</v-btn>
             </v-sheet>
 
             <!--SEÇÃO DE USUÁRIOS RECOMENDADOS-->
@@ -212,6 +227,10 @@ const likeLoadingId = ref(null);
 const musicasDestaque = ref([]);
 const loadingMusicasDestaque = ref(true);
 
+//
+const ultimaAvaliacao = ref(null);
+const loadingUltimaAvaliacao = ref(true);
+
 onMounted(async () => {
   // Verifica se o usuário está logado
   const usuarioSalvo = localStorage.getItem('usuario');
@@ -223,6 +242,12 @@ onMounted(async () => {
   fetchMusicasPopulares();
   fetchPrincipaisAvaliacoes();
   fetchMusicasDestaque();
+
+  if (loggedInUserId.value) {
+    fetchUltimaAvaliacao();
+  } else {
+    loadingUltimaAvaliacao.value = false;
+  }
 });
 
 // Funções para buscar dados da API
@@ -335,16 +360,25 @@ async function fetchMusicasDestaque() {
   }
 }
 
-// Dados estáticos 
+async function fetchUltimaAvaliacao() {
+  loadingUltimaAvaliacao.value = true;
+  try {
+    const res = await fetch(
+      `${API_URL}/api/ultima_avaliacao.php?`, {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (data.sucesso) {
+      ultimaAvaliacao.value = data.avaliacao;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar última avaliação:', error);
+  } finally {
+    loadingUltimaAvaliacao.value = false;
+  }
+}
 
-const ultimaAvaliacao = ref({
-  usuario: {
-    nome: 'Isabella',
-    handle: '@white',
-    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-  },
-  texto: 'Produção visionária, linha de baixo icônica e performance magnética...',
-});
+// Dados estáticos 
 
 const usuariosRecomendados = ref([
   { nome: 'White', handle: '@white', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
