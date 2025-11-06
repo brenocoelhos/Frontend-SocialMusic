@@ -47,7 +47,7 @@
           </v-fade-transition>
         </v-sheet>
 
-        <!--Principais Avaliações-->
+        <!-- SEÇÃO DE PRINCIPAIS AVALIAÇÕES -->
         <h2 class="text-h4 font-weight-bold my-10 text-grey-darken-3">Principais Avaliações</h2>
 
         <v-row v-if="loadingAvaliacoes">
@@ -120,11 +120,15 @@
           <v-col cols="12" md="8">
             <h2 class="text-h5 font-weight-bold mb-4">Músicas em destaques</h2>
 
-            <v-list lines="two" bg-color="transparent">
-              <v-list-item v-for="musica in musicasAvaliadas" :key="musica.titulo" class="mb-2">
+            <div v-if="loadingMusicasDestaques">
+              <v-skeleton-loader v-for="n in 6" :key="n" type="list-item-avatar" class="mb-2"></v-skeleton-loader>
+            </div>
+
+            <v-list v-else lines="two" bg-color="transparent">
+              <v-list-item v-for="musica in musicasDestaque" :key="musica.id" class="mb-2">
                 <template v-slot:prepend>
                   <v-avatar size="56" rounded="lg">
-                    <v-img :src="musica.capa"></v-img>
+                    <v-img :src="musica.capa_url"></v-img>
                   </v-avatar>
                 </template>
 
@@ -134,13 +138,14 @@
                 <template v-slot:append>
                   <div class="d-flex align-center">
                     <v-icon color="orange" icon="mdi-star" class="mr-1"></v-icon>
-                    <span class="font-weight-normal">{{ musica.nota }}</span>
+                    <span class="font-weight-normal">{{ musica.media_nota }}</span>
                   </div>
                 </template>
               </v-list-item>
             </v-list>
           </v-col>
 
+          <!--SEÇÃO DE ÚLTIMA AVALIAÇÃO-->
           <v-col cols="12" md="4">
             <h2 class="text-h5 font-weight-bold mb-4">Minha última avaliação</h2>
             <v-sheet rounded="xl" class="pa-5" color="#EEE8FF">
@@ -158,6 +163,7 @@
               </p>
             </v-sheet>
 
+            <!--SEÇÃO DE USUÁRIOS RECOMENDADOS-->
             <h2 class="text-h5 font-weight-bold mb-4 mt-8">Usuários recomendados</h2>
             <v-list bg-color="transparent">
               <v-list-item v-for="usuario in usuariosRecomendados" :key="usuario.handle" class="px-1">
@@ -202,6 +208,10 @@ const loadingAvaliacoes = ref(true);
 const followLoadingId = ref(null);
 const likeLoadingId = ref(null);
 
+// estado das músicas em destaque
+const musicasDestaque = ref([]);
+const loadingMusicasDestaque = ref(true);
+
 onMounted(async () => {
   // Verifica se o usuário está logado
   const usuarioSalvo = localStorage.getItem('usuario');
@@ -212,6 +222,7 @@ onMounted(async () => {
   }
   fetchMusicasPopulares();
   fetchPrincipaisAvaliacoes();
+  fetchMusicasDestaque();
 });
 
 // Funções para buscar dados da API
@@ -279,6 +290,7 @@ async function toggleFollow(review) {
   }
 }
 
+// Função para curtir/deixar de curtir a avaliação
 async function toggleLike(review) {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -305,16 +317,25 @@ async function toggleLike(review) {
   }
 }
 
-// Dados estáticos 
+// Função para buscar músicas em destaque
+async function fetchMusicasDestaque() {
+  loadingMusicasDestaque.value = true;
+  try {
+    const res = await fetch(
+      `${API_URL}/api/musicas_destaque.php?limit=6`
+    );
+    const data = await res.json();
+    if (data.sucesso) {
+      musicasDestaque.value = data.musicas;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar músicas em destaque:', error);
+  } finally {
+    loadingMusicasDestaque.value = false;
+  }
+}
 
-const musicasAvaliadas = ref([
-  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Ferrari', artista: 'Frank Ocean', nota: '4.5/5' },
-  { capa: 'https://i.scdn.co/image/ab67616d0000b2739478c87599550dd73bfa7e02', titulo: 'White Iverson', artista: 'Post Malone', nota: '4.5/5' },
-  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Tee (with NOI-NOAH)', artista: 'Summer Walk - NOI-NOAH', nota: '4.5/5' },
-  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Teeth Teens', artista: 'Lorde', nota: '4.5/5' },
-  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Horse', artista: 'Chris Stapleton', nota: '4.5/5' },
-  { capa: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', titulo: 'White Rabbit', artista: 'Jefferson Airplane', nota: '4.5/5' },
-]);
+// Dados estáticos 
 
 const ultimaAvaliacao = ref({
   usuario: {
