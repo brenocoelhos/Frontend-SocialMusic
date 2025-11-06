@@ -120,7 +120,7 @@
           <v-col cols="12" md="8">
             <h2 class="text-h5 font-weight-bold mb-4">Músicas em destaques</h2>
 
-            <div v-if="loadingMusicasDestaques">
+            <div v-if="loadingMusicasDestaque">
               <v-skeleton-loader v-for="n in 6" :key="n" type="list-item-avatar" class="mb-2"></v-skeleton-loader>
             </div>
 
@@ -160,15 +160,16 @@
             <v-sheet v-else-if="usuario && ultimaAvaliacao" rounded="xl" class="pa-5" color="#EEE8FF">
               <div class="d-flex align-center mb-3">
                 <v-avatar class="mr-3">
-                  <v-img :src="ultimaAvaliacao.usuario.avatar"></v-img>
+                      <v-img v-if="ultimaAvaliacao.usuario_avatar" :src="ultimaAvaliacao.usuario_avatar"></v-img>
+                      <v-icon v-else size="32" color="grey-lighten-1">mdi-account-circle</v-icon>
                 </v-avatar>
                 <div>
-                  <div class="font-weight-normal">{{ ultimaAvaliacao.usuario.nome }}</div>
-                  <div class="text-grey text-caption">{{ ultimaAvaliacao.usuario.handle }}</div>
+                  <div class="font-weight-normal">{{ ultimaAvaliacao.usuario_nome }}</div>
+                  <div class="text-grey text-caption">{{ ultimaAvaliacao.usuario_username }}</div>
                 </div>
               </div>
               <p class="text-body-2 text-grey-darken-2">
-                {{ ultimaAvaliacao.texto }}
+                {{ ultimaAvaliacao.comentario }}
               </p>
             </v-sheet>
 
