@@ -33,13 +33,14 @@
             <div>
               <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">
                 {{ isSelf ? 'Minhas Avaliações' : `Avaliações de ${perfilUsuario.nome}` }}
+                ({{ avaliacoes.length }})
               </h2>
               
               <v-alert v-if="avaliacoes.length === 0" type="info" variant="tonal">
                 Este usuário ainda não fez nenhuma avaliação.
               </v-alert>
               
-              <div v-for="(avaliacao, i) in avaliacoes" :key="i" class="mb-4">
+              <div v-for="(avaliacao, i) in reviewsVisiveis" :key="i" class="mb-4">
                 <v-card rounded="lg" flat>
                   <v-card-text class="pa-5">
                     <div class="d-flex align-start mb-3">
@@ -62,6 +63,18 @@
                 </v-card>
               </div>
               
+              <div v-if="reviewsVisiveis.length < avaliacoes.length" class="text-center mt-6">
+                <v-btn
+                  :loading="isLoadingMoreReviews"
+                  variant="outlined"
+                  class="text-none"
+                  rounded="lg"
+                  size="large"
+                  @click="carregarMaisAvaliacoes"
+                >
+                  Carregar Mais Avaliações
+                </v-btn>
+              </div>
               </div>
           </v-col>
           
@@ -93,7 +106,7 @@
       </v-container>
 
       <v-dialog v-model="editDialog" max-width="500px" persistent>
-        <v-form ref="editFormRef" @submit.prevent="saveProfile">
+        <v-form ref="editFormRef" @submit="prevent="saveProfile">
           <v-card>
             <v-card-title>Editar Perfil</v-card-title>
             <v-card-text>
@@ -126,7 +139,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, watch } from 'vue';
+
+import { ref, onMounted, reactive, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router'; 
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
@@ -147,18 +161,41 @@ const isSaving = ref(false);
 const editFormRef = ref(null); 
 const editForm = reactive({ nome: '', generos: '' });
 
-const avaliacoes = ref([]); // O array que o v-for usa
+// --- Lógica de Edição/Seguir (sem alterações) ---
+function openEditDialog() { /* ... */ }
+function closeEditDialog() { /* ... */ }
+async function saveProfile() { /* ... */ }
+async function toggleFollow() { /* ... */ }
 
-function openEditDialog() { /* ... (código existente) ... */ }
-function closeEditDialog() { /* ... (código existente) ... */ }
-async function saveProfile() { /* ... (código existente) ... */ }
-async function toggleFollow() { /* ... (código existente) ... */ }
+
+const avaliacoes = ref([]); // Onde guardamos TODAS as avaliações (máx 10)
+const reviewsVisiveisCount = ref(3); // Quantas mostrar (começa com 3)
+const isLoadingMoreReviews = ref(false); // Para o loading do botão
+
+// Propriedade computada que "fatia" o array completo
+const reviewsVisiveis = computed(() => {
+  return avaliacoes.value.slice(0, reviewsVisiveisCount.value);
+});
+
+// Função que o botão chama
+function carregarMaisAvaliacoes() {
+  isLoadingMoreReviews.value = true;
+  setTimeout(() => {
+    reviewsVisiveisCount.value += 3; // Mostra mais 3
+    isLoadingMoreReviews.value = false;
+  }, 300); // 300ms de delay
+}
+
+
 
 
 async function carregarPerfil(id) {
   loading.value = true;
   error.value = false;
   
+  
+  reviewsVisiveisCount.value = 3; 
+
   const url = id ? `${API_URL}/api/perfil.php?id=${id}` : `${API_URL}/api/perfil.php`;
 
   try {
@@ -178,11 +215,7 @@ async function carregarPerfil(id) {
       perfilUsuario.value = data.perfil;
       isSelf.value = data.is_self;
       isFollowing.value = data.is_following;
-      
-      avaliacoes.value = data.avaliacoes; 
-      
-      
-      
+      avaliacoes.value = data.avaliacoes; // Carrega todas as 10 avaliações aqui
     } else {
       errorMessage.value = data.mensagem;
       error.value = true;
