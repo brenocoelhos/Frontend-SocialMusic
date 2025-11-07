@@ -71,6 +71,16 @@
                         <div class="text-body-2 text-grey">{{ avaliacao.musica.artista }}</div>
                       </div>
                     </div>
+
+                    <v-rating
+                      :model-value="avaliacao.nota"
+                      color="amber"
+                      density="compact"
+                      half-increments
+                      readonly
+                      size="small"
+                      class="mb-2"
+                    ></v-rating>
                     <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">{{ avaliacao.titulo }}</h3>
                     <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">{{ avaliacao.comentario }}</p>
                     <div class="d-flex align-center">
@@ -106,7 +116,6 @@
                 </p>
                 </div>
             </v-card>
-
             </v-col>
         </v-row>
       </v-container>
@@ -173,9 +182,8 @@ const editForm = reactive({
 });
 
 function openEditDialog() {
-  // Preenche o formulário com os dados atuais
   editForm.nome = perfilUsuario.value.nome;
-  editForm.generos = perfilUsuario.value.generos || ''; // Preenche com string vazia se for null
+  editForm.generos = perfilUsuario.value.generos || '';
   editDialog.value = true;
 }
 function closeEditDialog() { 
@@ -183,7 +191,6 @@ function closeEditDialog() {
 }
 
 async function saveProfile() { 
-  // Valida o formulário
   const { valid } = await editFormRef.value.validate();
   if (!valid) return;
 
@@ -220,7 +227,6 @@ async function saveProfile() {
     isSaving.value = false;
   }
 }
-// =============================================
 
 async function toggleFollow() {
   
@@ -252,7 +258,6 @@ async function toggleFollow() {
 }
 
 async function carregarPerfil(id) {
-  // (Função de Carregar Perfil - sem alterações)
   loading.value = true;
   error.value = false;
   const url = id ? `${API_URL}/api/perfil.php?id=${id}` : `${API_URL}/api/perfil.php`;
