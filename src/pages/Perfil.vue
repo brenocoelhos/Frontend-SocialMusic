@@ -161,18 +161,90 @@ const isSaving = ref(false);
 const editFormRef = ref(null); 
 const editForm = reactive({ nome: '', generos: '' });
 
-// --- Lógica de Edição/Seguir (sem alterações) ---
-function openEditDialog() { /* ... */ }
-function closeEditDialog() { /* ... */ }
-async function saveProfile() { /* ... */ }
-async function toggleFollow() { /* ... */ }
+
+function openEditDialog() {
+  editForm.nome = perfilUsuario.value.nome;
+  editForm.generos = perfilUsuario.value.generos || '';
+  editDialog.value = true;
+}
+function closeEditDialog() {
+  editDialog.value = false;
+}
+
+async function saveProfile() {
+  // Valida o formulário
+  const { valid } = await editFormRef.value.validate();
+  if (!valid) return;
+
+  isSaving.value = true;
+  try {
+    const res = await fetch(`${API_URL}/api/perfil_update.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        nome: editForm.nome,
+        generos: editForm.generos 
+      })
+    });
+    const data = await res.json();
+    
+    if (data.sucesso) {
+      // Atualiza os dados na página (localmente)
+      perfilUsuario.value.nome = data.dados_atualizados.nome;
+      perfilUsuario.value.generos = data.dados_atualizados.generos;
+      
+      // Atualiza o localStorage (para o App.vue)
+      const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
+      if (usuarioLocal) {
+        usuarioLocal.nome = data.dados_atualizados.nome;
+        localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
+      }
+      closeEditDialog();
+    } else {
+      alert(`Erro: ${data.mensagem}`);
+    }
+  } catch (err) {
+    console.error('Erro ao salvar perfil:', err);
+    alert('Erro de rede ao tentar salvar.');
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+async function toggleFollow() {
+  followLoading.value = true;
+  const endpoint = isFollowing.value ? 'deixar_de_seguir.php' : 'seguir.php';
+  try {
+    const res = await fetch(`${API_URL}/api/${endpoint}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: perfilUsuario.value.id }) 
+    });
+    const data = await res.json();
+    if (data.sucesso) {
+      isFollowing.value = !isFollowing.value; 
+      if (isFollowing.value) {
+        perfilUsuario.value.followers_count++;
+      } else {
+        perfilUsuario.value.followers_count--;
+      }
+    } else {
+      alert(`Erro: ${data.mensagem}`);
+    }
+  } catch (err) {
+    console.error(`Erro ao ${endpoint}:`, err);
+  } finally {
+    followLoading.value = false;
+  }
+}
 
 
-const avaliacoes = ref([]); // Onde guardamos TODAS as avaliações (máx 10)
-const reviewsVisiveisCount = ref(3); // Quantas mostrar (começa com 3)
-const isLoadingMoreReviews = ref(false); // Para o loading do botão
+const avaliacoes = ref([]); 
+const reviewsVisiveisCount = ref(3); 
+const isLoadingMoreReviews = ref(false); 
 
-// Propriedade computada que "fatia" o array completo
 const reviewsVisiveis = computed(() => {
   return avaliacoes.value.slice(0, reviewsVisiveisCount.value);
 });
