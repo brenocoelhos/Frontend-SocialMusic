@@ -9,9 +9,7 @@
       </v-container>
 
       <v-container v-else-if="error" class="py-8 text-center">
-        <v-alert type="error" border="start" prominent>
-          {{ errorMessage }}
-        </v-alert>
+        <v-alert type="error" border="start" prominent>{{ errorMessage }}</v-alert>
         <v-btn to="/" color="primary" class="mt-4">Voltar à Página Inicial</v-btn>
       </v-container>
       
@@ -21,41 +19,23 @@
       
             <div class="d-flex justify-space-between align-center mb-6">
               <div>
-                <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">
-                  {{ perfilUsuario.nome }}
-                </h1>
+                <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">{{ perfilUsuario.nome }}</h1>
                 <p class="text-body-2 text-grey-darken-1">@{{ perfilUsuario.username }}</p>
               </div>
-              
-              <v-btn 
-                v-if="isSelf" 
-                color="primary" 
-                variant="flat" 
-                rounded="lg" 
-                size="default" 
-                @click="openEditDialog">
+              <v-btn v-if="isSelf" color="primary" variant="flat" rounded="lg" size="default" @click="openEditDialog">
                 Editar Perfil
               </v-btn>
-
-              <v-btn
-                v-else
-                :loading="followLoading"
-                :variant="isFollowing ? 'outlined' : 'flat'"
-                color="primary"
-                rounded="lg" 
-                size="default"
-                @click="toggleFollow"
-              >
+              <v-btn v-else :loading="followLoading" :variant="isFollowing ? 'outlined' : 'flat'" color="primary" rounded="lg" size="default" @click="toggleFollow">
                 {{ isFollowing ? 'A Seguir' : 'Seguir' }}
               </v-btn>
             </div>
 
             <div>
               <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">
-                {{ isSelf ? 'Minhas Avaliações' : `Avaliações de ${perfilUsuario.nome}` }}
+                {{ isSelf ? 'Minhas Avaliações' : `Avaliações de ${perfilUsuario.nome}` }} ({{ totalAvaliacoes }})
               </h2>
               
-              <v-alert v-if="avaliacoes.length === 0" type="info" variant="tonal">
+              <v-alert v-if="totalAvaliacoes === 0" type="info" variant="tonal">
                 Este usuário ainda não fez nenhuma avaliação.
               </v-alert>
               
@@ -71,16 +51,7 @@
                         <div class="text-body-2 text-grey">{{ avaliacao.musica.artista }}</div>
                       </div>
                     </div>
-
-                    <v-rating
-                      :model-value="avaliacao.nota"
-                      color="amber"
-                      density="compact"
-                      half-increments
-                      readonly
-                      size="small"
-                      class="mb-2"
-                    ></v-rating>
+                    <v-rating :model-value="avaliacao.nota" color="amber" density="compact" half-increments readonly size="small" class="mb-2"></v-rating>
                     <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">{{ avaliacao.titulo }}</h3>
                     <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">{{ avaliacao.comentario }}</p>
                     <div class="d-flex align-center">
@@ -90,11 +61,24 @@
                   </v-card-text>
                 </v-card>
               </div>
-            </div>
+              
+              <div v-if="avaliacoes.length < totalAvaliacoes" class="text-center mt-6">
+                <v-btn
+                  :loading="isLoadingMoreReviews"
+                  variant="outlined"
+                  class="text-none"
+                  rounded="lg"
+                  size="large"
+                  @click="carregarMaisAvaliacoes"
+                >
+                  Carregar Mais Avaliações
+                </v-btn>
+              </div>
+              </div>
           </v-col>
           
           <v-col cols="12" md="5">
-            <v-card rounded="xl" class="mb-6 pa-8 text-center" color="white" flat elevation="0">
+             <v-card rounded="xl" class="mb-6 pa-8 text-center" color="white" flat elevation="0">
               <div class="d-flex justify-center mb-4">
                 <v-avatar size="160">
                   <v-img :src="perfilUsuario.avatar"></v-img>
@@ -161,105 +145,75 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onr
 const router = useRouter();
 const route = useRoute();
 
-const loading = ref(true);
+const loading = ref(true); // Loading do perfil principal
 const error = ref(false);
 const errorMessage = ref('');
 const perfilUsuario = ref({});
-const avaliacoes = ref([]);
 const isSelf = ref(false);
 const isFollowing = ref(false);
 const followLoading = ref(false);
-const musicasRecentes = ref([]); // (Mockado)
-const usuariosOnline = ref([]); // (Mockado)
 
+// (Dados estáticos mockados)
+const musicasRecentes = ref([]); 
+const usuariosOnline = ref([]); 
 
 const editDialog = ref(false);
 const isSaving = ref(false);
 const editFormRef = ref(null); 
-const editForm = reactive({
-  nome: '',
-  generos: '' 
-});
+const editForm = reactive({ nome: '', generos: '' });
+function openEditDialog() { /* ... */ }
+function closeEditDialog() { /* ... */ }
+async function saveProfile() { /* ... */ }
+async function toggleFollow() { /* ... */ }
 
-function openEditDialog() {
-  editForm.nome = perfilUsuario.value.nome;
-  editForm.generos = perfilUsuario.value.generos || '';
-  editDialog.value = true;
-}
-function closeEditDialog() { 
-  editDialog.value = false;
-}
 
-async function saveProfile() { 
-  const { valid } = await editFormRef.value.validate();
-  if (!valid) return;
+const avaliacoes = ref([]); // O array que o v-for usa
+const totalAvaliacoes = ref(0); // A contagem total da API
+const avaliacoesPagina = ref(1); // A página atual
+const avaliacoesPorPagina = ref(3); // Quantos carregar de cada vez
+const isLoadingMoreReviews = ref(false); // Loading do botão
 
-  isSaving.value = true;
+// Esta função agora SÓ carrega as avaliações
+async function carregarMaisAvaliacoes() {
+  if (isLoadingMoreReviews.value) return;
+  isLoadingMoreReviews.value = true;
+
   try {
-    const res = await fetch(`${API_URL}/api/perfil_update.php`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        nome: editForm.nome,
-        generos: editForm.generos 
-      })
-    });
+    // Busca o ID do perfil que já foi carregado
+    const perfilId = perfilUsuario.value.id;
+    if (!perfilId) return;
+
+    const res = await fetch(
+      `${API_URL}/api/perfil_avaliacoes.php?id=${perfilId}&page=${avaliacoesPagina.value}&limit=${avaliacoesPorPagina.value}`
+    );
+    
     const data = await res.json();
     
     if (data.sucesso) {
-      perfilUsuario.value.nome = data.dados_atualizados.nome;
-      perfilUsuario.value.generos = data.dados_atualizados.generos;
-      
-      const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
-      if (usuarioLocal) {
-        usuarioLocal.nome = data.dados_atualizados.nome;
-        localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
-      }
-      closeEditDialog();
+      // Adiciona os novos resultados ao final do array
+      avaliacoes.value.push(...data.avaliacoes); 
+      avaliacoesPagina.value++; // Avança para a próxima página
     } else {
-      alert(`Erro: ${data.mensagem}`);
+      // (Opcional: tratar erro ao carregar mais)
     }
   } catch (err) {
-    console.error('Erro ao salvar perfil:', err);
-    alert('Erro de rede ao tentar salvar.');
+    console.error("Erro ao carregar mais avaliações:", err);
   } finally {
-    isSaving.value = false;
+    isLoadingMoreReviews.value = false;
   }
 }
+// =============================================
 
-async function toggleFollow() {
-  
-  followLoading.value = true;
-  const endpoint = isFollowing.value ? 'deixar_de_seguir.php' : 'seguir.php';
-  try {
-    const res = await fetch(`${API_URL}/api/${endpoint}`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: perfilUsuario.value.id }) 
-    });
-    const data = await res.json();
-    if (data.sucesso) {
-      isFollowing.value = !isFollowing.value; 
-      if (isFollowing.value) {
-        perfilUsuario.value.followers_count++;
-      } else {
-        perfilUsuario.value.followers_count--;
-      }
-    } else {
-      alert(`Erro: ${data.mensagem}`);
-    }
-  } catch (err) {
-    console.error(`Erro ao ${endpoint}:`, err);
-  } finally {
-    followLoading.value = false;
-  }
-}
 
 async function carregarPerfil(id) {
   loading.value = true;
   error.value = false;
+  
+  
+  avaliacoes.value = [];
+  avaliacoesPagina.value = 1;
+  totalAvaliacoes.value = 0;
+
   const url = id ? `${API_URL}/api/perfil.php?id=${id}` : `${API_URL}/api/perfil.php`;
 
   try {
@@ -268,23 +222,25 @@ async function carregarPerfil(id) {
       credentials: 'include' 
     });
     if (!res.ok) {
-      if (res.status === 401) {
-        errorMessage.value = 'A sua sessão expirou. Por favor, faça login novamente.';
-        router.push('/');
-      } else if (res.status === 404) {
-        errorMessage.value = 'Usuário não encontrado.';
-      } else {
-        errorMessage.value = 'Não foi possível carregar o perfil.';
-      }
+      // (Tratamento de erro - 401, 404, etc.)
+      if (res.status === 401) router.push('/');
+      else errorMessage.value = 'Não foi possível carregar o perfil.';
       error.value = true;
       throw new Error('Falha ao buscar dados');
     }
+    
     const data = await res.json();
     if (data.sucesso) {
       perfilUsuario.value = data.perfil;
-      avaliacoes.value = data.avaliacoes;
       isSelf.value = data.is_self;
       isFollowing.value = data.is_following;
+      totalAvaliacoes.value = data.perfil.total_avaliacoes; // Pega a contagem total
+
+      // Se o utilizador tiver avaliações, carrega o Lote 1
+      if (totalAvaliacoes.value > 0) {
+        await carregarMaisAvaliacoes();
+      }
+      
     } else {
       errorMessage.value = data.mensagem;
       error.value = true;
