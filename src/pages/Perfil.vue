@@ -106,8 +106,8 @@
       </v-container>
 
       <v-dialog v-model="editDialog" max-width="500px" persistent>
-        <v-form ref="editFormRef" @submit="prevent="saveProfile">
-          <v-card>
+        <v-form ref="editFormRef" @submit.prevent="saveProfile">
+        <v-card>
             <v-card-title>Editar Perfil</v-card-title>
             <v-card-text>
               <v-text-field
@@ -172,7 +172,7 @@ function closeEditDialog() {
 }
 
 async function saveProfile() {
-  // Valida o formulário
+  
   const { valid } = await editFormRef.value.validate();
   if (!valid) return;
 
