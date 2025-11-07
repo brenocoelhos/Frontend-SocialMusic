@@ -154,19 +154,15 @@
                   <v-card-title class="text-h5 text-center font-weight-bold pt-5">Complete seu Cadastro</v-card-title>
                   <v-card-subtitle class="text-center mb-4 text-success">
                     <v-icon color="success" class="mr-1">mdi-spotify</v-icon>
-                    Conectado com Spotify: {{ spotifyEmail }}
+                    Conectado com Spotify!
                   </v-card-subtitle>
                   <v-card-text>
                     <v-text-field v-model="formData.nome" :rules="rules.required" label="Nome Completo"
                       variant="outlined" density="compact" class="mb-2"></v-text-field>
                     <v-text-field v-model="formData.username" :rules="rules.username" label="Nome de Usuário"
-                      variant="outlined" density="compact" class="mb-2"></v-text-field>
-                    <v-text-field v-model="formData.password" :rules="rules.required" label="Senha" variant="outlined"
-                      density="compact" type="password" class="mb-2"></v-text-field>
-                    <v-text-field v-model="formData.confirmPassword" :rules="[...rules.required, rules.passwordMatch]"
-                      label="Confirmar Senha" variant="outlined" density="compact" type="password"></v-text-field>
+                      variant="outlined" density="compact" class="mb-4"></v-text-field>
                     
-                    <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-6 text-none"
+                    <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-4 text-none"
                       style="background-color: #B39DDB; color: white;">
                       Finalizar Cadastro
                     </v-btn>
@@ -372,10 +368,6 @@ watch(() => route.path, () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
-// =================================================================
-// MUDANÇAS PARA SINCRONIZAR SESSÃO EXPIRADA
-// =================================================================
-
 // Função para lidar com a mudança de storage
 function handleStorageChange(event) {
   if (event.key === 'usuario' && event.newValue === null) {
@@ -411,9 +403,7 @@ onUnmounted(() => {
   window.removeEventListener('storage', handleStorageChange);
 });
 
-// =================================================================
-// FIM DAS MUDANÇAS
-// =================================================================
+
 
 
 // --- GERENCIAMENTO DE ESTADO E SESSÃO ---
@@ -557,6 +547,9 @@ const capturarDadosSpotify = () => {
     formData.nome = spotifyData.value.nome;
     formData.email = spotifyData.value.email;
     
+    // Limpar apenas username (senha não é necessária)
+    formData.username = '';
+    
     // Mudar para a view spotify-register e abrir o dialog
     view.value = 'spotify-register';
     dialog.value = true;
@@ -582,14 +575,16 @@ async function submitForm() {
       const payload = {
         nome: formData.nome,
         username: formData.username,
-        email: formData.email,
-        senha: formData.password
+        email: formData.email
       };
 
-      // Se for cadastro via Spotify, adicionar dados extras
+      // Se for cadastro via Spotify, adicionar dados extras (sem senha)
       if (view.value === 'spotify-register') {
         payload.origem = 'spotify';
         payload.spotifyId = spotifyData.value.spotify_id;
+      } else {
+        // Apenas cadastro normal precisa de senha
+        payload.senha = formData.password;
       }
 
       const res = await fetch(`${API_URL}/api/cadastro.php`, {
