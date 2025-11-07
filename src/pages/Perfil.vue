@@ -22,9 +22,9 @@
             <div class="d-flex justify-space-between align-center mb-6">
               <div>
                 <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">
-               {{ perfilUsuario.nome }}
+                  {{ perfilUsuario.nome }}
                 </h1>
-                <p class="text-body-2 text-grey-darken-1">{{ perfilUsuario.username }}</p>
+                <p class="text-body-2 text-grey-darken-1">@{{ perfilUsuario.username }}</p>
               </div>
               
               <v-btn 
@@ -56,7 +56,7 @@
               </h2>
               
               <v-alert v-if="avaliacoes.length === 0" type="info" variant="tonal">
-                Este utilizador ainda não fez nenhuma avaliação.
+                Este usuário ainda não fez nenhuma avaliação.
               </v-alert>
               
               <div v-for="(avaliacao, i) in avaliacoes" :key="i" class="mb-4">
@@ -67,20 +67,12 @@
                         <v-img :src="avaliacao.musica.capa"></v-img>
                       </v-avatar>
                       <div>
-                        <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">
-                          {{ avaliacao.musica.titulo }}
-                        </div>
-                        <div class="text-body-2 text-grey">
-                          {{ avaliacao.musica.artista }}
-                        </div>
+                        <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">{{ avaliacao.musica.titulo }}</div>
+                        <div class="text-body-2 text-grey">{{ avaliacao.musica.artista }}</div>
                       </div>
                     </div>
-                    <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">
-                      {{ avaliacao.titulo }}
-                    </h3>
-                    <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">
-                      {{ avaliacao.comentario }}
-                    </p>
+                    <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">{{ avaliacao.titulo }}</h3>
+                    <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">{{ avaliacao.comentario }}</p>
                     <div class="d-flex align-center">
                       <v-icon icon="mdi-heart" size="20"></v-icon>
                       <span class="text-body-2 ml-2 text-grey-darken-3 font-weight-medium">{{ avaliacao.likes }}</span>
@@ -88,7 +80,7 @@
                   </v-card-text>
                 </v-card>
               </div>
-              </div>
+            </div>
           </v-col>
           
           <v-col cols="12" md="5">
@@ -110,18 +102,45 @@
               </v-row>
               <div class="text-center">
                 <p class="text-caption text-grey-darken-1">
-                  Gêneros preferidos pop, eletrônico
+                  {{ perfilUsuario.generos || 'Sem gêneros preferidos' }}
                 </p>
-              </div>
+                </div>
             </v-card>
+
             </v-col>
         </v-row>
       </v-container>
 
       <v-dialog v-model="editDialog" max-width="500px" persistent>
-         </v-dialog>
-
-    </div>
+        <v-form ref="editFormRef" @submit.prevent="saveProfile">
+          <v-card>
+            <v-card-title>Editar Perfil</v-card-title>
+            <v-card-text>
+              <v-text-field
+                v-model="editForm.nome"
+                label="Nome"
+                variant="outlined"
+                :rules="[v => !!v || 'Nome é obrigatório']"
+                required
+                class="mb-3"
+              ></v-text-field>
+              
+              <v-text-field
+                v-model="editForm.generos"
+                label="Gêneros Preferidos (ex: pop, rock, eletrônico)"
+                variant="outlined"
+                hint="Separados por vírgula"
+              ></v-text-field>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn text @click="closeEditDialog" :disabled="isSaving">Cancelar</v-btn>
+              <v-btn color="primary" type="submit" :loading="isSaving">Salvar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-form>
+      </v-dialog>
+      </div>
   </div>
 </template>
 
@@ -143,33 +162,51 @@ const isFollowing = ref(false);
 const followLoading = ref(false);
 const musicasRecentes = ref([]); // (Mockado)
 const usuariosOnline = ref([]); // (Mockado)
+
+
 const editDialog = ref(false);
 const isSaving = ref(false);
-const editForm = reactive({ nome: '' });
+const editFormRef = ref(null); 
+const editForm = reactive({
+  nome: '',
+  generos: '' 
+});
 
 function openEditDialog() {
+  // Preenche o formulário com os dados atuais
   editForm.nome = perfilUsuario.value.nome;
+  editForm.generos = perfilUsuario.value.generos || ''; // Preenche com string vazia se for null
   editDialog.value = true;
 }
 function closeEditDialog() { 
   editDialog.value = false;
 }
+
 async function saveProfile() { 
-  if (!editForm.nome.trim()) return; 
+  // Valida o formulário
+  const { valid } = await editFormRef.value.validate();
+  if (!valid) return;
+
   isSaving.value = true;
   try {
     const res = await fetch(`${API_URL}/api/perfil_update.php`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome: editForm.nome })
+      body: JSON.stringify({ 
+        nome: editForm.nome,
+        generos: editForm.generos 
+      })
     });
     const data = await res.json();
+    
     if (data.sucesso) {
-      perfilUsuario.value.nome = data.nome_atualizado;
+      perfilUsuario.value.nome = data.dados_atualizados.nome;
+      perfilUsuario.value.generos = data.dados_atualizados.generos;
+      
       const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
       if (usuarioLocal) {
-        usuarioLocal.nome = data.nome_atualizado;
+        usuarioLocal.nome = data.dados_atualizados.nome;
         localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
       }
       closeEditDialog();
@@ -178,12 +215,15 @@ async function saveProfile() {
     }
   } catch (err) {
     console.error('Erro ao salvar perfil:', err);
+    alert('Erro de rede ao tentar salvar.');
   } finally {
     isSaving.value = false;
   }
 }
+// =============================================
 
 async function toggleFollow() {
+  
   followLoading.value = true;
   const endpoint = isFollowing.value ? 'deixar_de_seguir.php' : 'seguir.php';
   try {
@@ -196,7 +236,11 @@ async function toggleFollow() {
     const data = await res.json();
     if (data.sucesso) {
       isFollowing.value = !isFollowing.value; 
-      // (Atualização de contagem local omitida por brevidade)
+      if (isFollowing.value) {
+        perfilUsuario.value.followers_count++;
+      } else {
+        perfilUsuario.value.followers_count--;
+      }
     } else {
       alert(`Erro: ${data.mensagem}`);
     }
@@ -208,6 +252,7 @@ async function toggleFollow() {
 }
 
 async function carregarPerfil(id) {
+  // (Função de Carregar Perfil - sem alterações)
   loading.value = true;
   error.value = false;
   const url = id ? `${API_URL}/api/perfil.php?id=${id}` : `${API_URL}/api/perfil.php`;
@@ -222,7 +267,7 @@ async function carregarPerfil(id) {
         errorMessage.value = 'A sua sessão expirou. Por favor, faça login novamente.';
         router.push('/');
       } else if (res.status === 404) {
-        errorMessage.value = 'Utilizador não encontrado.';
+        errorMessage.value = 'Usuário não encontrado.';
       } else {
         errorMessage.value = 'Não foi possível carregar o perfil.';
       }
