@@ -537,9 +537,6 @@ const capturarDadosSpotify = () => {
       nome: urlParams.get('user_name')
     };
     
-    // TODO: Aqui você pode adicionar mais dados do usuário se o backend enviar
-    // Por exemplo: id, email, username, perfil
-    
     // Salva o usuário no localStorage (por enquanto só com nome)
     localStorage.setItem('usuario', JSON.stringify(userData));
     usuario.value = userData;
@@ -547,9 +544,8 @@ const capturarDadosSpotify = () => {
     // Mostra mensagem de sucesso
     showAlert(`Bem-vindo de volta, ${userData.nome}!`, 'success');
     
-    // Limpa a URL e recarrega a página
+    // Limpa a URL IMEDIATAMENTE (sem recarregar a página)
     window.history.replaceState({}, document.title, window.location.pathname);
-    setTimeout(() => location.reload(), 1000);
     
   } 
   // Verifica se é CADASTRO com Spotify (success=1 para cadastro)
