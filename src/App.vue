@@ -519,15 +519,13 @@ async function logout() {
 
 // --- FUNÇÃO DE LOGIN COM SPOTIFY ---
 function loginWithSpotify() {
-  // Redireciona para o backend que vai gerenciar a autenticação OAuth
-  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize';
+  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize&mode=login';
 }
 
 // --- FUNÇÃO PARA INICIAR CADASTRO COM SPOTIFY ---
 function startSpotifyRegister() {
   // Redireciona para o backend para autenticação Spotify
-  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize';
-}
+  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize&mode=register';}
 
 // --- FUNÇÃO PARA CAPTURAR DADOS DO SPOTIFY DA URL ---
 const capturarDadosSpotify = () => {
