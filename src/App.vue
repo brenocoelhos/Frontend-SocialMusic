@@ -110,7 +110,7 @@
                       <span class="text-caption text-grey">ou</span>
                     </v-divider>
 
-                    <v-btn @click="loginWithSpotify" block size="large" variant="outlined" class="text-none mb-4"
+                    <v-btn @click="startSpotifyRegister" block size="large" variant="outlined" class="text-none mb-4"
                       style="border-color: #1DB954; color: #1DB954;" prepend-icon="mdi-spotify">
                       Cadastrar com Spotify
                     </v-btn>
@@ -146,6 +146,34 @@
                     <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao" color="black"
                       @click="changeView('register')" style="text-decoration: underline;">
                       Cadastre-se
+                    </v-btn>
+                  </v-card-text>
+                </div>
+
+                <div v-if="view === 'spotify-register'">
+                  <v-card-title class="text-h5 text-center font-weight-bold pt-5">Complete seu Cadastro</v-card-title>
+                  <v-card-subtitle class="text-center mb-4 text-success">
+                    <v-icon color="success" class="mr-1">mdi-spotify</v-icon>
+                    Conectado com Spotify: {{ spotifyEmail }}
+                  </v-card-subtitle>
+                  <v-card-text>
+                    <v-text-field v-model="formData.nome" :rules="rules.required" label="Nome Completo"
+                      variant="outlined" density="compact" class="mb-2"></v-text-field>
+                    <v-text-field v-model="formData.username" :rules="rules.username" label="Nome de Usuário"
+                      variant="outlined" density="compact" class="mb-2"></v-text-field>
+                    <v-text-field v-model="formData.password" :rules="rules.required" label="Senha" variant="outlined"
+                      density="compact" type="password" class="mb-2"></v-text-field>
+                    <v-text-field v-model="formData.confirmPassword" :rules="[...rules.required, rules.passwordMatch]"
+                      label="Confirmar Senha" variant="outlined" density="compact" type="password"></v-text-field>
+                    
+                    <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-6 text-none"
+                      style="background-color: #B39DDB; color: white;">
+                      Finalizar Cadastro
+                    </v-btn>
+
+                    <v-btn block variant="plain" :ripple="false" class="mt-2 text-none ajuste-botao"
+                      @click="changeView('login')" style="text-decoration: underline;">
+                      Voltar ao Login
                     </v-btn>
                   </v-card-text>
                 </div>
@@ -366,6 +394,9 @@ onMounted(() => {
   // Ouve por mudanças no localStorage
   window.addEventListener('storage', handleStorageChange);
 
+  // Captura dados do Spotify se houver na URL
+  capturarDadosSpotify();
+
   // Verifica se já existe uma sessão
   const usuarioSalvo = localStorage.getItem('usuario');
   if (usuarioSalvo) {
@@ -393,6 +424,8 @@ const dialog = ref(false);
 const form = ref(null);
 const loading = ref(false);
 const view = ref('login');
+const spotifyEmail = ref(''); // Para armazenar o email vindo do Spotify
+const spotifyData = ref({}); // Para armazenar todos os dados do Spotify
 
 // --- CONTROLE DO NAVIGATION DRAWER ---
 const drawer = ref(false);
@@ -496,16 +529,46 @@ async function logout() {
 
 // --- FUNÇÃO DE LOGIN COM SPOTIFY ---
 function loginWithSpotify() {
-  // Configurações do Spotify OAuth
-  const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID
-  const redirectUri = 'https://socialmusic.vercel.app/callback'
-  const scopes = 'user-read-private user-read-email playlist-read-private user-top-read'
-
-  const spotifyAuthUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&show_dialog=true`
-
-  // Redireciona para a página de autorização do Spotify
-  window.location.href = spotifyAuthUrl;
+  // Redireciona para o backend que vai gerenciar a autenticação OAuth
+  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize';
 }
+
+// --- FUNÇÃO PARA INICIAR CADASTRO COM SPOTIFY ---
+function startSpotifyRegister() {
+  // Redireciona para o backend para autenticação Spotify
+  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize';
+}
+
+// --- FUNÇÃO PARA CAPTURAR DADOS DO SPOTIFY DA URL ---
+const capturarDadosSpotify = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  if (urlParams.get('success') === '1') {
+    // Dados do Spotify capturados com sucesso
+    spotifyData.value = {
+      email: urlParams.get('email'),
+      nome: urlParams.get('nome'),
+      spotify_id: urlParams.get('spotify_id'),
+      imagem: urlParams.get('imagem')
+    };
+    
+    // Pré-preencher o formulário
+    spotifyEmail.value = spotifyData.value.email;
+    formData.nome = spotifyData.value.nome;
+    formData.email = spotifyData.value.email;
+    
+    // Mudar para a view spotify-register e abrir o dialog
+    view.value = 'spotify-register';
+    dialog.value = true;
+    
+    // Limpar a URL (opcional, para ficar mais limpa)
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+  } else if (urlParams.get('error')) {
+    // Erro na autenticação
+    showAlert('Erro na autenticação Spotify: ' + urlParams.get('error'), 'error');
+  }
+};
 
 // --- LÓGICA DE SUBMISSÃO ---
 async function submitForm() {
@@ -515,22 +578,35 @@ async function submitForm() {
   loading.value = true;
 
   try {
-    if (view.value === 'register') {
+    if (view.value === 'register' || view.value === 'spotify-register') {
+      const payload = {
+        nome: formData.nome,
+        username: formData.username,
+        email: formData.email,
+        senha: formData.password
+      };
+
+      // Se for cadastro via Spotify, adicionar dados extras
+      if (view.value === 'spotify-register') {
+        payload.origem = 'spotify';
+        payload.spotifyId = spotifyData.value.spotify_id;
+      }
+
       const res = await fetch(`${API_URL}/api/cadastro.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
-        body: JSON.stringify({
-          nome: formData.nome,
-          username: formData.username,
-          email: formData.email,
-          senha: formData.password
-        })
+        body: JSON.stringify(payload)
       });
+      
       const data = await res.json();
 
       if (data.sucesso) {
-        showAlert(data.mensagem, "success");
+        if (view.value === 'spotify-register') {
+          showAlert("Cadastro com Spotify realizado com sucesso!", "success");
+        } else {
+          showAlert(data.mensagem, "success");
+        }
         changeView('login');
       } else {
         showAlert(data.mensagem, "error");
