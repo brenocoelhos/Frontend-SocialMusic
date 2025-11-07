@@ -32,10 +32,10 @@
 
             <div>
               <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">
-                {{ isSelf ? 'Minhas Avaliações' : `Avaliações de ${perfilUsuario.nome}` }} ({{ totalAvaliacoes }})
+                {{ isSelf ? 'Minhas Avaliações' : `Avaliações de ${perfilUsuario.nome}` }}
               </h2>
               
-              <v-alert v-if="totalAvaliacoes === 0" type="info" variant="tonal">
+              <v-alert v-if="avaliacoes.length === 0" type="info" variant="tonal">
                 Este usuário ainda não fez nenhuma avaliação.
               </v-alert>
               
@@ -62,18 +62,6 @@
                 </v-card>
               </div>
               
-              <div v-if="avaliacoes.length < totalAvaliacoes" class="text-center mt-6">
-                <v-btn
-                  :loading="isLoadingMoreReviews"
-                  variant="outlined"
-                  class="text-none"
-                  rounded="lg"
-                  size="large"
-                  @click="carregarMaisAvaliacoes"
-                >
-                  Carregar Mais Avaliações
-                </v-btn>
-              </div>
               </div>
           </v-col>
           
@@ -145,75 +133,32 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onr
 const router = useRouter();
 const route = useRoute();
 
-const loading = ref(true); // Loading do perfil principal
+const loading = ref(true); 
 const error = ref(false);
 const errorMessage = ref('');
 const perfilUsuario = ref({});
 const isSelf = ref(false);
 const isFollowing = ref(false);
 const followLoading = ref(false);
-
-// (Dados estáticos mockados)
 const musicasRecentes = ref([]); 
 const usuariosOnline = ref([]); 
-
 const editDialog = ref(false);
 const isSaving = ref(false);
 const editFormRef = ref(null); 
 const editForm = reactive({ nome: '', generos: '' });
-function openEditDialog() { /* ... */ }
-function closeEditDialog() { /* ... */ }
-async function saveProfile() { /* ... */ }
-async function toggleFollow() { /* ... */ }
-
 
 const avaliacoes = ref([]); // O array que o v-for usa
-const totalAvaliacoes = ref(0); // A contagem total da API
-const avaliacoesPagina = ref(1); // A página atual
-const avaliacoesPorPagina = ref(3); // Quantos carregar de cada vez
-const isLoadingMoreReviews = ref(false); // Loading do botão
 
-// Esta função agora SÓ carrega as avaliações
-async function carregarMaisAvaliacoes() {
-  if (isLoadingMoreReviews.value) return;
-  isLoadingMoreReviews.value = true;
-
-  try {
-    // Busca o ID do perfil que já foi carregado
-    const perfilId = perfilUsuario.value.id;
-    if (!perfilId) return;
-
-    const res = await fetch(
-      `${API_URL}/api/perfil_avaliacoes.php?id=${perfilId}&page=${avaliacoesPagina.value}&limit=${avaliacoesPorPagina.value}`
-    );
-    
-    const data = await res.json();
-    
-    if (data.sucesso) {
-      // Adiciona os novos resultados ao final do array
-      avaliacoes.value.push(...data.avaliacoes); 
-      avaliacoesPagina.value++; // Avança para a próxima página
-    } else {
-      // (Opcional: tratar erro ao carregar mais)
-    }
-  } catch (err) {
-    console.error("Erro ao carregar mais avaliações:", err);
-  } finally {
-    isLoadingMoreReviews.value = false;
-  }
-}
-// =============================================
+function openEditDialog() { /* ... (código existente) ... */ }
+function closeEditDialog() { /* ... (código existente) ... */ }
+async function saveProfile() { /* ... (código existente) ... */ }
+async function toggleFollow() { /* ... (código existente) ... */ }
 
 
 async function carregarPerfil(id) {
   loading.value = true;
   error.value = false;
   
-  
-  avaliacoes.value = [];
-  avaliacoesPagina.value = 1;
-  totalAvaliacoes.value = 0;
-
   const url = id ? `${API_URL}/api/perfil.php?id=${id}` : `${API_URL}/api/perfil.php`;
 
   try {
@@ -222,7 +167,6 @@ async function carregarPerfil(id) {
       credentials: 'include' 
     });
     if (!res.ok) {
-      // (Tratamento de erro - 401, 404, etc.)
       if (res.status === 401) router.push('/');
       else errorMessage.value = 'Não foi possível carregar o perfil.';
       error.value = true;
@@ -234,12 +178,10 @@ async function carregarPerfil(id) {
       perfilUsuario.value = data.perfil;
       isSelf.value = data.is_self;
       isFollowing.value = data.is_following;
-      totalAvaliacoes.value = data.perfil.total_avaliacoes; // Pega a contagem total
-
-      // Se o utilizador tiver avaliações, carrega o Lote 1
-      if (totalAvaliacoes.value > 0) {
-        await carregarMaisAvaliacoes();
-      }
+      
+      avaliacoes.value = data.avaliacoes; 
+      
+      
       
     } else {
       errorMessage.value = data.mensagem;
