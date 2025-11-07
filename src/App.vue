@@ -532,28 +532,51 @@ const capturarDadosSpotify = () => {
   const urlParams = new URLSearchParams(window.location.search);
   
   if (urlParams.get('success') === '1') {
-    // Dados do Spotify capturados com sucesso
-    spotifyData.value = {
-      email: urlParams.get('email'),
-      nome: urlParams.get('nome'),
-      spotify_id: urlParams.get('spotify_id'),
-      imagem: urlParams.get('imagem')
-    };
+    const mode = urlParams.get('mode');
     
-    // Pré-preencher o formulário
-    spotifyEmail.value = spotifyData.value.email;
-    formData.nome = spotifyData.value.nome;
-    formData.email = spotifyData.value.email;
-    
-    // Limpar apenas username (senha não é necessária)
-    formData.username = '';
-    
-    // Mudar para a view spotify-register e abrir o dialog
-    view.value = 'spotify-register';
-    dialog.value = true;
-    
-    // Limpar a URL (opcional, para ficar mais limpa)
-    window.history.replaceState({}, document.title, window.location.pathname);
+    if (mode === 'login') {
+      // LOGIN com Spotify - usuário já existe
+      const userData = {
+        id: urlParams.get('user_id'),
+        nome: urlParams.get('nome'),
+        email: urlParams.get('email'),
+        username: urlParams.get('username'),
+        perfil: urlParams.get('perfil') || 'user'
+      };
+      
+      // Salva o usuário no localStorage
+      localStorage.setItem('usuario', JSON.stringify(userData));
+      usuario.value = userData;
+      
+      // Mostra mensagem de sucesso
+      showAlert('Login com Spotify realizado com sucesso!', 'success');
+      
+      // Limpa a URL e recarrega a página
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setTimeout(() => location.reload(), 1000);
+      
+    } else if (mode === 'register') {
+      // CADASTRO com Spotify - usuário precisa completar dados
+      spotifyData.value = {
+        email: urlParams.get('email'),
+        nome: urlParams.get('nome'),
+        spotify_id: urlParams.get('spotify_id'),
+        imagem: urlParams.get('imagem')
+      };
+      
+      // Pré-preencher o formulário
+      spotifyEmail.value = spotifyData.value.email;
+      formData.nome = spotifyData.value.nome;
+      formData.email = spotifyData.value.email;
+      formData.username = '';
+      
+      // Mudar para a view spotify-register e abrir o dialog
+      view.value = 'spotify-register';
+      dialog.value = true;
+      
+      // Limpar a URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
     
   } else if (urlParams.get('error')) {
     // Erro na autenticação
