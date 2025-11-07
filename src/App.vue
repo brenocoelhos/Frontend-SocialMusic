@@ -531,54 +531,52 @@ function startSpotifyRegister() {
 const capturarDadosSpotify = () => {
   const urlParams = new URLSearchParams(window.location.search);
   
-  if (urlParams.get('success') === '1') {
-    const mode = urlParams.get('mode');
+  // Verifica se é LOGIN com Spotify (usuário já existe)
+  if (urlParams.get('spotify_login') === 'success') {
+    const userData = {
+      nome: urlParams.get('user_name')
+    };
     
-    if (mode === 'login') {
-      // LOGIN com Spotify - usuário já existe
-      const userData = {
-        id: urlParams.get('user_id'),
-        nome: urlParams.get('nome'),
-        email: urlParams.get('email'),
-        username: urlParams.get('username'),
-        perfil: urlParams.get('perfil') || 'user'
-      };
-      
-      // Salva o usuário no localStorage
-      localStorage.setItem('usuario', JSON.stringify(userData));
-      usuario.value = userData;
-      
-      // Mostra mensagem de sucesso
-      showAlert('Login com Spotify realizado com sucesso!', 'success');
-      
-      // Limpa a URL e recarrega a página
-      window.history.replaceState({}, document.title, window.location.pathname);
-      setTimeout(() => location.reload(), 1000);
-      
-    } else if (mode === 'register') {
-      // CADASTRO com Spotify - usuário precisa completar dados
-      spotifyData.value = {
-        email: urlParams.get('email'),
-        nome: urlParams.get('nome'),
-        spotify_id: urlParams.get('spotify_id'),
-        imagem: urlParams.get('imagem')
-      };
-      
-      // Pré-preencher o formulário
-      spotifyEmail.value = spotifyData.value.email;
-      formData.nome = spotifyData.value.nome;
-      formData.email = spotifyData.value.email;
-      formData.username = '';
-      
-      // Mudar para a view spotify-register e abrir o dialog
-      view.value = 'spotify-register';
-      dialog.value = true;
-      
-      // Limpar a URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+    // TODO: Aqui você pode adicionar mais dados do usuário se o backend enviar
+    // Por exemplo: id, email, username, perfil
     
-  } else if (urlParams.get('error')) {
+    // Salva o usuário no localStorage (por enquanto só com nome)
+    localStorage.setItem('usuario', JSON.stringify(userData));
+    usuario.value = userData;
+    
+    // Mostra mensagem de sucesso
+    showAlert(`Bem-vindo de volta, ${userData.nome}!`, 'success');
+    
+    // Limpa a URL e recarrega a página
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setTimeout(() => location.reload(), 1000);
+    
+  } 
+  // Verifica se é CADASTRO com Spotify (success=1 para cadastro)
+  else if (urlParams.get('success') === '1') {
+    // CADASTRO com Spotify - usuário precisa completar dados
+    spotifyData.value = {
+      email: urlParams.get('email'),
+      nome: urlParams.get('nome'),
+      spotify_id: urlParams.get('spotify_id'),
+      imagem: urlParams.get('imagem')
+    };
+    
+    // Pré-preencher o formulário
+    spotifyEmail.value = spotifyData.value.email;
+    formData.nome = spotifyData.value.nome;
+    formData.email = spotifyData.value.email;
+    formData.username = '';
+    
+    // Mudar para a view spotify-register e abrir o dialog
+    view.value = 'spotify-register';
+    dialog.value = true;
+    
+    // Limpar a URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  // Verifica se houve erro
+  else if (urlParams.get('error')) {
     // Erro na autenticação
     showAlert('Erro na autenticação Spotify: ' + urlParams.get('error'), 'error');
   }
