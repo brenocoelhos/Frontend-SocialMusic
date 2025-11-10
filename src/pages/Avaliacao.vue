@@ -173,8 +173,7 @@
                           <p class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</p>
                         </div>
                         <div>
-                          <v-btn v-if="loggedInUserId !== review.usuario_id"
-                            :loading="followLoadingId === review.id"
+                          <v-btn v-if="loggedInUserId !== review.usuario_id" :loading="followLoadingId === review.id"
                             :variant="review.is_following ? 'outlined' : 'flat'" color="EEE8FF" class="text-none"
                             rounded="lg" @click="toggleFollow(review)">
                             {{ review.is_following ? 'Seguindo' : 'Seguir' }}
@@ -340,7 +339,7 @@ function formatDate(dateString) {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
-      timeZone: 'UTC'
+      timeZone: 'UTC-3'
     }).format(date);
   } catch (e) {
     return '--';
@@ -427,20 +426,29 @@ async function loadTrackFromQuery(query) {
       track_name: query.name,
       artist_name: query.artist,
       image_url: query.image,
-      spotify_url: query.spotify,
       // Formata os dados que vieram da URL
       duration: formatDuration(query.duration_ms),
       release_date: formatDate(query.release_date),
       popularity: query.popularity,
       explicit: query.explicit === 'true',
       album_name: query.album_name,
-      album_type: formatAlbumType(query.album_type)
+      album_type: formatAlbumType(query.album_type),
+      spotify_url: query.spotify
     };
 
-    await Promise.all([
+    // Verifica se os dados ricos estão faltando
+    const dadosRicosFaltando = !query.duration_ms || !query.popularity;
+
+    const promises = [
       checkExistingReview(track.value.id),
       fetchPageReviews(track.value.id, 1)
-    ]);
+    ];
+
+    if (dadosRicosFaltando) {
+      promises.push(fetchMissingTrackDetails(track.value.id));
+    }
+
+    await Promise.all(promises);
 
   } catch (err) {
     console.error("Erro ao processar dados da URL:", err);
@@ -613,5 +621,28 @@ watch(
   },
   { immediate: true, deep: true },
 );
+
+// Função para preencher os detalhes da música
+async function fetchMissingTrackDetails(spotifyId) {
+  try {
+    const response = await axios.get(`/api/detalhes_musica.php?id=${spotifyId}`
+    );
+    if (response.data.sucesso && response.data.track) {
+      const spotifyTrack = response.data.track;
+      track.value = {
+        duration: formatDuration(spotifyTrack.duration_ms),
+        release_date: formatDate(spotifyTrack.album.release_date),
+        popularity: spotifyTrack.popularity,
+        explicit: spotifyTrack.explicit,
+        album_name: spotifyTrack.album.name,
+        album_type: formatAlbumType(spotifyTrack.album.album_type),
+        spotify_url: spotifyTrack.external_urls.spotify
+      };
+    }
+  } catch (err) {
+    console.error("Erro ao buscar detalhes da música:", err);
+    return null;
+  }
+}
 
 </script>
