@@ -161,7 +161,7 @@
                       variant="outlined" density="compact" class="mb-2"></v-text-field>
                     <v-text-field v-model="formData.username" :rules="rules.username" label="Nome de Usuário"
                       variant="outlined" density="compact" class="mb-4"></v-text-field>
-                    
+
                     <v-btn type="submit" :loading="loading" block size="large" variant="flat" class="mt-4 text-none"
                       style="background-color: #B39DDB; color: white;">
                       Finalizar Cadastro
@@ -525,29 +525,36 @@ function loginWithSpotify() {
 // --- FUNÇÃO PARA INICIAR CADASTRO COM SPOTIFY ---
 function startSpotifyRegister() {
   // Redireciona para o backend para autenticação Spotify
-  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize&mode=register';}
+  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize&mode=register';
+}
 
 // --- FUNÇÃO PARA CAPTURAR DADOS DO SPOTIFY DA URL ---
 const capturarDadosSpotify = () => {
   const urlParams = new URLSearchParams(window.location.search);
-  
+
   // Verifica se é LOGIN com Spotify (usuário já existe)
   if (urlParams.get('spotify_login') === 'success') {
     const userData = {
-      nome: urlParams.get('user_name')
+      id: urlParams.get('id'),
+      nome: urlParams.get('nome'),
+      email: urlParams.get('email'),
+      perfil: urlParams.get('perfil'),
+      foto: urlParams.get('foto')
     };
-    
-    // Salva o usuário no localStorage (por enquanto só com nome)
+
+    // Salva o usuário COMPLETO no localStorage
     localStorage.setItem('usuario', JSON.stringify(userData));
     usuario.value = userData;
-    
+
     // Mostra mensagem de sucesso
     showAlert(`Bem-vindo de volta, ${userData.nome}!`, 'success');
-    
+
     // Limpa a URL IMEDIATAMENTE (sem recarregar a página)
     window.history.replaceState({}, document.title, window.location.pathname);
-    
-  } 
+
+    // RECARREGA A PÁGINA, reconhecer o novo estado de login
+    location.reload();
+  }
   // Verifica se é CADASTRO com Spotify (success=1 para cadastro)
   else if (urlParams.get('success') === '1') {
     // CADASTRO com Spotify - usuário precisa completar dados
@@ -557,17 +564,17 @@ const capturarDadosSpotify = () => {
       spotify_id: urlParams.get('spotify_id'),
       imagem: urlParams.get('imagem')
     };
-    
+
     // Pré-preencher o formulário
     spotifyEmail.value = spotifyData.value.email;
     formData.nome = spotifyData.value.nome;
     formData.email = spotifyData.value.email;
     formData.username = '';
-    
+
     // Mudar para a view spotify-register e abrir o dialog
     view.value = 'spotify-register';
     dialog.value = true;
-    
+
     // Limpar a URL
     window.history.replaceState({}, document.title, window.location.pathname);
   }
@@ -608,7 +615,7 @@ async function submitForm() {
         credentials: 'include',
         body: JSON.stringify(payload)
       });
-      
+
       const data = await res.json();
 
       if (data.sucesso) {
@@ -650,6 +657,7 @@ async function submitForm() {
     loading.value = false;
   }
 }
+
 </script>
 
 <style scoped>
