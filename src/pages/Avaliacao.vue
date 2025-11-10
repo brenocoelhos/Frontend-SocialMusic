@@ -159,52 +159,50 @@
 
             <div v-else>
               <v-card v-for="review in reviewsList" :key="review.id" rounded="xl" elevation="2" class="mb-4">
-                <v-card-text class="pa-6">
-                  <div class="d-flex align-start">
+
+                <v-list-item :to="`/perfil/${review.usuario_id}`" class="pa-6" lines="two">
+                  <template v-slot:prepend>
                     <v-avatar size="56" class="mr-4">
                       <v-img v-if="review.usuario_avatar" :src="review.usuario_avatar" alt="Avatar do usuário" cover />
                       <v-icon v-else size="56" color="grey-lighten-1">mdi-account-circle</v-icon>
                     </v-avatar>
+                  </template>
 
-                    <div class="flex-grow-1">
-                      <div class="d-flex align-center justify-space-between mb-2">
-                        <div>
-                          <h3 class="text-h6 font-weight-bold">{{ review.usuario_nome }}</h3>
-                          <p class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</p>
-                        </div>
-                        <div>
-                          <v-btn v-if="loggedInUserId !== review.usuario_id" :loading="followLoadingId === review.id"
-                            :variant="review.is_following ? 'outlined' : 'flat'" color="EEE8FF" class="text-none"
-                            rounded="lg" @click="toggleFollow(review)">
-                            {{ review.is_following ? 'Seguindo' : 'Seguir' }}
-                          </v-btn>
-                        </div>
-                      </div>
+                  <template v-slot:append>
+                    <v-btn v-if="loggedInUserId !== review.usuario_id" :loading="followLoadingId === review.id"
+                      :variant="review.is_following ? 'outlined' : 'flat'" color="EEE8FF" class="text-none" rounded="lg"
+                      @click.prevent="toggleFollow(review)">
+                      {{ review.is_following ? 'Seguindo' : 'Seguir' }}
+                    </v-btn>
+                  </template>
 
-                      <div class="mb-2">
-                        <v-rating :model-value="parseFloat(review.nota)" color="amber" half-increments readonly
-                          size="small" density="compact" />
-                      </div>
+                  <v-list-item-title class="text-h6 font-weight-bold mb-1">{{ review.usuario_nome }}</v-list-item-title>
+                  <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao)
+                    }}</v-list-item-subtitle>
 
-                      <h4 v-if="review.titulo" class="text-body-1 font-weight-bold mb-1">{{ review.titulo }}</h4>
+                </v-list-item>
 
-                      <div class="d-flex align-center justify-space-between mb-2">
-                        <p class="text-body-1">{{ review.comentario }}</p>
+                <v-card-text class="pt-0 pl-16 ml-2">
+                  <div class="mb-2">
+                    <v-rating :model-value="parseFloat(review.nota)" color="amber" half-increments readonly size="small"
+                      density="compact" />
+                  </div>
 
-                        <v-btn variant="text" size="small" class="text-none"
-                          :color="review.usuario_curtiu ? 'red' : 'grey-darken-1'"
-                          :loading="likeLoadingId === review.id" @click="toggleLike(review)"
-                          :disabled="likeLoadingId === review.id">
-                          <v-icon start>{{ review.usuario_curtiu ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
-                          {{ review.total_curtidas }}
-                        </v-btn>
-                      </div>
+                  <h4 v-if="review.titulo" class="text-body-1 font-weight-bold mb-1">{{ review.titulo }}</h4>
+                  <p class="text-body-1 mb-2">{{ review.comentario }}</p>
 
-                    </div>
+                  <div class="d-flex align-center justify-end">
+                    <v-btn variant="text" size="small" class="text-none"
+                      :color="review.usuario_curtiu ? 'red' : 'grey-darken-1'" :loading="likeLoadingId === review.id"
+                      @click.prevent="toggleLike(review)" :disabled="likeLoadingId === review.id">
+                      <v-icon start>{{ review.usuario_curtiu ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
+                      {{ review.total_curtidas }}
+                    </v-btn>
                   </div>
                 </v-card-text>
-              </v-card>
 
+              </v-card>
+              
               <div v-if="hasMoreReviews" class="text-center mt-6">
                 <v-btn :loading="isLoadingMore" variant="outlined" class="text-none" rounded="lg" size="large"
                   @click="loadMoreReviews">
