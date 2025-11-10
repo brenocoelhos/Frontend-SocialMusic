@@ -84,11 +84,39 @@
 
           <v-col cols="12" md="5">
             <v-card rounded="xl" class="mb-6 pa-8 text-center" color="white" flat elevation="0">
+              
               <div class="d-flex justify-center mb-4">
-                <v-avatar size="160">
+                <v-avatar size="160" style="position: relative;">
                   <v-img :src="perfilUsuario.avatar"></v-img>
+                  
+                  <v-btn
+                    v-if="isSelf"
+                    icon="mdi-pencil"
+                    size="small"
+                    color="primary"
+                    style="position: absolute; bottom: 8px; right: 8px;"
+                    @click="triggerUpload"
+                    :loading="isUploading"
+                  ></v-btn>
+                  
+                  <v-btn
+                    v-if="isSelf && perfilUsuario.foto_perfil"
+                    icon="mdi-delete"
+                    size="small"
+                    color="error"
+                    style="position: absolute; top: 8px; right: 8px;"
+                    @click="removePhoto"
+                    :loading="isUploading"
+                  ></v-btn>
                 </v-avatar>
               </div>
+
+              <v-file-input
+                ref="fileInput"
+                v-show="false"
+                accept="image/png, image/jpeg"
+                @change="onFileChange"
+              ></v-file-input>
               <v-row class="mb-4">
                 <v-col class="text-center">
                   <div class="text-h5 font-weight-bold">{{ perfilUsuario.followers_count }}</div>
@@ -141,14 +169,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onr
 const router = useRouter();
 const route = useRoute();
 
-// Injetar funções do app.vue
 const openLoginDialog = inject('openLoginDialog');
 const showAlert = inject('showAlert');
 
-// Estado de login e curtida
 const loggedInUserId = ref(null);
 const likeLoadingId = ref(null);
-
 const loading = ref(true);
 const error = ref(false);
 const errorMessage = ref('');
@@ -163,6 +188,95 @@ const isSaving = ref(false);
 const editFormRef = ref(null);
 const editForm = reactive({ nome: '', generos: '' });
 
+const fileInput = ref(null); // Ref para o v-file-input
+const isUploading = ref(false); // Loading para os botões do avatar
+
+// 1. Função para "clicar" no input escondido
+function triggerUpload() {
+  fileInput.value.click();
+}
+
+// 2. Função chamada quando o utilizador seleciona um ficheiro
+async function onFileChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  isUploading.value = true;
+  const formData = new FormData();
+  formData.append('foto', file); // 'foto' deve corresponder ao $_FILES['foto'] no PHP
+
+  try {
+    const res = await fetch(`${API_URL}/api/perfil_foto_update.php`, {
+      method: 'POST',
+      credentials: 'include', // Envia o cookie de sessão
+      body: formData, // Envia como FormData (NÃO JSON)
+    });
+
+    const data = await res.json();
+    if (res.ok && data.sucesso) {
+      // Atualiza o avatar na página
+      perfilUsuario.value.avatar = data.nova_url;
+      // Atualiza o 'foto_perfil' (para o botão 'remover' aparecer)
+      perfilUsuario.value.foto_perfil = data.nova_url;
+      
+      atualizarLocalStorageFoto(data.nova_url);
+      showAlert('Foto de perfil atualizada!', 'success');
+    } else {
+      showAlert(data.mensagem || 'Erro ao enviar imagem.', 'error');
+    }
+
+  } catch (err) {
+    console.error('Erro ao fazer upload do avatar:', err);
+    showAlert('Erro de rede ao enviar a imagem.', 'error');
+  } finally {
+    isUploading.value = false;
+  }
+}
+
+// 3. Função para REMOVER a foto
+async function removePhoto() {
+  if (!confirm('Tem a certeza que quer remover a sua foto de perfil?')) {
+    return;
+  }
+  
+  isUploading.value = true;
+  try {
+    const res = await fetch(`${API_URL}/api/perfil_foto_remove.php`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    
+    const data = await res.json();
+    if (res.ok && data.sucesso) {
+      // Atualiza o avatar para o padrão
+      perfilUsuario.value.avatar = data.nova_url;
+      perfilUsuario.value.foto_perfil = null;
+      
+      atualizarLocalStorageFoto(null);
+      showAlert('Foto de perfil removida.', 'success');
+    } else {
+      showAlert(data.mensagem || 'Erro ao remover foto.', 'error');
+    }
+
+  } catch (err) {
+    console.error('Erro ao remover a foto:', err);
+    showAlert('Erro de rede ao remover a foto.', 'error');
+  } finally {
+    isUploading.value = false;
+  }
+}
+
+// 4. Função auxiliar para atualizar o localStorage
+function atualizarLocalStorageFoto(novaUrl) {
+  const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
+  if (usuarioLocal) {
+    // Adiciona/atualiza a foto no objeto do localStorage
+    usuarioLocal.foto_perfil = novaUrl;
+    localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
+  }
+}
+
+
 function openEditDialog() {
   editForm.nome = perfilUsuario.value.nome;
   editForm.generos = perfilUsuario.value.generos || '';
@@ -172,7 +286,6 @@ function closeEditDialog() {
   editDialog.value = false;
 }
 
-// Lógica de curtida
 async function toggleLike(review) {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -218,11 +331,9 @@ async function saveProfile() {
     const data = await res.json();
 
     if (data.sucesso) {
-      // Atualiza os dados na página (localmente)
       perfilUsuario.value.nome = data.dados_atualizados.nome;
       perfilUsuario.value.generos = data.dados_atualizados.generos;
 
-      // Atualiza o localStorage (para o App.vue)
       const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
       if (usuarioLocal) {
         usuarioLocal.nome = data.dados_atualizados.nome;
@@ -277,13 +388,12 @@ const reviewsVisiveis = computed(() => {
   return avaliacoes.value.slice(0, reviewsVisiveisCount.value);
 });
 
-// Função que o botão chama
 function carregarMaisAvaliacoes() {
   isLoadingMoreReviews.value = true;
   setTimeout(() => {
-    reviewsVisiveisCount.value += 3; // Mostra mais 3
+    reviewsVisiveisCount.value += 3;
     isLoadingMoreReviews.value = false;
-  }, 300); // 300ms de delay
+  }, 300);
 }
 
 
@@ -315,7 +425,7 @@ async function carregarPerfil(id) {
       perfilUsuario.value = data.perfil;
       isSelf.value = data.is_self;
       isFollowing.value = data.is_following;
-      avaliacoes.value = data.avaliacoes; // Carrega todas as 10 avaliações aqui
+      avaliacoes.value = data.avaliacoes;
     } else {
       errorMessage.value = data.mensagem;
       error.value = true;
