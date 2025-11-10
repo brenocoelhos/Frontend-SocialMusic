@@ -39,7 +39,8 @@
                 <v-card hover color="transparent" flat :to="getAvaliacaoUrl(musica)">
                   <v-img :src="musica.capa" class="rounded-lg"></v-img>
                   <v-card-title class="text-subtitle-1 pa-1 mt-2">{{ musica.titulo }}</v-card-title>
-                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista }}</v-card-subtitle>
+                  <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista
+                    }}</v-card-subtitle>
                 </v-card>
               </v-col>
             </v-row>
@@ -124,7 +125,8 @@
             </div>
 
             <v-list v-else lines="two" bg-color="transparent">
-              <v-list-item v-for="musica in musicasDestaque" :key="musica.id" :to="getAvaliacaoUrl(musica)" class="mb-2">
+              <v-list-item v-for="musica in musicasDestaque" :key="musica.id" :to="getAvaliacaoUrl(musica)"
+                class="mb-2">
                 <template v-slot:prepend>
                   <v-avatar size="56" rounded="lg">
                     <v-img :src="musica.capa_url"></v-img>
@@ -422,8 +424,11 @@ function getAvaliacaoUrl(musica) {
   params.append('id', musica.id);
   params.append('name', musica.titulo);
   params.append('artist', musica.artista);
-  params.append('image', musica.capa);
-
+  const imageUrl = musica.capa || musica.capa_url;
+  if (imageUrl) {
+    params.append('image', imageUrl);
+  }
+  
   return `/avaliacao?${params.toString()}`;
 }
 

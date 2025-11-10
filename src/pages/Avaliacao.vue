@@ -625,11 +625,13 @@ watch(
 // Função para preencher os detalhes da música
 async function fetchMissingTrackDetails(spotifyId) {
   try {
-    const response = await axios.get(`/api/detalhes_musica.php?id=${spotifyId}`
-    );
+    const response = await axios.get(`/api/detalhes_musica.php?id=${spotifyId}`);
+
     if (response.data.sucesso && response.data.track) {
       const spotifyTrack = response.data.track;
+
       track.value = {
+        ...track.value,
         duration: formatDuration(spotifyTrack.duration_ms),
         release_date: formatDate(spotifyTrack.album.release_date),
         popularity: spotifyTrack.popularity,
