@@ -436,17 +436,10 @@ async function loadTrackFromQuery(query) {
       spotify_url: query.spotify
     };
 
-    // Verifica se os dados ricos estão faltando
-    const dadosRicosFaltando = !query.duration_ms || !query.popularity;
-
     const promises = [
       checkExistingReview(track.value.id),
       fetchPageReviews(track.value.id, 1)
     ];
-
-    if (dadosRicosFaltando) {
-      promises.push(fetchMissingTrackDetails(track.value.id));
-    }
 
     await Promise.all(promises);
 
@@ -621,30 +614,5 @@ watch(
   },
   { immediate: true, deep: true },
 );
-
-// Função para preencher os detalhes da música
-async function fetchMissingTrackDetails(spotifyId) {
-  try {
-    const response = await axios.get(`/api/detalhes_musica.php?id=${spotifyId}`);
-
-    if (response.data.sucesso && response.data.track) {
-      const spotifyTrack = response.data.track;
-
-      track.value = {
-        ...track.value,
-        duration: formatDuration(spotifyTrack.duration_ms),
-        release_date: formatDate(spotifyTrack.album.release_date),
-        popularity: spotifyTrack.popularity,
-        explicit: spotifyTrack.explicit,
-        album_name: spotifyTrack.album.name,
-        album_type: formatAlbumType(spotifyTrack.album.album_type),
-        spotify_url: spotifyTrack.external_urls.spotify
-      };
-    }
-  } catch (err) {
-    console.error("Erro ao buscar detalhes da música:", err);
-    return null;
-  }
-}
 
 </script>

@@ -428,6 +428,13 @@ function getAvaliacaoUrl(musica) {
   if (imageUrl) {
     params.append('image', imageUrl);
   }
+  params.append('spotify', musica.spotify_url);
+  params.append('duration_ms', musica.duration_ms);
+  params.append('release_date', musica.release_date);
+  params.append('popularity', musica.popularity);
+  params.append('explicit', musica.explicit); 
+  params.append('album_name', musica.album_name); 
+  params.append('album_type', musica.album_type);
   
   return `/avaliacao?${params.toString()}`;
 }
