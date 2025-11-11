@@ -23,7 +23,7 @@
             <v-progress-circular indeterminate color="#EEE8FF" size="64"></v-progress-circular>
           </div>
 
-          <div v-else-if="!isLoading && searched && firstTrack === null">
+          <div v-else-if="!isLoadingTracks && searched && firstTrack === null">
             <v-card-text class="text-center text-grey">
               Nenhuma música encontrada.
             </v-card-text>
@@ -80,7 +80,7 @@
               <v-list-item-title>{{ membro.nome }}</v-list-item-title>
               <v-list-item-subtitle>@{{ membro.username }}</v-list-item-subtitle>
             </v-list-item>
-            
+
           </v-list>
         </v-col>
       </v-row>
@@ -110,12 +110,12 @@ const isLoadingMembers = ref(false);
 
 // Computed para o primeiro track (destaque)
 const firstTrack = computed(() => {
-  return results.value.length > 0 ? results.value[0] : null;
+  return trackResults.value.length > 0 ? trackResults.value[0] : null;
 });
 
 // Computed para os outros tracks (a partir do segundo)
 const otherTracks = computed(() => {
-  return results.value.slice(1);
+  return trackResults.value.slice(1);
 });
 
 // URL para a página de avaliação com todos os dados
