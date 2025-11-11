@@ -59,29 +59,32 @@
         <v-col cols="12" md="4">
           <h2 class="text-h6 mb-4">Membros</h2>
 
-          <div v-if="isLoadingMembers">
-            <v-skeleton-loader v-for="n in 10" :key="n" type="list-item-avatar" class="mb-2"></v-skeleton-loader>
-          </div>
+          <v-card rounded="lg">
+            <div v-if="isLoadingMembers">
+              <v-skeleton-loader v-for="n in 10" :key="n" type="list-item-avatar" class="mb-2"></v-skeleton-loader>
+            </div>
 
-          <v-list v-else bg-color="transparent">
+            <v-list v-else bg-color="transparent">
 
-            <v-list-item v-if="membersResults.length === 0 && searched" class="text-center  text-grey">
-              <v-list-item-title>Nenhum membro encontrado</v-list-item-title>
-            </v-list-item>
+              <v-list-item v-if="membersResults.length === 0 && searched" class="text-center  text-grey">
+                <v-list-item-title>Nenhum membro encontrado</v-list-item-title>
+              </v-list-item>
 
-            <v-list-item v-for="membro in membersResults" :key="membro.id" :to="`/perfil/${membro.id}`" rounded="lg"
-              class="mb-2">
-              <template v-slot:prepend>
-                <v-avatar>
-                  <v-img v-if="membro.avatar" :src="membro.avatar" :alt="membro.nome" cover />
-                  <v-icon v-else size="40" color="grey-lighten-1">mdi-account-circle</v-icon> </v-avatar>
-              </template>
+              <v-list-item v-for="membro in membersResults" :key="membro.id" :to="`/perfil/${membro.id}`" rounded="lg"
+                class="mb-2">
+                <template v-slot:prepend>
+                  <v-avatar>
+                    <v-img v-if="membro.avatar" :src="membro.avatar" :alt="membro.nome" cover />
+                    <v-icon v-else size="40" color="grey-lighten-1">mdi-account-circle</v-icon> </v-avatar>
+                </template>
 
-              <v-list-item-title>{{ membro.nome }}</v-list-item-title>
-              <v-list-item-subtitle>@{{ membro.username }}</v-list-item-subtitle>
-            </v-list-item>
+                <v-list-item-title>{{ membro.nome }}</v-list-item-title>
+                <v-list-item-subtitle>@{{ membro.username }}</v-list-item-subtitle>
+              </v-list-item>
 
-          </v-list>
+            </v-list>
+          </v-card>
+
         </v-col>
       </v-row>
     </v-container>
