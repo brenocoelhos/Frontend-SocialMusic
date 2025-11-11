@@ -19,7 +19,7 @@
         <v-col cols="12" md="8">
           <h2 class="text-h6 mb-4">Músicas</h2>
 
-          <div v-if="isLoading" class="text-center">
+          <div v-if="isLoadingTracks" class="text-center">
             <v-progress-circular indeterminate color="#EEE8FF" size="64"></v-progress-circular>
           </div>
 
@@ -40,14 +40,9 @@
                 <v-card-subtitle class="pa-0 text-body-2">{{ firstTrack.artist_name }}</v-card-subtitle>
               </div>
 
-              <div class="d-flex ml-4">
-                <span class="text-body-1 font-weight-medium mr-1">4/5</span>
-                <v-icon color="yellow-darken-2">mdi-star</v-icon>
-              </div>
             </v-card>
 
-            <v-card v-for="track in otherTracks" :key="track.spotify_url" class="mb-4"
-              :to="getAvaliacaoUrl(track)">
+            <v-card v-for="track in otherTracks" :key="track.spotify_url" class="mb-4" :to="getAvaliacaoUrl(track)">
               <div class="d-flex">
                 <div>
                   <v-img :src="track.image_url" :width="80" :height="80" cover class="ma-2 rounded"></v-img>
@@ -64,16 +59,29 @@
         <v-col cols="12" md="4">
           <h2 class="text-h6 mb-4">Membros</h2>
 
-          <v-card rounded="lg">
-            <v-card-text class="text-center text-grey">
-              <v-list-item prepend-avatar="https://randomuser.me/api/portraits/men/1.jpg" title="Nome do Membro"
-                subtitle="username" class="mb-2"></v-list-item>
-              <v-list-item prepend-avatar="https://randomuser.me/api/portraits/women/2.jpg" title="Outro Membro"
-                subtitle="outro_user"></v-list-item>
+          <div v-if="isLoadingMembers">
+            <v-skeleton-loader v-for="n in 10" :key="n" type="list-item-avatar" class="mb-2"></v-skeleton-loader>
+          </div>
 
-              <p class="mt-4">em construção</p>
-            </v-card-text>
-          </v-card>
+          <v-list v-else bg-color="transparent">
+
+            <v-list-item v-if="membersResults.length === 0 && searched" class="text-center  text-grey">
+              <v-list-item-title>Nenhum membro encontrado</v-list-item-title>
+            </v-list-item>
+
+            <v-list-item v-for="membro in membersResults" :key="membro.id" :to="`/perfil/${membro.id}`" rounded="lg"
+              class="mb-2">
+              <template v-slot:prepend>
+                <v-avatar>
+                  <v-img v-if="membro.avatar" :src="membro.avatar" :alt="membro.nome" cover />
+                  <v-icon v-else size="40" color="grey-lighten-1">mdi-account-circle</v-icon> </v-avatar>
+              </template>
+
+              <v-list-item-title>{{ membro.nome }}</v-list-item-title>
+              <v-list-item-subtitle>@{{ membro.username }}</v-list-item-subtitle>
+            </v-list-item>
+            
+          </v-list>
         </v-col>
       </v-row>
     </v-container>
@@ -90,9 +98,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onr
 
 const route = useRoute();
 const searchTerm = ref(route.query?.q || "");
-const results = ref([]); // Todos os resultados brutos da API
-const isLoading = ref(false);
 const searched = ref(false);
+
+// Estado das músicas
+const trackResults = ref([]);
+const isLoadingTracks = ref(false);
+
+// Estado dos membros
+const membersResults = ref([]);
+const isLoadingMembers = ref(false);
 
 // Computed para o primeiro track (destaque)
 const firstTrack = computed(() => {
@@ -117,30 +131,39 @@ function getAvaliacaoUrl(track) {
   params.append('duration_ms', track.duration_ms);
   params.append('release_date', track.release_date);
   params.append('popularity', track.popularity);
-  params.append('explicit', track.explicit);  
-  params.append('album_name', track.album_name); 
-  params.append('album_type', track.album_type); 
+  params.append('explicit', track.explicit);
+  params.append('album_name', track.album_name);
+  params.append('album_type', track.album_type);
   return `/avaliacao?${params.toString()}`;
 }
 
-async function fetchResults(query) {
-  if (!query) {
-    results.value = [];
-    searched.value = false;
-    return;
-  }
-  isLoading.value = true;
-  searched.value = true;
-  results.value = []; // Limpa antes de uma nova busca
-
+async function fetchTracks(query) {
+  isLoadingTracks.value = true;
+  trackResults.value = [];
   const apiUrl = `${API_URL}/api/search.php?q=${encodeURIComponent(query)}`;
   try {
     const response = await axios.get(apiUrl);
-    results.value = response.data; // Armazena todos os resultados
+    trackResults.value = response.data;
   } catch (err) {
-    console.error("Erro ao buscar dados:", err);
+    console.error("Erro ao buscar músicas:", err);
   } finally {
-    isLoading.value = false;
+    isLoadingTracks.value = false;
+  }
+}
+
+async function fetchMembers(query) {
+  isLoadingMembers.value = true;
+  membersResults.value = [];
+  const apiUrl = `${API_URL}/api/buscar_membros.php?q=${encodeURIComponent(query)}`;
+  try {
+    const response = await axios.get(apiUrl);
+    if (response.data.sucesso) {
+      membersResults.value = response.data.usuarios;
+    }
+  } catch (err) {
+    console.error("Erro ao buscar membros:", err);
+  } finally {
+    isLoadingMembers.value = false;
   }
 }
 
@@ -148,7 +171,17 @@ watch(
   () => route.query?.q,
   (newQuery) => {
     searchTerm.value = newQuery || "";
-    fetchResults(newQuery);
+    if (newQuery && newQuery.trim() !== "") {
+      searched.value = true;
+      // Chama as duas buscas em paralelo
+      fetchTracks(newQuery);
+      fetchMembers(newQuery);
+    } else {
+      // Limpa tudo se a busca for vazia
+      searched.value = false;
+      trackResults.value = [];
+      membersResults.value = [];
+    }
   },
   { immediate: true },
 );

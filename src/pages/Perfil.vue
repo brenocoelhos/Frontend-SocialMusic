@@ -352,6 +352,8 @@ async function saveProfile() {
 }
 
 async function toggleFollow() {
+  if (!loggedInUserId.value) return openLoginDialog();
+  
   followLoading.value = true;
   const endpoint = isFollowing.value ? 'deixar_de_seguir.php' : 'seguir.php';
   try {

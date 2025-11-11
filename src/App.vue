@@ -189,7 +189,7 @@
           <template v-slot:activator="{ props }">
             <div class="d-flex align-center mr-8" style="cursor: pointer;" v-bind="props">
               <v-avatar size="32">
-                <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário" cover></v-img>
+                <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário" ></v-img>
                 <v-icon v-else :color="textColor" size="32">mdi-account-circle</v-icon>
               </v-avatar>
               <span class="text-subtitle-2 ml-2" :style="{ color: textColor }">{{ usuario.nome }}</span>
