@@ -159,7 +159,7 @@
 
             <div v-else>
               <v-card v-for="review in reviewsList" :key="review.id" rounded="xl" elevation="2" class="mb-4">
-
+                
                 <v-list-item :to="`/perfil/${review.usuario_id}`" class="pa-6" lines="two">
                   <template v-slot:prepend>
                     <v-avatar size="56" class="mr-4">
@@ -177,8 +177,7 @@
                   </template>
 
                   <v-list-item-title class="text-h6 font-weight-bold mb-1">{{ review.usuario_nome }}</v-list-item-title>
-                  <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao)
-                    }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-grey text-caption">{{formatTimeAgo(review.data_criacao)}}</v-list-item-subtitle>
 
                 </v-list-item>
 
@@ -202,7 +201,7 @@
                 </v-card-text>
 
               </v-card>
-              
+
               <div v-if="hasMoreReviews" class="text-center mt-6">
                 <v-btn :loading="isLoadingMore" variant="outlined" class="text-none" rounded="lg" size="large"
                   @click="loadMoreReviews">

@@ -40,7 +40,7 @@
                   <v-img :src="musica.capa" class="rounded-lg"></v-img>
                   <v-card-title class="text-subtitle-1 pa-1 mt-2">{{ musica.titulo }}</v-card-title>
                   <v-card-subtitle style="margin-top: -8px;" class="text-grey pa-1">{{ musica.artista
-                    }}</v-card-subtitle>
+                  }}</v-card-subtitle>
                 </v-card>
               </v-col>
             </v-row>
@@ -161,19 +161,27 @@
             </v-sheet>
 
             <v-sheet v-else-if="usuario && ultimaAvaliacao" rounded="xl" class="pa-5" color="#EEE8FF">
-              <div class="d-flex align-center mb-3">
-                <v-avatar class="mr-3">
-                  <v-img v-if="ultimaAvaliacao.usuario_avatar" :src="ultimaAvaliacao.usuario_avatar"></v-img>
-                  <v-icon v-else size="48" color="grey-lighten-1">mdi-account-circle</v-icon>
-                </v-avatar>
-                <div>
-                  <div class="font-weight-normal">{{ ultimaAvaliacao.usuario_nome }}</div>
-                  <div class="text-grey text-caption">{{ ultimaAvaliacao.usuario_username }}</div>
+
+              <div class="d-flex justify-space-between align-center mb-3">
+                <div class="d-flex align-center" style="min-width: 0;"> <v-avatar class="mr-3" rounded="lg" size="48">
+                    <v-img :src="ultimaAvaliacao.musica_capa"></v-img>
+                  </v-avatar>
+                  <div style="min-width: 0;">
+                    <div class="font-weight-bold text-truncate">{{ ultimaAvaliacao.musica_titulo }}</div>
+                    <div class="text-caption text-grey text-truncate">{{ ultimaAvaliacao.musica_artista }}</div>
+                  </div>
+                </div>
+
+                <div class="d-flex align-center pl-3">
+                  <v-icon color="orange" icon="mdi-star" class="mr-1" size="small"></v-icon>
+                  <span class="font-weight-normal">{{ ultimaAvaliacao.nota.toFixed(1) }}</span>
                 </div>
               </div>
+
               <p class="text-body-2 text-grey-darken-2">
                 {{ ultimaAvaliacao.comentario }}
               </p>
+
             </v-sheet>
 
             <v-sheet v-else rounded="xl" class="pa-5 text-center" color="#EEE8FF" height="150">
@@ -432,10 +440,10 @@ function getAvaliacaoUrl(musica) {
   params.append('duration_ms', musica.duration_ms);
   params.append('release_date', musica.release_date);
   params.append('popularity', musica.popularity);
-  params.append('explicit', musica.explicit); 
-  params.append('album_name', musica.album_name); 
+  params.append('explicit', musica.explicit);
+  params.append('album_name', musica.album_name);
   params.append('album_type', musica.album_type);
-  
+
   return `/avaliacao?${params.toString()}`;
 }
 
