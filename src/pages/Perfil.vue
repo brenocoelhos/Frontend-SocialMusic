@@ -44,18 +44,16 @@
               <div v-for="(avaliacao, i) in reviewsVisiveis" :key="i" class="mb-4">
                 <v-card rounded="lg" flat>
                   <v-card-text class="pa-5">
-                    <div class="d-flex align-start mb-3">
-                      <v-avatar size="70" rounded="lg" class="mr-4">
-                        <v-img :src="avaliacao.musica.capa"></v-img>
-                      </v-avatar>
-                      <div>
-                        <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">{{ avaliacao.musica.titulo }}
-                        </div>
-                        <div class="text-body-2 text-grey">{{ avaliacao.musica.artista }}</div>
-                      </div>
-                    </div>
-                    <v-rating :model-value="avaliacao.nota" color="amber" density="compact" half-increments readonly
-                      size="small" class="mb-2"></v-rating>
+                    <v-list-item :to="getAvaliacaoUrl(avaliacao.musica)" class="pa-0 mb-3" lines="two">
+                      <template v-slot:prepend>
+                        <v-avatar size="70" rounded="lg" class="mr-4">
+                          <v-img :src="avaliacao.musica.capa"></v-img>
+                        </v-avatar>
+                      </template>
+                      <v-list-item-title class="text-subtitle-1 font-weight-bold text-grey-darken-4">{{ avaliacao.musica.titulo }}</v-list-item-title>
+                      <v-list-item-subtitle class="text-body-2 text-grey">{{ avaliacao.musica.artista }}</v-list-item-subtitle>
+                    </v-list-item> <v-rating :model-value="avaliacao.nota" color="amber" density="compact"
+                      half-increments readonly size="small" class="mb-2"></v-rating>
                     <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">{{ avaliacao.titulo }}</h3>
                     <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">{{ avaliacao.comentario }}
                     </p>
@@ -84,39 +82,23 @@
 
           <v-col cols="12" md="5">
             <v-card rounded="xl" class="mb-6 pa-8 text-center" color="white" flat elevation="0">
-              
+
               <div class="d-flex justify-center mb-4">
                 <v-avatar size="160" style="position: relative;">
                   <v-img :src="perfilUsuario.avatar"></v-img>
-                  
-                  <v-btn
-                    v-if="isSelf"
-                    icon="mdi-pencil"
-                    size="small"
-                    color="primary"
-                    style="position: absolute; bottom: 8px; right: 8px;"
-                    @click="triggerUpload"
-                    :loading="isUploading"
-                  ></v-btn>
-                  
-                  <v-btn
-                    v-if="isSelf && perfilUsuario.foto_perfil"
-                    icon="mdi-delete"
-                    size="small"
-                    color="error"
-                    style="position: absolute; top: 8px; right: 8px;"
-                    @click="removePhoto"
-                    :loading="isUploading"
-                  ></v-btn>
+
+                  <v-btn v-if="isSelf" icon="mdi-pencil" size="small" color="primary"
+                    style="position: absolute; bottom: 8px; right: 8px;" @click="triggerUpload"
+                    :loading="isUploading"></v-btn>
+
+                  <v-btn v-if="isSelf && perfilUsuario.foto_perfil" icon="mdi-delete" size="small" color="error"
+                    style="position: absolute; top: 8px; right: 8px;" @click="removePhoto"
+                    :loading="isUploading"></v-btn>
                 </v-avatar>
               </div>
 
-              <v-file-input
-                ref="fileInput"
-                v-show="false"
-                accept="image/png, image/jpeg"
-                @change="onFileChange"
-              ></v-file-input>
+              <v-file-input ref="fileInput" v-show="false" accept="image/png, image/jpeg"
+                @change="onFileChange"></v-file-input>
               <v-row class="mb-4">
                 <v-col class="text-center">
                   <div class="text-h5 font-weight-bold">{{ perfilUsuario.followers_count }}</div>
@@ -218,7 +200,7 @@ async function onFileChange(event) {
       perfilUsuario.value.avatar = data.nova_url;
       // Atualiza o 'foto_perfil' (para o botão 'remover' aparecer)
       perfilUsuario.value.foto_perfil = data.nova_url;
-      
+
       atualizarLocalStorageFoto(data.nova_url);
       showAlert('Foto de perfil atualizada!', 'success');
     } else {
@@ -238,20 +220,20 @@ async function removePhoto() {
   if (!confirm('Tem a certeza que quer remover a sua foto de perfil?')) {
     return;
   }
-  
+
   isUploading.value = true;
   try {
     const res = await fetch(`${API_URL}/api/perfil_foto_remove.php`, {
       method: 'POST',
       credentials: 'include',
     });
-    
+
     const data = await res.json();
     if (res.ok && data.sucesso) {
       // Atualiza o avatar para o padrão
       perfilUsuario.value.avatar = data.nova_url;
       perfilUsuario.value.foto_perfil = null;
-      
+
       atualizarLocalStorageFoto(null);
       showAlert('Foto de perfil removida.', 'success');
     } else {
@@ -276,7 +258,7 @@ function atualizarLocalStorageFoto(novaUrl) {
   }
 }
 
-
+// Funções para abrir e fechar o dialogo de login
 function openEditDialog() {
   editForm.nome = perfilUsuario.value.nome;
   editForm.generos = perfilUsuario.value.generos || '';
@@ -286,6 +268,7 @@ function closeEditDialog() {
   editDialog.value = false;
 }
 
+// Função de curtir a avaliação
 async function toggleLike(review) {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -351,9 +334,10 @@ async function saveProfile() {
   }
 }
 
+// Função de seguir o usuário
 async function toggleFollow() {
   if (!loggedInUserId.value) return openLoginDialog();
-  
+
   followLoading.value = true;
   const endpoint = isFollowing.value ? 'deixar_de_seguir.php' : 'seguir.php';
   try {
@@ -398,6 +382,25 @@ function carregarMaisAvaliacoes() {
   }, 300);
 }
 
+// Função para direcionar para a página de avaliação
+function getAvaliacaoUrl(musica) {
+  if (!musica) return '/';
+
+  const params = new URLSearchParams();
+  params.append('id', musica.id);
+  params.append('name', musica.titulo);
+  params.append('artist', musica.artista);
+  params.append('image', musica.capa);
+  params.append('spotify', musica.spotify_url);
+  params.append('duration_ms', musica.duration_ms);
+  params.append('release_date', musica.release_date);
+  params.append('popularity', musica.popularity);
+  params.append('explicit', musica.explicit);
+  params.append('album_name', musica.album_name);
+  params.append('album_type', musica.album_type);
+
+  return `/avaliacao?${params.toString()}`;
+}
 
 
 

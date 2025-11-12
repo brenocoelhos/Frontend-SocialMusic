@@ -117,6 +117,7 @@
     <div style="background-color: #f8f9fa;">
       <v-container>
         <v-row>
+
           <v-col cols="12" md="8">
             <h2 class="text-h5 font-weight-bold mb-4">Músicas em destaques</h2>
 
@@ -141,9 +142,9 @@
 
                     <v-icon color="orange" icon="mdi-star" class="mr-1"></v-icon>
                     <span class="font-weight-normal">{{ musica.media_nota.toFixed(1) }}</span>
-
                   </div>
                 </template>
+
               </v-list-item>
             </v-list>
           </v-col>

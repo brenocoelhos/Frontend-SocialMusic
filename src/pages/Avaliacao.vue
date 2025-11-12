@@ -159,7 +159,7 @@
 
             <div v-else>
               <v-card v-for="review in reviewsList" :key="review.id" rounded="xl" elevation="2" class="mb-4">
-                
+
                 <v-list-item :to="`/perfil/${review.usuario_id}`" class="pa-6" lines="two">
                   <template v-slot:prepend>
                     <v-avatar size="56" class="mr-4">
@@ -177,7 +177,8 @@
                   </template>
 
                   <v-list-item-title class="text-h6 font-weight-bold mb-1">{{ review.usuario_nome }}</v-list-item-title>
-                  <v-list-item-subtitle class="text-grey text-caption">{{formatTimeAgo(review.data_criacao)}}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao)
+                    }}</v-list-item-subtitle>
 
                 </v-list-item>
 
@@ -237,6 +238,10 @@
           </v-form>
         </v-card-text>
         <v-card-actions class="pa-4">
+          <v-btn color="red" variant="text" @click="deleteReview" :loading="isDeleting" class="text-none" rounded="lg"
+            size="large">
+            Excluir
+          </v-btn>
           <v-spacer />
           <v-btn variant="text" @click="closeComment" class="text-none" rounded="lg" size="large">
             Cancelar
@@ -277,6 +282,7 @@ const isLoadingMore = ref(false); // Indica se está carregando mais avaliaçõe
 const likeLoadingId = ref(null); // Para saber qual avaliação está sendo curtida
 const showAlert = inject("showAlert");// Função global para mostrar alertas
 const openLoginDialog = inject("openLoginDialog");// Função global para abrir o diálogo de login
+const isDeleting = ref(false);
 const hasMoreReviews = computed(() => {
   return reviewsList.value.length < stats.value.total;
 });
@@ -604,6 +610,45 @@ async function submitReview() {
     isSubmitting.value = false;
   }
 }
+
+async function deleteReview() {
+  // Pede confirmação
+  if (!window.confirm("Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita.")) {
+    return;
+  }
+
+  isDeleting.value = true;
+  try {
+    // userReview.value.id foi obtido do 'verificar_avaliacao.php'
+    const response = await axios.post(
+      '/api/delete_avaliacao.php',
+      { avaliacao_id: userReview.value.id },
+      { withCredentials: true }
+    );
+
+    if (response.data.sucesso) {
+      showAlert('Avaliação excluída com sucesso.', 'success');
+      closeComment();
+
+      // Força a atualização da página para mostrar que a avaliação sumiu
+      await Promise.all([
+        checkExistingReview(track.value.id),
+        fetchPageReviews(track.value.id, 1)
+      ]);
+
+      // Define userReview como null para o botão "Editar" sumir
+      userReview.value = null;
+    } else {
+      showAlert(response.data.mensagem, 'error');
+    }
+  } catch (err) {
+    const msg = err.response?.data?.mensagem || "Erro ao excluir avaliação.";
+    showAlert(msg, 'error');
+  } finally {
+    isDeleting.value = false;
+  }
+}
+
 watch(
   () => route.query,
   (newQuery) => {
