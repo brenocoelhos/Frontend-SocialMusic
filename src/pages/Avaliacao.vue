@@ -342,7 +342,7 @@ function formatDate(dateString) {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
-      timeZone: 'UTC-3'
+      timeZone: 'UTC'
     }).format(date);
   } catch (e) {
     return '--';
