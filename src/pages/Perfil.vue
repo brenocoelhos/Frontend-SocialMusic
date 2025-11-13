@@ -27,7 +27,7 @@
               </v-btn>
               <v-btn v-else :loading="followLoading" :variant="isFollowing ? 'outlined' : 'flat'" color="primary"
                 rounded="lg" size="default" @click="toggleFollow">
-                {{ isFollowing ? 'A Seguir' : 'Seguir' }}
+                {{ isFollowing ? 'Seguindo' : 'Seguir' }}
               </v-btn>
             </div>
 
@@ -50,8 +50,11 @@
                           <v-img :src="avaliacao.musica.capa"></v-img>
                         </v-avatar>
                       </template>
-                      <v-list-item-title class="text-subtitle-1 font-weight-bold text-grey-darken-4">{{ avaliacao.musica.titulo }}</v-list-item-title>
-                      <v-list-item-subtitle class="text-body-2 text-grey">{{ avaliacao.musica.artista }}</v-list-item-subtitle>
+                      <v-list-item-title class="text-subtitle-1 font-weight-bold text-grey-darken-4">{{
+                        avaliacao.musica.titulo
+                      }}</v-list-item-title>
+                      <v-list-item-subtitle class="text-body-2 text-grey">{{ avaliacao.musica.artista
+                      }}</v-list-item-subtitle>
                     </v-list-item> <v-rating :model-value="avaliacao.nota" color="amber" density="compact"
                       half-increments readonly size="small" class="mb-2"></v-rating>
                     <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">{{ avaliacao.titulo }}</h3>
@@ -85,7 +88,8 @@
 
               <div class="d-flex justify-center mb-4">
                 <v-avatar size="160" style="position: relative;">
-                  <v-img :src="perfilUsuario.avatar"></v-img>
+                  <v-img v-if="perfilUsuario.foto_perfil" :src="perfilUsuario.foto_perfil"></v-img>
+                  <v-icon v-else size="160" color="grey-lighten-1">mdi-account-circle</v-icon>
 
                   <v-btn v-if="isSelf" icon="mdi-pencil" size="small" color="primary"
                     style="position: absolute; bottom: 8px; right: 8px;" @click="triggerUpload"
@@ -106,7 +110,7 @@
                 </v-col>
                 <v-col class="text-center">
                   <div class="text-h5 font-weight-bold">{{ perfilUsuario.following_count }}</div>
-                  <div class="text-caption text-grey">A Seguir</div>
+                  <div class="text-caption text-grey">Seguindo</div>
                 </v-col>
               </v-row>
               <div class="text-center">
