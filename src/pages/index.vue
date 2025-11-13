@@ -60,20 +60,23 @@
           <v-col v-for="avaliacao in avaliacoes" :key="avaliacao.id" cols="12" md="6" lg="4">
             <v-card rounded="lg" class="d-flex flex-column" height="300">
               <v-card-text>
-                <div class="d-flex justify-space-between align-center">
-                  <div class="d-flex align-center">
+                <v-list-item class="pa-0" :to="getAvaliacaoUrl(avaliacao.musica)">
+
+                  <template v-slot:prepend>
                     <v-avatar size="50" rounded="lg" class="mr-3">
                       <v-img :src="avaliacao.musica.capa"></v-img>
                     </v-avatar>
-                    <div>
-                      <div class="font-weight-bold">{{ avaliacao.musica.titulo }}</div>
-                      <div class="text-caption text-grey">{{ avaliacao.musica.artista }}</div>
-                    </div>
-                  </div>
-                  <v-rating :model-value="avaliacao.nota" color="orange" density="compact" half-increments
-                    readonly></v-rating>
-                </div>
-              </v-card-text>
+                  </template>
+
+                  <v-list-item-title class="font-weight-bold">{{ avaliacao.musica.titulo }}</v-list-item-title>
+                  <v-list-item-subtitle class="text-caption text-grey">{{ avaliacao.musica.artista }}</v-list-item-subtitle>
+
+                  <template v-slot:append>
+                    <v-rating :model-value="avaliacao.nota" color="orange" density="compact" half-increments
+                      readonly></v-rating>
+                  </template>
+
+                </v-list-item> </v-card-text>
               <v-divider class="mx-4"></v-divider>
               <v-card-title>{{ avaliacao.titulo }}</v-card-title>
               <v-card-text class="text-grey-darken-1">{{ avaliacao.comentario }}</v-card-text>
