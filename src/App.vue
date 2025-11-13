@@ -204,7 +204,7 @@
                 </v-avatar>
               </template>
               <v-list-item-title class="text-subtitle-2 font-weight-bold">{{ usuario.nome }}</v-list-item-title>
-              <v-list-item-subtitle class="text-caption">{{ usuario.email }}</v-list-item-subtitle>
+              <v-list-item-subtitle class="text-caption">{{ usuario.username }}</v-list-item-subtitle>
             </v-list-item>
 
             <v-divider class="my-2"></v-divider>
