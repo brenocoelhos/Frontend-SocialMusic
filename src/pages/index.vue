@@ -78,7 +78,7 @@
 
                 </v-list-item> </v-card-text>
               <v-divider class="mx-4"></v-divider>
-              <v-card-title  class="font-weight-regular" style="flex-shrink: 0; padding: 8px 16px;">{{ avaliacao.titulo }}</v-card-title>
+              <v-card-title  class="font-weight-regular" style="flex-shrink: 0; padding: 8px 16px 0px;">{{ avaliacao.titulo }}</v-card-title>
               <v-card-text class="text-grey-darken-1" style="flex: 2; overflow: hidden; padding: 0 16px;">{{ avaliacao.comentario }}</v-card-text>
 
               <v-card-actions class="pa-4" style="flex-shrink: 0;">
