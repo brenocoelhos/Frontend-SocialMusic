@@ -170,7 +170,7 @@
 
                     <template v-slot:append>
                       <v-btn v-if="loggedInUserId !== review.usuario_id" :loading="followLoadingId === review.id"
-                        :variant="review.is_following ? 'outlined' : 'flat'" color="EEE8FF" class="text-none" rounded="lg"
+                        :variant="review.is_following ? 'outlined' : 'flat'" :color="review.is_following ? 'grey-darken-1' : '#EEE8FF'" class="text-none" rounded="lg"
                         @click.prevent="toggleFollow(review)">
                         {{ review.is_following ? 'Seguindo' : 'Seguir' }}
                       </v-btn>
@@ -188,8 +188,8 @@
                         density="compact" />
                     </div>
 
-                    <h4 v-if="review.titulo" class="text-body-1 font-weight-bold mb-1">{{ review.titulo }}</h4>
-                    <p class="text-body-1 mb-2">{{ review.comentario }}</p>
+                    <h4 v-if="review.titulo" class="text-body-1 font-weight-regular mb-1">{{ review.titulo }}</h4>
+                    <p class="text-body-1 mb-2 text-grey">{{ review.comentario }}</p>
 
                     <div class="d-flex align-center justify-end">
                       <v-btn variant="text" size="small" class="text-none"
