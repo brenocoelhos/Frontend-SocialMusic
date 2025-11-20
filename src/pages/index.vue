@@ -68,7 +68,7 @@
                     </v-avatar>
                   </template>
 
-                  <v-list-item-title class="font-weight-semibold">{{ avaliacao.musica.titulo }}</v-list-item-title>
+                  <v-list-item-title class="font-weight-regular">{{ avaliacao.musica.titulo }}</v-list-item-title>
                   <v-list-item-subtitle class="text-caption text-grey">{{ avaliacao.musica.artista }}</v-list-item-subtitle>
 
                   <template v-slot:append>
