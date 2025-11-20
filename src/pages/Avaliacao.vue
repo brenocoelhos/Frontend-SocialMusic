@@ -660,3 +660,13 @@ watch(
 );
 
 </script>
+
+<style scoped>
+.v-list-item {
+  background-color: transparent !important;
+}
+
+.v-list-item:hover {
+  background-color: transparent !important;
+}
+</style>
