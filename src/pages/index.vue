@@ -59,7 +59,7 @@
         <v-row v-else>
           <v-col v-for="avaliacao in avaliacoes" :key="avaliacao.id" cols="12" md="6" lg="4">
             <v-card rounded="lg" class="d-flex flex-column" height="300">
-              <v-card-text>
+              <v-card-text style="padding-bottom: 0;">
                 <v-list-item class="pa-0" :to="getAvaliacaoUrl(avaliacao.musica)">
 
                   <template v-slot:prepend>
