@@ -162,10 +162,12 @@
                 <template v-for="(review, index) in reviewsList" :key="review.id">
                   <v-list-item class="pa-6" lines="two">
                     <template v-slot:prepend>
-                      <v-avatar :to="`/perfil/${review.usuario_id}`" size="56" class="mr-4">
-                        <v-img v-if="review.usuario_avatar" :src="review.usuario_avatar" alt="Avatar do usuário" cover />
-                        <v-icon v-else size="56" color="grey-lighten-1">mdi-account-circle</v-icon>
-                      </v-avatar>
+                      <v-btn :to="`/perfil/${review.usuario_id}`" variant="text" class="pa-0" style="min-width: unset;">
+                        <v-avatar size="56" class="mr-4">
+                          <v-img v-if="review.usuario_avatar" :src="review.usuario_avatar" alt="Avatar do usuário" cover />
+                          <v-icon v-else size="56" color="grey-lighten-1">mdi-account-circle</v-icon>
+                        </v-avatar>
+                      </v-btn>
                     </template>
                     <template v-slot:append>
                       <v-btn v-if="loggedInUserId !== review.usuario_id" :loading="followLoadingId === review.id"
@@ -175,9 +177,11 @@
                       </v-btn>
                     </template>
 
-                    <v-list-item-title class="text-h6 font-weight-bold mb-1">{{ review.usuario_nome }}</v-list-item-title>
-                    <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao)
-                      }}</v-list-item-subtitle>
+                    <v-btn :to="`/perfil/${review.usuario_id}`" variant="text" class="text-none pa-0 justify-start d-flex flex-column align-start" style="min-width: unset; text-decoration: none; color: inherit;">
+                      <v-list-item-title class="text-h6 font-weight-bold mb-1">{{ review.usuario_nome }}</v-list-item-title>
+                      <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao)
+                        }}</v-list-item-subtitle>
+                    </v-btn>
 
                   </v-list-item>
 
