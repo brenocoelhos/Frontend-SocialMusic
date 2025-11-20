@@ -35,13 +35,21 @@
             </v-btn>
           </div>
           <div v-else>
-            <div class="text-center mb-3">
+            <div class="d-flex align-center mb-3">
+              <v-avatar size="40" class="mr-2">
+                <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário"></v-img>
+                <v-icon v-else size="40" color="grey">mdi-account-circle</v-icon>
+              </v-avatar>
               <div class="text-subtitle-1 font-weight-medium">{{ usuario.nome }}</div>
             </div>
-            <v-btn v-if="usuario.perfil === 'admin'" block variant="flat" color="error" class="mb-2" to="/admin"
-              @click="drawer = false">
-              Painel Admin
-            </v-btn>
+            <v-list nav density="compact" class="mb-3">
+              <v-list-item prepend-icon="mdi-account" to="/perfil" class="mb-2" @click="drawer = false">
+                <v-list-item-title class="text-body-2">Perfil</v-list-item-title>
+              </v-list-item>
+              <v-list-item v-if="usuario.perfil === 'admin'" prepend-icon="mdi-shield-account" to="/admin" class="mb-2" @click="drawer = false">
+                <v-list-item-title class="text-body-2">Painel Admin</v-list-item-title>
+              </v-list-item>
+            </v-list>
             <v-btn block variant="flat" color="red-lighten-1" @click="logout(); drawer = false">
               Sair
             </v-btn>
