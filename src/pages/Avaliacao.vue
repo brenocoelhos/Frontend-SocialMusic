@@ -160,14 +160,13 @@
             <div v-else>
               <v-card rounded="xl" elevation="2">
                 <template v-for="(review, index) in reviewsList" :key="review.id">
-                  <v-list-item :to="`/perfil/${review.usuario_id}`" class="pa-6" lines="two">
+                  <v-list-item class="pa-6" lines="two">
                     <template v-slot:prepend>
-                      <v-avatar size="56" class="mr-4">
+                      <v-avatar :to="`/perfil/${review.usuario_id}`" size="56" class="mr-4">
                         <v-img v-if="review.usuario_avatar" :src="review.usuario_avatar" alt="Avatar do usuário" cover />
                         <v-icon v-else size="56" color="grey-lighten-1">mdi-account-circle</v-icon>
                       </v-avatar>
                     </template>
-
                     <template v-slot:append>
                       <v-btn v-if="loggedInUserId !== review.usuario_id" :loading="followLoadingId === review.id"
                         :variant="review.is_following ? 'outlined' : 'flat'" :color="review.is_following ? 'grey-darken-1' : '#EEE8FF'" class="text-none" rounded="lg"
