@@ -78,10 +78,10 @@
 
                 </v-list-item> </v-card-text>
               <v-divider class="mx-4"></v-divider>
-              <v-card-title>{{ avaliacao.titulo }}</v-card-title>
-              <v-card-text class="text-grey-darken-1">{{ avaliacao.comentario }}</v-card-text>
+              <v-card-title style="flex-shrink: 0;">{{ avaliacao.titulo }}</v-card-title>
+              <v-card-text class="text-grey-darken-1" style="flex: 1; overflow: hidden;">{{ avaliacao.comentario }}</v-card-text>
 
-              <v-card-actions class="pa-4">
+              <v-card-actions class="pa-4" style="flex-shrink: 0;">
                 <v-btn :to="`/perfil/${avaliacao.usuario.id}`" variant="text" rounded="lg" class="text-none pa-1"
                   style="color: inherit; letter-spacing: normal;">
                   <template v-slot:prepend>
