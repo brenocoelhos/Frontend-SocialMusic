@@ -79,7 +79,7 @@
                 </v-list-item> </v-card-text>
               <v-divider class="mx-4"></v-divider>
               <v-card-title style="flex-shrink: 0; padding: 8px 16px;">{{ avaliacao.titulo }}</v-card-title>
-              <v-card-text class="text-grey-darken-1" style="flex: 1; overflow: hidden; padding: 0 16px;">{{ avaliacao.comentario }}</v-card-text>
+              <v-card-text class="text-grey-darken-1" style="flex: 0; overflow: hidden; padding: 0 16px; line-height: 1.4;">{{ avaliacao.comentario }}</v-card-text>
 
               <v-card-actions class="pa-4" style="flex-shrink: 0;">
                 <v-btn :to="`/perfil/${avaliacao.usuario.id}`" variant="text" rounded="lg" class="text-none pa-1"
