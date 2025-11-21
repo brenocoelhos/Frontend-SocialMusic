@@ -181,14 +181,11 @@
                     <v-btn :to="`/perfil/${review.usuario_id}`" variant="text" class="text-none pa-0 justify-start" style="min-width: unset; text-decoration: none; color: inherit;">
                       <v-list-item-title class="text-h6 font-weight-semibold">{{ review.usuario_nome }}</v-list-item-title>
                     </v-btn>
-                    <br/>
-                    <v-rating :model-value="parseFloat(review.nota)" color="amber" half-increments readonly size="small"
-                      density="compact" />
                     <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</v-list-item-subtitle>
 
                   </v-list-item>
 
-                  <v-card-text class="pt-0 pl-16 ml-2">
+                  <v-card-text class="pt-2 pl-16 ml-2">
                     <div class="mb-2">
                       <v-rating :model-value="parseFloat(review.nota)" color="amber" half-increments readonly size="small"
                         density="compact" />
