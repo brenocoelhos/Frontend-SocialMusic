@@ -47,7 +47,7 @@
                   <div class="d-flex flex-column align-center">
                     <div class="d-flex align-center gap-1 mb-2">
                       <v-icon icon="mdi-comment-text" color="grey" size="28" class="pr-3" />
-                      <h3 class="text-subtitle-1 font-weight-bold">{{ stats.total }}</h3>
+                      <h3 class="text-h6 font-weight-bold">{{ stats.total }}</h3>
                     </div>
                     <p class="text-grey text-body-2">Avaliações</p>
                   </div>
@@ -57,7 +57,7 @@
                   <div class="d-flex flex-column align-center">
                     <div class="d-flex align-center gap-1 mb-2">
                       <v-icon icon="mdi-star" color="orange" size="28" class="pr-3" />
-                      <h3 class="text-subtitle-2 font-weight-bold">{{ stats.media > 0 ? stats.media.toFixed(1) : '--' }} / 5.0</h3>
+                      <h3 class="text-h6 font-weight-bold">{{ stats.media > 0 ? stats.media.toFixed(1) : '--' }} / 5.0</h3>
                     </div>
                     <p class="text-grey text-body-2">Média geral</p>
                   </div>
@@ -67,7 +67,9 @@
                   <div class="d-flex flex-column align-center">
                     <div class="d-flex align-center gap-1 mb-2">
                       <v-icon icon="mdi-star-outline" color="grey" size="28" class="pr-3"/>
-                      <h3 v-if="hasUserReview" class="text-h6 font-weight-bold">{{ userReview.nota }} / 5.0</h3>
+                      <h3 v-if="hasUserReview" class="text-h6 font-weight-bold">
+                        <span class="text-black">{{ userReview.nota }} </span>
+                        <span class="text-grey">/ 5.0 </span> </h3>
                       <h3 v-else-if="isLoadingReview" class="text-h5 font-weight-bold">
                         <v-progress-circular indeterminate size="24" />
                       </h3>
