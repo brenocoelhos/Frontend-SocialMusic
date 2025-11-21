@@ -41,7 +41,7 @@
 
           <!-- informações de avaliações da música -->
           <v-col cols="12" md="8" lg="6">
-            <v-card rounded="xl" elevation="2" class="pa-6 mb-4">
+            <div rounded="xl" elevation="2" class="pa-6 mb-4">
               <v-row class="text-center">
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
@@ -85,7 +85,7 @@
                   Escrever avaliação
                 </v-btn>
               </div>
-            </v-card>
+            </div>
 
             <!-- Detalhes música -->
             <v-card rounded="xl" elevation="2" class="pa-6">
@@ -185,7 +185,7 @@
 
                   </v-list-item>
 
-                  <v-card-text class="pt-2 pl-16 ml-2">
+                  <v-card-text class="pt-2 pl-21 ml-2">
                     <div class="mb-2">
                       <v-rating :model-value="parseFloat(review.nota)" color="amber" half-increments readonly size="small"
                         density="compact" />
