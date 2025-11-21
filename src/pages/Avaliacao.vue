@@ -64,6 +64,12 @@
                     <p class="text-grey text-body-2">Média geral</p>
                   </div>
                 </v-col>
+<p class="font-weight-light">Texto leve</p>
+<p class="font-weight-regular">Texto normal</p>
+<p class="font-weight-medium">Texto médio</p>
+<p class="font-weight-semibold">Texto semi-negrito</p>
+<p class="font-weight-bold">Texto negrito</p>
+<p class="font-weight-black">Texto muito pesado</p>
 
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
