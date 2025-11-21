@@ -677,6 +677,9 @@ watch(
 .v-list-item {
   background-color: transparent !important;
 }
+.pl-21 {
+  padding-left: 84px !important;
+}
 
 .v-list-item:hover {
   background-color: transparent !important;
