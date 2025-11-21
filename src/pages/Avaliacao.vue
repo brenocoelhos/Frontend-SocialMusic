@@ -178,12 +178,10 @@
                       </v-btn>
                     </template>
 
-                    <v-btn :to="`/perfil/${review.usuario_id}`" variant="text" class="text-none pa-0 justify-start d-flex flex-column align-start" style="min-width: unset; text-decoration: none; color: inherit; white-space: normal;">
-                      <div class="d-flex flex-column align-start" style="width: 100%;">
-                        <v-list-item-title class="text-h6 font-weight-semibold mb-1">{{ review.usuario_nome }}</v-list-item-title>
-                        <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</v-list-item-subtitle>
-                      </div>
+                    <v-btn :to="`/perfil/${review.usuario_id}`" variant="text" class="text-none pa-0 justify-start" style="min-width: unset; text-decoration: none; color: inherit;">
+                      <v-list-item-title class="text-h6 font-weight-semibold">{{ review.usuario_nome }}</v-list-item-title>
                     </v-btn>
+                    <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</v-list-item-subtitle>
 
                   </v-list-item>
 
