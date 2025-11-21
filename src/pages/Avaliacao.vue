@@ -59,17 +59,11 @@
                       <v-icon icon="mdi-star" color="orange" size="28" class="pr-3" />
                       <h3 class="text-h6">
                         <span class="text-black font-weight-bold">{{ stats.media > 0 ? stats.media.toFixed(1) : '--' }} </span>
-                        <span class="text-grey font-weight-regular">/ 5.0</span> </h3>
+                        <span class="text-grey font-weight-medium">/5.0</span> </h3>
                     </div>
                     <p class="text-grey text-body-2">Média geral</p>
                   </div>
                 </v-col>
-<p class="font-weight-light">Texto leve</p>
-<p class="font-weight-regular">Texto normal</p>
-<p class="font-weight-medium">Texto médio</p>
-<p class="font-weight-semibold">Texto semi-negrito</p>
-<p class="font-weight-bold">Texto negrito</p>
-<p class="font-weight-black">Texto muito pesado</p>
 
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
@@ -77,7 +71,7 @@
                       <v-icon icon="mdi-star-outline" color="grey" size="28" class="pr-3"/>
                       <h3 v-if="hasUserReview" class="text-h6">
                         <span class="text-black font-weight-bold">{{ userReview.nota }} </span>
-                        <span class="text-grey font-weight-regular">/ 5.0 </span> </h3>
+                        <span class="text-grey font-weight-medium">/5.0 </span> </h3>
                       <h3 v-else-if="isLoadingReview" class="text-h5 font-weight-bold">
                         <v-progress-circular indeterminate size="24" />
                       </h3>
