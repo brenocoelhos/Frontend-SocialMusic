@@ -160,7 +160,7 @@
             <div v-else>
               <v-card rounded="xl" elevation="2">
                 <template v-for="(review, index) in reviewsList" :key="review.id">
-                  <v-list-item class="pa-6" lines="two" :ripple="false">
+                  <v-list-item class="pa-6" :ripple="false">
                     <template v-slot:prepend>
                       <v-btn :to="`/perfil/${review.usuario_id}`" variant="text" class="pa-0" style="min-width: unset;">
                         <v-avatar size="56" class="mr-4">
