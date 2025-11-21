@@ -45,29 +45,34 @@
               <v-row class="text-center">
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
-                    <v-icon icon="mdi-comment-text" color="grey" size="32" class="mb-2" />
-                    <h3 class="text-h5 font-weight-bold">{{ stats.total }}</h3>
+                    <div class="d-flex align-center gap-1 mb-2">
+                      <v-icon icon="mdi-comment-text" color="grey" size="28" />
+                      <h3 class="text-h5 font-weight-bold">{{ stats.total }}</h3>
+                    </div>
                     <p class="text-grey text-body-2">Avaliações</p>
                   </div>
                 </v-col>
 
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
-                    <v-icon icon="mdi-star" color="orange" size="32" class="mb-2" />
-                    <h3 class="text-h5 font-weight-bold">{{ stats.media > 0 ? stats.media.toFixed(1) : '--' }} / 5.0
-                    </h3>
+                    <div class="d-flex align-center gap-1 mb-2">
+                      <v-icon icon="mdi-star" color="orange" size="28" />
+                      <h3 class="text-h5 font-weight-bold">{{ stats.media > 0 ? stats.media.toFixed(1) : '--' }} / 5.0</h3>
+                    </div>
                     <p class="text-grey text-body-2">Média geral</p>
                   </div>
                 </v-col>
 
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
-                    <v-icon icon="mdi-star-outline" color="grey" size="32" class="mb-2" />
-                    <h3 v-if="hasUserReview" class="text-h5 font-weight-bold">{{ userReview.nota }} / 5.0</h3>
-                    <h3 v-else-if="isLoadingReview" class="text-h5 font-weight-bold">
-                      <v-progress-circular indeterminate size="24" />
-                    </h3>
-                    <h3 v-else class="text-h5 font-weight-bold">--</h3>
+                    <div class="d-flex align-center gap-1 mb-2">
+                      <v-icon icon="mdi-star-outline" color="grey" size="28" />
+                      <h3 v-if="hasUserReview" class="text-h5 font-weight-bold">{{ userReview.nota }} / 5.0</h3>
+                      <h3 v-else-if="isLoadingReview" class="text-h5 font-weight-bold">
+                        <v-progress-circular indeterminate size="24" />
+                      </h3>
+                      <h3 v-else class="text-h5 font-weight-bold">--</h3>
+                    </div>
                     <p class="text-grey text-body-2">Sua avaliação</p>
                   </div>
                 </v-col>
