@@ -22,11 +22,9 @@
                 <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">{{ perfilUsuario.nome }}</h1>
                 <p class="text-body-2 text-grey-darken-1">@{{ perfilUsuario.username }}</p>
               </div>
-              
               <v-btn v-if="isSelf" color="primary" variant="flat" rounded="lg" size="default" @click="openEditDialog">
                 Editar Perfil
               </v-btn>
-              
               <v-btn v-else :loading="followLoading" :variant="isFollowing ? 'outlined' : 'flat'" color="primary"
                 rounded="lg" size="default" @click="toggleFollow">
                 {{ isFollowing ? 'Seguindo' : 'Seguir' }}
@@ -123,7 +121,7 @@
                         variant="text"
                         color="error"
                         size="small"
-                        @click="removePhoto"
+                        @click="confirmarRemocaoFoto"
                         :loading="isUploading"
                       ></v-btn>
                     </template>
@@ -144,7 +142,6 @@
                   <div class="text-caption text-grey">Seguindo</div>
                 </v-col>
               </v-row>
-              
               <div class="text-center">
                 <p class="text-caption text-grey-darken-1">
                   {{ perfilUsuario.generos || 'Sem gêneros preferidos' }}
@@ -201,46 +198,37 @@
             <div v-if="conexoesLoading" class="text-center pa-4">
               <v-progress-circular indeterminate color="primary"></v-progress-circular>
             </div>
-            
             <div v-else-if="listaConexoes.length === 0" class="text-center pa-4 text-grey">
               Ninguém aqui ainda.
             </div>
-
             <v-list v-else>
-              <v-list-item
-                v-for="user in listaConexoes"
-                :key="user.id"
-                :to="`/perfil/${user.id}`"
-                @click="conexoesDialog = false"
-                class="py-2"
-              >
+              <v-list-item v-for="user in listaConexoes" :key="user.id" :to="`/perfil/${user.id}`" @click="conexoesDialog = false" class="py-2">
                 <template v-slot:prepend>
-                  <v-avatar size="40">
-                    <v-img :src="user.foto_perfil"></v-img>
-                  </v-avatar>
+                  <v-avatar size="40"><v-img :src="user.foto_perfil"></v-img></v-avatar>
                 </template>
-                
                 <v-list-item-title class="font-weight-bold">{{ user.nome }}</v-list-item-title>
                 <v-list-item-subtitle>@{{ user.username }}</v-list-item-subtitle>
-
                 <template v-slot:append>
-                  <v-btn
-                    v-if="isSelf && conexoesTipo === 'seguindo'"
-                    color="grey-lighten-1"
-                    variant="text"
-                    icon="mdi-account-remove-outline"
-                    size="small"
-                    @click.stop.prevent="removerConexao(user)"
-                    title="Deixar de seguir"
-                  ></v-btn>
+                  <v-btn v-if="isSelf && conexoesTipo === 'seguindo'" color="grey-lighten-1" variant="text" icon="mdi-account-remove-outline" size="small" @click.stop.prevent="removerConexao(user)" title="Deixar de seguir"></v-btn>
                 </template>
-                </v-list-item>
+              </v-list-item>
             </v-list>
           </v-card-text>
         </v-card>
       </v-dialog>
 
-    </div>
+      <v-dialog v-model="confirmDialog" max-width="400px">
+        <v-card rounded="xl">
+          <v-card-title class="text-h6 font-weight-bold">Confirmação</v-card-title>
+          <v-card-text>{{ confirmMessage }}</v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="grey-darken-1" variant="text" @click="confirmDialog = false">Cancelar</v-btn>
+            <v-btn color="error" variant="flat" @click="confirmAction">Confirmar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      </div>
   </div>
 </template>
 
@@ -267,15 +255,30 @@ const followLoading = ref(false);
 const editDialog = ref(false);
 const isSaving = ref(false);
 const editFormRef = ref(null);
+const editForm = reactive({ nome: '', generos: '' });
 
-// Variáveis para o Modal de Conexões
 const conexoesDialog = ref(false);
 const conexoesTitulo = ref('');
 const conexoesLoading = ref(false);
 const listaConexoes = ref([]);
-const conexoesTipo = ref(''); // 'seguindo' ou 'seguidores'
+const conexoesTipo = ref('');
 
-// --- Função para abrir o modal de conexões ---
+
+const confirmDialog = ref(false);
+const confirmMessage = ref('');
+let onConfirmCallback = null;
+
+function showConfirm(message, callback) {
+  confirmMessage.value = message;
+  onConfirmCallback = callback;
+  confirmDialog.value = true;
+}
+
+function confirmAction() {
+  if (onConfirmCallback) onConfirmCallback();
+  confirmDialog.value = false;
+}
+
 async function abrirModalConexoes(tipo) {
   conexoesTipo.value = tipo;
   conexoesTitulo.value = tipo === 'seguindo' ? 'Seguindo' : 'Seguidores';
@@ -284,7 +287,7 @@ async function abrirModalConexoes(tipo) {
   listaConexoes.value = [];
 
   try {
-    const perfilId = perfilUsuario.value.id; // ID do perfil que estamos vendo
+    const perfilId = perfilUsuario.value.id; 
     const res = await fetch(`${API_URL}/api/perfil_conexoes.php?id=${perfilId}&tipo=${tipo}`, {
       method: 'GET',
       credentials: 'include'
@@ -301,48 +304,42 @@ async function abrirModalConexoes(tipo) {
   }
 }
 
-// --- Função para remover conexão (Deixar de seguir na lista) ---
 async function removerConexao(userToRemove) {
-  if (!confirm(`Deixar de seguir ${userToRemove.nome}?`)) return;
+  
+  showConfirm(`Deixar de seguir ${userToRemove.nome}?`, async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/deixar_de_seguir.php`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: userToRemove.id })
+      });
 
-  try {
-    const res = await fetch(`${API_URL}/api/deixar_de_seguir.php`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: userToRemove.id })
-    });
-
-    const data = await res.json();
-    if (data.sucesso) {
-      // Remove da lista visualmente
-      listaConexoes.value = listaConexoes.value.filter(u => u.id !== userToRemove.id);
-      // Atualiza o contador do perfil
-      perfilUsuario.value.following_count--;
-    } else {
-      alert(data.mensagem);
+      const data = await res.json();
+      if (data.sucesso) {
+        listaConexoes.value = listaConexoes.value.filter(u => u.id !== userToRemove.id);
+        perfilUsuario.value.following_count--;
+        showAlert('Deixou de seguir com sucesso', 'success');
+      } else {
+        showAlert(data.mensagem, 'error');
+      }
+    } catch (err) {
+      console.error("Erro ao deixar de seguir:", err);
+      showAlert("Erro ao deixar de seguir.", 'error');
     }
-  } catch (err) {
-    console.error("Erro ao deixar de seguir:", err);
-  }
+  });
 }
 
-// Lista de géneros
+// --- Géneros e Upload ---
 const generosDisponiveis = [
   'Pop', 'Rock', 'Hip Hop', 'Rap', 'R&B', 'Country', 'Eletrônica', 
   'Jazz', 'Clássica', 'Funk', 'Sertanejo', 'Pagode', 'Samba', 
   'Indie', 'Metal', 'Reggae', 'Soul', 'Blues', 'K-Pop', 'MPB'
 ];
 
-const editForm = reactive({ 
-  nome: '', 
-  generos: [] 
-});
-
 const fileInput = ref(null);
 const isUploading = ref(false);
 
-// --- Upload de Foto ---
 function triggerUpload() {
   fileInput.value.click();
 }
@@ -368,12 +365,9 @@ async function onFileChange(event) {
       perfilUsuario.value.foto_perfil = data.nova_url;
       atualizarLocalStorageFoto(data.nova_url);
       showAlert('Foto de perfil atualizada!', 'success');
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      
+      setTimeout(() => { window.location.reload(); }, 1000);
     } else {
+      
       showAlert(data.mensagem || 'Erro ao enviar imagem.', 'error');
     }
 
@@ -385,12 +379,12 @@ async function onFileChange(event) {
   }
 }
 
-// --- Remover Foto ---
-async function removePhoto() {
-  if (!confirm('Tem a certeza que quer remover a sua foto de perfil?')) {
-    return;
-  }
-  
+
+function confirmarRemocaoFoto() {
+  showConfirm('Tem a certeza que quer remover a sua foto de perfil?', executarRemocaoFoto);
+}
+
+async function executarRemocaoFoto() {
   isUploading.value = true;
   try {
     const res = await fetch(`${API_URL}/api/perfil_foto_remove.php`, {
@@ -404,11 +398,7 @@ async function removePhoto() {
       perfilUsuario.value.foto_perfil = null;
       atualizarLocalStorageFoto(null);
       showAlert('Foto de perfil removida.', 'success');
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-
+      setTimeout(() => { window.location.reload(); }, 1000);
     } else {
       showAlert(data.mensagem || 'Erro ao remover foto.', 'error');
     }
@@ -421,6 +411,11 @@ async function removePhoto() {
   }
 }
 
+// Mantemos a removePhoto original para compatibilidade, mas redirecionamos
+function removePhoto() {
+  confirmarRemocaoFoto();
+}
+
 function atualizarLocalStorageFoto(novaUrl) {
   const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
   if (usuarioLocal) {
@@ -429,7 +424,6 @@ function atualizarLocalStorageFoto(novaUrl) {
   }
 }
 
-// --- Edição de Perfil ---
 function openEditDialog() {
   editForm.nome = perfilUsuario.value.nome;
   const generosString = perfilUsuario.value.generos || '';
@@ -476,18 +470,18 @@ async function saveProfile() {
         localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
       }
       closeEditDialog();
+      showAlert('Perfil atualizado com sucesso!', 'success');
     } else {
-      alert(`Erro: ${data.mensagem}`);
+      showAlert(data.mensagem, 'error'); // MUDANÇA: showAlert
     }
   } catch (err) {
     console.error('Erro ao salvar perfil:', err);
-    alert('Erro de rede ao tentar salvar.');
+    showAlert('Erro de rede ao tentar salvar.', 'error'); // MUDANÇA: showAlert
   } finally {
     isSaving.value = false;
   }
 }
 
-// --- Curtidas ---
 async function toggleLike(review) {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -514,7 +508,6 @@ async function toggleLike(review) {
   }
 }
 
-// --- Seguir ---
 async function toggleFollow() {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -536,16 +529,16 @@ async function toggleFollow() {
         perfilUsuario.value.followers_count--;
       }
     } else {
-      alert(`Erro: ${data.mensagem}`);
+      showAlert(data.mensagem, 'error'); // MUDANÇA: showAlert
     }
   } catch (err) {
     console.error(`Erro ao ${endpoint}:`, err);
+    showAlert('Erro na solicitação.', 'error'); // MUDANÇA: showAlert
   } finally {
     followLoading.value = false;
   }
 }
 
-// --- Carregar Dados ---
 const avaliacoes = ref([]);
 const reviewsVisiveisCount = ref(3);
 const isLoadingMoreReviews = ref(false);
