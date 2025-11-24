@@ -15,7 +15,7 @@
 
       <v-container v-else class="py-8">
         <v-row>
-          <v-col cols="12" md="7">
+          <v-col cols="12" md="7" order="2" order-md="1">
 
             <div class="d-flex justify-space-between align-center mb-6">
               <div>
@@ -83,22 +83,31 @@
             </div>
           </v-col>
 
-          <v-col cols="12" md="5">
+          <v-col cols="12" md="5" order="1" order-md="2">
             <v-card rounded="xl" class="mb-6 pa-8 text-center" color="white" flat elevation="0">
 
-              <div class="d-flex justify-center mb-4">
-                <v-avatar size="160" style="position: relative;">
-                  <v-img v-if="perfilUsuario.foto_perfil" :src="perfilUsuario.foto_perfil"></v-img>
-                  <v-icon v-else size="160" color="grey-lighten-1">mdi-account-circle</v-icon>
-
-                  <v-btn v-if="isSelf" icon="mdi-pencil" size="small" color="primary"
-                    style="position: absolute; bottom: 8px; right: 8px;" @click="triggerUpload"
-                    :loading="isUploading"></v-btn>
-
-                  <v-btn v-if="isSelf && perfilUsuario.foto_perfil" icon="mdi-delete" size="small" color="error"
-                    style="position: absolute; top: 8px; right: 8px;" @click="removePhoto"
-                    :loading="isUploading"></v-btn>
+              <div class="d-flex flex-column align-center mb-6">
+                <v-avatar size="160" class="mb-4 elevation-2">
+                  <v-img v-if="perfilUsuario.foto_perfil" :src="perfilUsuario.foto_perfil" cover></v-img>
+                  <div v-else class="d-flex align-center justify-center fill-height bg-grey-lighten-4"
+                    style="width: 100%; height: 100%;">
+                    <v-icon size="80" color="grey-lighten-1">mdi-account</v-icon>
+                  </div>
                 </v-avatar>
+
+                <div v-if="isSelf" class="d-flex align-center mt-2">
+                  <v-btn variant="tonal" color="primary" rounded="pill" class="text-none mr-2"
+                    prepend-icon="mdi-camera-outline" @click="triggerUpload" :loading="isUploading" size="small">
+                    Alterar foto
+                  </v-btn>
+
+                  <v-tooltip text="Remover foto atual" location="bottom">
+                    <template v-slot:activator="{ props }">
+                      <v-btn v-if="perfilUsuario.foto_perfil" v-bind="props" icon="mdi-delete-outline" variant="text"
+                        color="error" size="small" @click="removePhoto" :loading="isUploading"></v-btn>
+                    </template>
+                  </v-tooltip>
+                </div>
               </div>
 
               <v-file-input ref="fileInput" v-show="false" accept="image/png, image/jpeg"
@@ -131,9 +140,17 @@
               <v-text-field v-model="editForm.nome" label="Nome" variant="outlined"
                 :rules="[v => !!v || 'Nome é obrigatório']" required class="mb-3"></v-text-field>
 
-              <v-text-field v-model="editForm.generos" label="Gêneros Preferidos (ex: pop, rock, eletrônico)"
-                variant="outlined" hint="Separados por vírgula"></v-text-field>
-            </v-card-text>
+              <v-autocomplete
+                v-model="editForm.generos"
+                :items="generosDisponiveis"
+                label="Gêneros Preferidos"
+                variant="outlined"
+                multiple
+                chips
+                closable-chips
+                placeholder="Selecione seus gêneros..."
+              ></v-autocomplete>
+              </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn text @click="closeEditDialog" :disabled="isSaving">Cancelar</v-btn>
@@ -167,44 +184,51 @@ const perfilUsuario = ref({});
 const isSelf = ref(false);
 const isFollowing = ref(false);
 const followLoading = ref(false);
-const musicasRecentes = ref([]);
-const usuariosOnline = ref([]);
 const editDialog = ref(false);
 const isSaving = ref(false);
 const editFormRef = ref(null);
-const editForm = reactive({ nome: '', generos: '' });
 
-const fileInput = ref(null); // Ref para o v-file-input
-const isUploading = ref(false); // Loading para os botões do avatar
 
-// 1. Função para "clicar" no input escondido
+// Lista de gêneros disponíveis para escolha
+const generosDisponiveis = [
+  'Pop', 'Rock', 'Hip Hop', 'Rap', 'R&B', 'Country', 'Eletrônica', 
+  'Jazz', 'Clássica', 'Funk', 'Sertanejo', 'Pagode', 'Samba', 
+  'Indie', 'Metal', 'Reggae', 'Soul', 'Blues', 'K-Pop', 'MPB'
+];
+
+// O editForm agora inicializa 'generos' como array []
+const editForm = reactive({ 
+  nome: '', 
+  generos: [] 
+});
+
+
+const fileInput = ref(null);
+const isUploading = ref(false);
+
 function triggerUpload() {
   fileInput.value.click();
 }
 
-// 2. Função chamada quando o utilizador seleciona um ficheiro
 async function onFileChange(event) {
   const file = event.target.files[0];
   if (!file) return;
 
   isUploading.value = true;
   const formData = new FormData();
-  formData.append('foto', file); // 'foto' deve corresponder ao $_FILES['foto'] no PHP
+  formData.append('foto', file);
 
   try {
     const res = await fetch(`${API_URL}/api/perfil_foto_update.php`, {
       method: 'POST',
-      credentials: 'include', // Envia o cookie de sessão
-      body: formData, // Envia como FormData (NÃO JSON)
+      credentials: 'include',
+      body: formData,
     });
 
     const data = await res.json();
     if (res.ok && data.sucesso) {
-      // Atualiza o avatar na página
       perfilUsuario.value.avatar = data.nova_url;
-      // Atualiza o 'foto_perfil' (para o botão 'remover' aparecer)
       perfilUsuario.value.foto_perfil = data.nova_url;
-
       atualizarLocalStorageFoto(data.nova_url);
       showAlert('Foto de perfil atualizada!', 'success');
     } else {
@@ -219,7 +243,6 @@ async function onFileChange(event) {
   }
 }
 
-// 3. Função para REMOVER a foto
 async function removePhoto() {
   if (!confirm('Tem a certeza que quer remover a sua foto de perfil?')) {
     return;
@@ -234,10 +257,8 @@ async function removePhoto() {
 
     const data = await res.json();
     if (res.ok && data.sucesso) {
-      // Atualiza o avatar para o padrão
       perfilUsuario.value.avatar = data.nova_url;
       perfilUsuario.value.foto_perfil = null;
-
       atualizarLocalStorageFoto(null);
       showAlert('Foto de perfil removida.', 'success');
     } else {
@@ -252,27 +273,76 @@ async function removePhoto() {
   }
 }
 
-// 4. Função auxiliar para atualizar o localStorage
 function atualizarLocalStorageFoto(novaUrl) {
   const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
   if (usuarioLocal) {
-    // Adiciona/atualiza a foto no objeto do localStorage
     usuarioLocal.foto_perfil = novaUrl;
     localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
   }
 }
 
-// Funções para abrir e fechar o dialogo de login
+
 function openEditDialog() {
   editForm.nome = perfilUsuario.value.nome;
-  editForm.generos = perfilUsuario.value.generos || '';
+  
+  const generosString = perfilUsuario.value.generos || '';
+  if (generosString) {
+    editForm.generos = generosString.split(',').map(g => g.trim());
+  } else {
+    editForm.generos = [];
+  }
+  
   editDialog.value = true;
 }
+
 function closeEditDialog() {
   editDialog.value = false;
 }
 
-// Função de curtir a avaliação
+async function saveProfile() {
+  const { valid } = await editFormRef.value.validate();
+  if (!valid) return;
+
+  isSaving.value = true;
+  try {
+
+    const generosParaEnviar = Array.isArray(editForm.generos) 
+      ? editForm.generos.join(', ') 
+      : editForm.generos;
+
+    const res = await fetch(`${API_URL}/api/perfil_update.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: editForm.nome,
+        generos: generosParaEnviar // Envia como string
+      })
+    });
+    const data = await res.json();
+
+    if (data.sucesso) {
+      perfilUsuario.value.nome = data.dados_atualizados.nome;
+      perfilUsuario.value.generos = data.dados_atualizados.generos;
+
+      const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
+      if (usuarioLocal) {
+        usuarioLocal.nome = data.dados_atualizados.nome;
+        localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
+      }
+      closeEditDialog();
+    } else {
+      alert(`Erro: ${data.mensagem}`);
+    }
+  } catch (err) {
+    console.error('Erro ao salvar perfil:', err);
+    alert('Erro de rede ao tentar salvar.');
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+
 async function toggleLike(review) {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -299,46 +369,6 @@ async function toggleLike(review) {
   }
 }
 
-async function saveProfile() {
-
-  const { valid } = await editFormRef.value.validate();
-  if (!valid) return;
-
-  isSaving.value = true;
-  try {
-    const res = await fetch(`${API_URL}/api/perfil_update.php`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nome: editForm.nome,
-        generos: editForm.generos
-      })
-    });
-    const data = await res.json();
-
-    if (data.sucesso) {
-      perfilUsuario.value.nome = data.dados_atualizados.nome;
-      perfilUsuario.value.generos = data.dados_atualizados.generos;
-
-      const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
-      if (usuarioLocal) {
-        usuarioLocal.nome = data.dados_atualizados.nome;
-        localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
-      }
-      closeEditDialog();
-    } else {
-      alert(`Erro: ${data.mensagem}`);
-    }
-  } catch (err) {
-    console.error('Erro ao salvar perfil:', err);
-    alert('Erro de rede ao tentar salvar.');
-  } finally {
-    isSaving.value = false;
-  }
-}
-
-// Função de seguir o usuário
 async function toggleFollow() {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -386,7 +416,6 @@ function carregarMaisAvaliacoes() {
   }, 300);
 }
 
-// Função para direcionar para a página de avaliação
 function getAvaliacaoUrl(musica) {
   if (!musica) return '/';
 
@@ -406,13 +435,9 @@ function getAvaliacaoUrl(musica) {
   return `/avaliacao?${params.toString()}`;
 }
 
-
-
 async function carregarPerfil(id) {
   loading.value = true;
   error.value = false;
-
-
   reviewsVisiveisCount.value = 3;
 
   const url = id ? `${API_URL}/api/perfil.php?id=${id}` : `${API_URL}/api/perfil.php`;
