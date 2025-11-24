@@ -55,15 +55,11 @@
                       }}</v-list-item-title>
                       <v-list-item-subtitle class="text-body-2 text-grey">{{ avaliacao.musica.artista
                       }}</v-list-item-subtitle>
-                    </v-list-item> 
-                    
-                    <v-rating :model-value="avaliacao.nota" color="amber" density="compact"
+                    </v-list-item> <v-rating :model-value="avaliacao.nota" color="amber" density="compact"
                       half-increments readonly size="small" class="mb-2"></v-rating>
-                    
                     <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">{{ avaliacao.titulo }}</h3>
                     <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">{{ avaliacao.comentario }}
                     </p>
-                    
                     <div class="d-flex align-center">
                       <v-btn :color="avaliacao.usuario_curtiu ? 'red' : 'grey-darken-1'" variant="text" size="small"
                         class="text-none ml-n2" :loading="likeLoadingId === avaliacao.id"
@@ -228,7 +224,8 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-      </div>
+
+    </div>
   </div>
 </template>
 
@@ -236,7 +233,7 @@
 import { ref, onMounted, reactive, watch, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
+const API_URL = '';
 const router = useRouter();
 const route = useRoute();
 
@@ -257,13 +254,14 @@ const isSaving = ref(false);
 const editFormRef = ref(null);
 const editForm = reactive({ nome: '', generos: '' });
 
+// Modal de Conexões
 const conexoesDialog = ref(false);
 const conexoesTitulo = ref('');
 const conexoesLoading = ref(false);
 const listaConexoes = ref([]);
 const conexoesTipo = ref('');
 
-
+// Diálogo de Confirmação
 const confirmDialog = ref(false);
 const confirmMessage = ref('');
 let onConfirmCallback = null;
@@ -279,6 +277,7 @@ function confirmAction() {
   confirmDialog.value = false;
 }
 
+// --- Conexões ---
 async function abrirModalConexoes(tipo) {
   conexoesTipo.value = tipo;
   conexoesTitulo.value = tipo === 'seguindo' ? 'Seguindo' : 'Seguidores';
@@ -305,7 +304,6 @@ async function abrirModalConexoes(tipo) {
 }
 
 async function removerConexao(userToRemove) {
-  
   showConfirm(`Deixar de seguir ${userToRemove.nome}?`, async () => {
     try {
       const res = await fetch(`${API_URL}/api/deixar_de_seguir.php`, {
@@ -364,10 +362,11 @@ async function onFileChange(event) {
       perfilUsuario.value.avatar = data.nova_url;
       perfilUsuario.value.foto_perfil = data.nova_url;
       atualizarLocalStorageFoto(data.nova_url);
-      showAlert('Foto de perfil atualizada!', 'success');
-      setTimeout(() => { window.location.reload(); }, 1000);
-    } else {
       
+      
+      window.dispatchEvent(new Event('user-updated'));
+      showAlert('Foto de perfil atualizada!', 'success');
+    } else {
       showAlert(data.mensagem || 'Erro ao enviar imagem.', 'error');
     }
 
@@ -379,8 +378,7 @@ async function onFileChange(event) {
   }
 }
 
-
-function confirmarRemocaoFoto() {
+function confirmingRemocaoFoto() {
   showConfirm('Tem a certeza que quer remover a sua foto de perfil?', executarRemocaoFoto);
 }
 
@@ -397,8 +395,10 @@ async function executarRemocaoFoto() {
       perfilUsuario.value.avatar = data.nova_url;
       perfilUsuario.value.foto_perfil = null;
       atualizarLocalStorageFoto(null);
+      
+     
+      window.dispatchEvent(new Event('user-updated'));
       showAlert('Foto de perfil removida.', 'success');
-      setTimeout(() => { window.location.reload(); }, 1000);
     } else {
       showAlert(data.mensagem || 'Erro ao remover foto.', 'error');
     }
@@ -411,9 +411,8 @@ async function executarRemocaoFoto() {
   }
 }
 
-// Mantemos a removePhoto original para compatibilidade, mas redirecionamos
 function removePhoto() {
-  confirmarRemocaoFoto();
+  confirmingRemocaoFoto();
 }
 
 function atualizarLocalStorageFoto(novaUrl) {
@@ -469,14 +468,16 @@ async function saveProfile() {
         usuarioLocal.nome = data.dados_atualizados.nome;
         localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
       }
+      
+      window.dispatchEvent(new Event('user-updated'));
       closeEditDialog();
       showAlert('Perfil atualizado com sucesso!', 'success');
     } else {
-      showAlert(data.mensagem, 'error'); // MUDANÇA: showAlert
+      showAlert(data.mensagem, 'error');
     }
   } catch (err) {
     console.error('Erro ao salvar perfil:', err);
-    showAlert('Erro de rede ao tentar salvar.', 'error'); // MUDANÇA: showAlert
+    showAlert('Erro de rede ao tentar salvar.', 'error');
   } finally {
     isSaving.value = false;
   }
@@ -529,11 +530,11 @@ async function toggleFollow() {
         perfilUsuario.value.followers_count--;
       }
     } else {
-      showAlert(data.mensagem, 'error'); // MUDANÇA: showAlert
+      showAlert(data.mensagem, 'error');
     }
   } catch (err) {
     console.error(`Erro ao ${endpoint}:`, err);
-    showAlert('Erro na solicitação.', 'error'); // MUDANÇA: showAlert
+    showAlert('Erro na solicitação.', 'error');
   } finally {
     followLoading.value = false;
   }

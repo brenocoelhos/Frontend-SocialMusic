@@ -37,7 +37,7 @@
           <div v-else>
             <div class="d-flex align-center mb-3">
               <v-avatar size="40" class="mr-2">
-                <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário"></v-img>
+                <v-img v-if="usuario.foto_perfil" :src="usuario.foto_perfil" alt="Foto do usuário" cover></v-img>
                 <v-icon v-else size="40" color="grey">mdi-account-circle</v-icon>
               </v-avatar>
               <div class="text-subtitle-1 font-weight-medium">{{ usuario.nome }}</div>
@@ -197,7 +197,7 @@
           <template v-slot:activator="{ props }">
             <div class="d-flex align-center mr-8" style="cursor: pointer;" v-bind="props">
               <v-avatar size="32">
-                <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário" ></v-img>
+                <v-img v-if="usuario.foto_perfil" :src="usuario.foto_perfil" alt="Foto do usuário" cover></v-img>
                 <v-icon v-else :color="textColor" size="32">mdi-account-circle</v-icon>
               </v-avatar>
               <span class="text-subtitle-2 ml-2" :style="{ color: textColor }">{{ usuario.nome }}</span>
@@ -207,12 +207,12 @@
             <v-list-item class="px-4 pb-2">
               <template v-slot:prepend>
                 <v-avatar size="48" class="mr-3">
-                  <v-img v-if="usuario.foto" :src="usuario.foto" alt="Foto do usuário" cover></v-img>
+                  <v-img v-if="usuario.foto_perfil" :src="usuario.foto_perfil" alt="Foto do usuário" cover></v-img>
                   <v-icon v-else size="48" color="grey">mdi-account-circle</v-icon>
                 </v-avatar>
               </template>
               <v-list-item-title class="text-subtitle-2 font-weight-bold">{{ usuario.nome }}</v-list-item-title>
-              <v-list-item-subtitle class="text-caption">@{{ usuario.username }}</v-list-item-subtitle>
+              <v-list-item-subtitle class="text-caption">{{ usuario.email }}</v-list-item-subtitle>
             </v-list-item>
 
             <v-divider class="my-2"></v-divider>
@@ -306,10 +306,11 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch, provide } from 
 import { useRoute, useRouter } from 'vue-router';
 
 // Configuração da API URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
+// (Mantive vazia conforme sua configuração de proxy Vercel)
+const API_URL = '';
 
-const route = useRoute(); // Rota atual
-const router = useRouter(); // Roteador para navegação programática
+const route = useRoute(); 
+const router = useRouter(); 
 const searchQuery = ref('');
 
 function goToBusca() {
@@ -371,7 +372,6 @@ watch(isHomePage, (newVal) => {
   }
 });
 
-// Observa mudanças de rota e faz scroll para o topo
 watch(() => route.path, () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
@@ -379,56 +379,47 @@ watch(() => route.path, () => {
 // Função para lidar com a mudança de storage
 function handleStorageChange(event) {
   if (event.key === 'usuario' && event.newValue === null) {
-    // Se o 'usuario' foi removido do localStorage (ex: pelo index.js)
-    // força o logout na interface.
     usuario.value = null;
     showAlert("A sua sessão expirou.", "warning");
   }
 }
 
-// Inicializa e limpa os event listeners
-onMounted(() => {
-  handleScroll();
-  window.addEventListener('scroll', handleScroll);
-
-  // Ouve por mudanças no localStorage
-  window.addEventListener('storage', handleStorageChange);
-
-  // Captura dados do Spotify se houver na URL
-  capturarDadosSpotify();
-
-  // Verifica se já existe uma sessão
+// Função para atualizar usuário sem reload
+function updateUserState() {
   const usuarioSalvo = localStorage.getItem('usuario');
   if (usuarioSalvo) {
     usuario.value = JSON.parse(usuarioSalvo);
+  } else {
+    usuario.value = null;
   }
+}
+
+onMounted(() => {
+  handleScroll();
+  window.addEventListener('scroll', handleScroll);
+  window.addEventListener('storage', handleStorageChange);
+  
+  // Ouvir evento de atualização do usuário (Vindo do Perfil.vue)
+  window.addEventListener('user-updated', updateUserState);
+  
+  capturarDadosSpotify();
+  updateUserState(); // Carga inicial
 });
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
-
-  // Remove o ouvinte ao sair
   window.removeEventListener('storage', handleStorageChange);
+  window.removeEventListener('user-updated', updateUserState);
 });
 
-
-
-
-// --- GERENCIAMENTO DE ESTADO E SESSÃO ---
 const usuario = ref(null);
-
-// --- CONTROLE DO FORMULÁRIO ---
 const dialog = ref(false);
 const form = ref(null);
 const loading = ref(false);
 const view = ref('login');
-const spotifyEmail = ref(''); // Para armazenar o email vindo do Spotify
-const spotifyData = ref({}); // Para armazenar todos os dados do Spotify
-
-// --- CONTROLE DO NAVIGATION DRAWER ---
+const spotifyEmail = ref(''); 
+const spotifyData = ref({}); 
 const drawer = ref(false);
-
-// --- CONTROLE DOS ALERTAS ---
 const alertVisible = ref(false);
 const alertType = ref('success');
 const alertMessage = ref('');
@@ -475,97 +466,76 @@ function closeDialog() {
 }
 
 function openLoginDialog() {
-  // Reseta o formulário primeiro
   if (form.value) {
     form.value.reset();
     form.value.resetValidation();
   }
-  // Define a view como login
   view.value = 'login';
-  // Abre o diálogo
   dialog.value = true;
 }
 
-// Disponibiliza as funções globalmente
 provide('openLoginDialog', openLoginDialog);
 provide('showAlert', showAlert);
 
-// --- FUNÇÃO PARA MOSTRAR ALERTAS ---
 function showAlert(message, type = 'success') {
   alertMessage.value = message;
   alertType.value = type;
   alertVisible.value = true;
-
-  // Auto-esconder após 5 segundos
+  
   setTimeout(() => {
     alertVisible.value = false;
   }, 5000);
 }
 
-// --- FUNÇÃO DE LOGOUT ---
 async function logout() {
   loading.value = true;
   try {
-    // Chama a API de logout
-    const res = await fetch(`${API_URL}/api/logout.php`, {
-      method: "POST",
-      credentials: 'include'
+    const res = await fetch(`${API_URL}/api/logout.php`, { 
+      method: "POST", 
+      credentials: 'include' 
     });
-
     await res.json();
-
   } catch (err) {
     console.error("Erro ao fazer logout:", err);
   } finally {
     usuario.value = null;
     localStorage.removeItem('usuario');
-    searchQuery.value = ''; // Limpa o input de busca
+    searchQuery.value = ''; 
     loading.value = false;
-    location.reload();
+    router.push('/');
   }
 }
 
-// --- FUNÇÃO DE LOGIN COM SPOTIFY ---
 function loginWithSpotify() {
   window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize&mode=login';
 }
 
-// --- FUNÇÃO PARA INICIAR CADASTRO COM SPOTIFY ---
 function startSpotifyRegister() {
-  // Redireciona para o backend para autenticação Spotify
   window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize&mode=register';
 }
 
-// --- FUNÇÃO PARA CAPTURAR DADOS DO SPOTIFY DA URL ---
 const capturarDadosSpotify = () => {
   const urlParams = new URLSearchParams(window.location.search);
 
-  // Verifica se é LOGIN com Spotify (usuário já existe)
   if (urlParams.get('spotify_login') === 'success') {
     const userData = {
       id: urlParams.get('id'),
       nome: urlParams.get('nome'),
       email: urlParams.get('email'),
       perfil: urlParams.get('perfil'),
-      foto: urlParams.get('foto')
+      
+      foto_perfil: urlParams.get('foto') 
     };
 
-    // Salva o usuário COMPLETO no localStorage
     localStorage.setItem('usuario', JSON.stringify(userData));
     usuario.value = userData;
 
-    // Mostra mensagem de sucesso
     showAlert(`Bem-vindo de volta, ${userData.nome}!`, 'success');
-
-    // Limpa a URL IMEDIATAMENTE (sem recarregar a página)
     window.history.replaceState({}, document.title, window.location.pathname);
-
-    // RECARREGA A PÁGINA, reconhecer o novo estado de login
+    
     location.reload();
   }
-  // Verifica se é CADASTRO com Spotify (success=1 para cadastro)
   else if (urlParams.get('success') === '1') {
-    // CADASTRO com Spotify - usuário precisa completar dados
     spotifyData.value = {
       email: urlParams.get('email'),
       nome: urlParams.get('nome'),
@@ -573,27 +543,20 @@ const capturarDadosSpotify = () => {
       imagem: urlParams.get('imagem')
     };
 
-    // Pré-preencher o formulário
     spotifyEmail.value = spotifyData.value.email;
     formData.nome = spotifyData.value.nome;
     formData.email = spotifyData.value.email;
     formData.username = '';
 
-    // Mudar para a view spotify-register e abrir o dialog
     view.value = 'spotify-register';
     dialog.value = true;
-
-    // Limpar a URL
     window.history.replaceState({}, document.title, window.location.pathname);
   }
-  // Verifica se houve erro
   else if (urlParams.get('error')) {
-    // Erro na autenticação
     showAlert('Erro na autenticação Spotify: ' + urlParams.get('error'), 'error');
   }
 };
 
-// --- LÓGICA DE SUBMISSÃO ---
 async function submitForm() {
   const { valid } = await form.value.validate();
   if (!valid) return;
@@ -608,12 +571,10 @@ async function submitForm() {
         email: formData.email
       };
 
-      // Se for cadastro via Spotify, adicionar dados extras (sem senha)
       if (view.value === 'spotify-register') {
         payload.origem = 'spotify';
         payload.spotifyId = spotifyData.value.spotify_id;
       } else {
-        // Apenas cadastro normal precisa de senha
         payload.senha = formData.password;
       }
 
@@ -649,11 +610,12 @@ async function submitForm() {
       const data = await res.json();
 
       if (data.sucesso) {
+        showAlert(data.mensagem, "success");
         usuario.value = data.usuario;
-        console.log(data.usuario.perfil);
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
         closeDialog();
-        location.reload(); // Recarrega a página para atualizar o estado global da sessão
+        // Reload no login para garantir sessão limpa
+        location.reload();
       } else {
         showAlert(data.mensagem, "error");
       }
@@ -665,7 +627,6 @@ async function submitForm() {
     loading.value = false;
   }
 }
-
 </script>
 
 <style scoped>
