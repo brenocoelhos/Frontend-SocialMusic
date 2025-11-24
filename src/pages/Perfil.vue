@@ -22,9 +22,11 @@
                 <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">{{ perfilUsuario.nome }}</h1>
                 <p class="text-body-2 text-grey-darken-1">@{{ perfilUsuario.username }}</p>
               </div>
+              
               <v-btn v-if="isSelf" color="primary" variant="flat" rounded="lg" size="default" @click="openEditDialog">
                 Editar Perfil
               </v-btn>
+              
               <v-btn v-else :loading="followLoading" :variant="isFollowing ? 'outlined' : 'flat'" color="primary"
                 rounded="lg" size="default" @click="toggleFollow">
                 {{ isFollowing ? 'Seguindo' : 'Seguir' }}
@@ -55,11 +57,15 @@
                       }}</v-list-item-title>
                       <v-list-item-subtitle class="text-body-2 text-grey">{{ avaliacao.musica.artista
                       }}</v-list-item-subtitle>
-                    </v-list-item> <v-rating :model-value="avaliacao.nota" color="amber" density="compact"
+                    </v-list-item> 
+                    
+                    <v-rating :model-value="avaliacao.nota" color="amber" density="compact"
                       half-increments readonly size="small" class="mb-2"></v-rating>
+                    
                     <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">{{ avaliacao.titulo }}</h3>
                     <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">{{ avaliacao.comentario }}
                     </p>
+                    
                     <div class="d-flex align-center">
                       <v-btn :color="avaliacao.usuario_curtiu ? 'red' : 'grey-darken-1'" variant="text" size="small"
                         class="text-none ml-n2" :loading="likeLoadingId === avaliacao.id"
@@ -89,22 +95,37 @@
               <div class="d-flex flex-column align-center mb-6">
                 <v-avatar size="160" class="mb-4 elevation-2">
                   <v-img v-if="perfilUsuario.foto_perfil" :src="perfilUsuario.foto_perfil" cover></v-img>
-                  <div v-else class="d-flex align-center justify-center fill-height bg-grey-lighten-4"
-                    style="width: 100%; height: 100%;">
+                  <div v-else class="d-flex align-center justify-center fill-height bg-grey-lighten-4" style="width: 100%; height: 100%;">
                     <v-icon size="80" color="grey-lighten-1">mdi-account</v-icon>
                   </div>
                 </v-avatar>
 
                 <div v-if="isSelf" class="d-flex align-center mt-2">
-                  <v-btn variant="tonal" color="primary" rounded="pill" class="text-none mr-2"
-                    prepend-icon="mdi-camera-outline" @click="triggerUpload" :loading="isUploading" size="small">
+                  <v-btn
+                    variant="tonal"
+                    color="primary"
+                    rounded="pill"
+                    class="text-none mr-2"
+                    prepend-icon="mdi-camera-outline"
+                    @click="triggerUpload"
+                    :loading="isUploading"
+                    size="small"
+                  >
                     Alterar foto
                   </v-btn>
 
                   <v-tooltip text="Remover foto atual" location="bottom">
                     <template v-slot:activator="{ props }">
-                      <v-btn v-if="perfilUsuario.foto_perfil" v-bind="props" icon="mdi-delete-outline" variant="text"
-                        color="error" size="small" @click="removePhoto" :loading="isUploading"></v-btn>
+                      <v-btn
+                        v-if="perfilUsuario.foto_perfil"
+                        v-bind="props"
+                        icon="mdi-delete-outline"
+                        variant="text"
+                        color="error"
+                        size="small"
+                        @click="removePhoto"
+                        :loading="isUploading"
+                      ></v-btn>
                     </template>
                   </v-tooltip>
                 </div>
@@ -112,6 +133,7 @@
 
               <v-file-input ref="fileInput" v-show="false" accept="image/png, image/jpeg"
                 @change="onFileChange"></v-file-input>
+              
               <v-row class="mb-4">
                 <v-col class="text-center">
                   <div class="text-h5 font-weight-bold">{{ perfilUsuario.followers_count }}</div>
@@ -122,6 +144,7 @@
                   <div class="text-caption text-grey">Seguindo</div>
                 </v-col>
               </v-row>
+              
               <div class="text-center">
                 <p class="text-caption text-grey-darken-1">
                   {{ perfilUsuario.generos || 'Sem gêneros preferidos' }}
@@ -150,7 +173,7 @@
                 closable-chips
                 placeholder="Selecione seus gêneros..."
               ></v-autocomplete>
-              </v-card-text>
+            </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn text @click="closeEditDialog" :disabled="isSaving">Cancelar</v-btn>
@@ -164,7 +187,6 @@
 </template>
 
 <script setup>
-
 import { ref, onMounted, reactive, watch, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -188,24 +210,22 @@ const editDialog = ref(false);
 const isSaving = ref(false);
 const editFormRef = ref(null);
 
-
-// Lista de gêneros disponíveis para escolha
+// Lista de géneros
 const generosDisponiveis = [
   'Pop', 'Rock', 'Hip Hop', 'Rap', 'R&B', 'Country', 'Eletrônica', 
   'Jazz', 'Clássica', 'Funk', 'Sertanejo', 'Pagode', 'Samba', 
   'Indie', 'Metal', 'Reggae', 'Soul', 'Blues', 'K-Pop', 'MPB'
 ];
 
-// O editForm agora inicializa 'generos' como array []
 const editForm = reactive({ 
   nome: '', 
   generos: [] 
 });
 
-
 const fileInput = ref(null);
 const isUploading = ref(false);
 
+// --- Upload de Foto ---
 function triggerUpload() {
   fileInput.value.click();
 }
@@ -231,6 +251,12 @@ async function onFileChange(event) {
       perfilUsuario.value.foto_perfil = data.nova_url;
       atualizarLocalStorageFoto(data.nova_url);
       showAlert('Foto de perfil atualizada!', 'success');
+     
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      // ---------------------------------------
+      
     } else {
       showAlert(data.mensagem || 'Erro ao enviar imagem.', 'error');
     }
@@ -242,6 +268,7 @@ async function onFileChange(event) {
     isUploading.value = false;
   }
 }
+
 
 async function removePhoto() {
   if (!confirm('Tem a certeza que quer remover a sua foto de perfil?')) {
@@ -261,6 +288,13 @@ async function removePhoto() {
       perfilUsuario.value.foto_perfil = null;
       atualizarLocalStorageFoto(null);
       showAlert('Foto de perfil removida.', 'success');
+      
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      // ---------------------------------------
+
     } else {
       showAlert(data.mensagem || 'Erro ao remover foto.', 'error');
     }
@@ -284,14 +318,13 @@ function atualizarLocalStorageFoto(novaUrl) {
 
 function openEditDialog() {
   editForm.nome = perfilUsuario.value.nome;
-  
+  // Converte string do banco para array
   const generosString = perfilUsuario.value.generos || '';
   if (generosString) {
     editForm.generos = generosString.split(',').map(g => g.trim());
   } else {
     editForm.generos = [];
   }
-  
   editDialog.value = true;
 }
 
@@ -305,7 +338,7 @@ async function saveProfile() {
 
   isSaving.value = true;
   try {
-
+    // Converte array para string para enviar
     const generosParaEnviar = Array.isArray(editForm.generos) 
       ? editForm.generos.join(', ') 
       : editForm.generos;
@@ -316,7 +349,7 @@ async function saveProfile() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nome: editForm.nome,
-        generos: generosParaEnviar // Envia como string
+        generos: generosParaEnviar
       })
     });
     const data = await res.json();
@@ -342,7 +375,7 @@ async function saveProfile() {
   }
 }
 
-
+// --- Curtidas ---
 async function toggleLike(review) {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -369,6 +402,7 @@ async function toggleLike(review) {
   }
 }
 
+// --- Seguir ---
 async function toggleFollow() {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -399,7 +433,7 @@ async function toggleFollow() {
   }
 }
 
-
+// --- Carregar Dados ---
 const avaliacoes = ref([]);
 const reviewsVisiveisCount = ref(3);
 const isLoadingMoreReviews = ref(false);
@@ -418,7 +452,6 @@ function carregarMaisAvaliacoes() {
 
 function getAvaliacaoUrl(musica) {
   if (!musica) return '/';
-
   const params = new URLSearchParams();
   params.append('id', musica.id);
   params.append('name', musica.titulo);
@@ -431,7 +464,6 @@ function getAvaliacaoUrl(musica) {
   params.append('explicit', musica.explicit);
   params.append('album_name', musica.album_name);
   params.append('album_type', musica.album_type);
-
   return `/avaliacao?${params.toString()}`;
 }
 
