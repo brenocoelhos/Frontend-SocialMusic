@@ -16,14 +16,17 @@
       <v-container v-else class="py-8">
         <v-row>
           <v-col cols="12" md="7" order="2" order-md="1">
+
             <div class="d-flex justify-space-between align-center mb-6">
               <div>
                 <h1 class="text-h4 font-weight-bold my-8 text-grey-darken-3 mb-1">{{ perfilUsuario.nome }}</h1>
                 <p class="text-body-2 text-grey-darken-1">@{{ perfilUsuario.username }}</p>
               </div>
+              
               <v-btn v-if="isSelf" color="primary" variant="flat" rounded="lg" size="default" @click="openEditDialog">
                 Editar Perfil
               </v-btn>
+              
               <v-btn v-else :loading="followLoading" :variant="isFollowing ? 'outlined' : 'flat'" color="primary"
                 rounded="lg" size="default" @click="toggleFollow">
                 {{ isFollowing ? 'Seguindo' : 'Seguir' }}
@@ -54,11 +57,15 @@
                       }}</v-list-item-title>
                       <v-list-item-subtitle class="text-body-2 text-grey">{{ avaliacao.musica.artista
                       }}</v-list-item-subtitle>
-                    </v-list-item> <v-rating :model-value="avaliacao.nota" color="amber" density="compact"
+                    </v-list-item> 
+                    
+                    <v-rating :model-value="avaliacao.nota" color="amber" density="compact"
                       half-increments readonly size="small" class="mb-2"></v-rating>
+                    
                     <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">{{ avaliacao.titulo }}</h3>
                     <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">{{ avaliacao.comentario }}
                     </p>
+                    
                     <div class="d-flex align-center">
                       <v-btn :color="avaliacao.usuario_curtiu ? 'red' : 'grey-darken-1'" variant="text" size="small"
                         class="text-none ml-n2" :loading="likeLoadingId === avaliacao.id"
@@ -88,22 +95,37 @@
               <div class="d-flex flex-column align-center mb-6">
                 <v-avatar size="160" class="mb-4 elevation-2">
                   <v-img v-if="perfilUsuario.foto_perfil" :src="perfilUsuario.foto_perfil" cover></v-img>
-                  <div v-else class="d-flex align-center justify-center fill-height bg-grey-lighten-4"
-                    style="width: 100%; height: 100%;">
+                  <div v-else class="d-flex align-center justify-center fill-height bg-grey-lighten-4" style="width: 100%; height: 100%;">
                     <v-icon size="80" color="grey-lighten-1">mdi-account</v-icon>
                   </div>
                 </v-avatar>
 
                 <div v-if="isSelf" class="d-flex align-center mt-2">
-                  <v-btn variant="tonal" color="primary" rounded="pill" class="text-none mr-2"
-                    prepend-icon="mdi-camera-outline" @click="triggerUpload" :loading="isUploading" size="small">
+                  <v-btn
+                    variant="tonal"
+                    color="primary"
+                    rounded="pill"
+                    class="text-none mr-2"
+                    prepend-icon="mdi-camera-outline"
+                    @click="triggerUpload"
+                    :loading="isUploading"
+                    size="small"
+                  >
                     Alterar foto
                   </v-btn>
 
                   <v-tooltip text="Remover foto atual" location="bottom">
                     <template v-slot:activator="{ props }">
-                      <v-btn v-if="perfilUsuario.foto_perfil" v-bind="props" icon="mdi-delete-outline" variant="text"
-                        color="error" size="small" @click="removePhoto" :loading="isUploading"></v-btn>
+                      <v-btn
+                        v-if="perfilUsuario.foto_perfil"
+                        v-bind="props"
+                        icon="mdi-delete-outline"
+                        variant="text"
+                        color="error"
+                        size="small"
+                        @click="removePhoto"
+                        :loading="isUploading"
+                      ></v-btn>
                     </template>
                   </v-tooltip>
                 </div>
@@ -122,6 +144,7 @@
                   <div class="text-caption text-grey">Seguindo</div>
                 </v-col>
               </v-row>
+              
               <div class="text-center">
                 <p class="text-caption text-grey-darken-1">
                   {{ perfilUsuario.generos || 'Sem gêneros preferidos' }}
@@ -137,12 +160,25 @@
           <v-card>
             <v-card-title>Editar Perfil</v-card-title>
             <v-card-text>
-              <v-text-field v-model="editForm.nome" label="Nome" variant="outlined"
-                :rules="[v => !!v || 'Nome é obrigatório']" required class="mb-3"></v-text-field>
+              <v-text-field
+                v-model="editForm.nome"
+                label="Nome"
+                variant="outlined"
+                :rules="[v => !!v || 'Nome é obrigatório']"
+                required
+                class="mb-3"
+              ></v-text-field>
 
-              <v-autocomplete v-model="editForm.generos" :items="generosDisponiveis" label="Gêneros Preferidos"
-                variant="outlined" multiple chips closable-chips
-                placeholder="Selecione seus gêneros..."></v-autocomplete>
+              <v-autocomplete
+                v-model="editForm.generos"
+                :items="generosDisponiveis"
+                label="Gêneros Preferidos"
+                variant="outlined"
+                multiple
+                chips
+                closable-chips
+                placeholder="Selecione seus gêneros..."
+              ></v-autocomplete>
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
@@ -183,19 +219,32 @@
                     <v-img :src="user.foto_perfil"></v-img>
                   </v-avatar>
                 </template>
+                
                 <v-list-item-title class="font-weight-bold">{{ user.nome }}</v-list-item-title>
                 <v-list-item-subtitle>@{{ user.username }}</v-list-item-subtitle>
-              </v-list-item>
+
+                <template v-slot:append>
+                  <v-btn
+                    v-if="isSelf && conexoesTipo === 'seguindo'"
+                    color="grey-lighten-1"
+                    variant="text"
+                    icon="mdi-account-remove-outline"
+                    size="small"
+                    @click.stop.prevent="removerConexao(user)"
+                    title="Deixar de seguir"
+                  ></v-btn>
+                </template>
+                </v-list-item>
             </v-list>
           </v-card-text>
         </v-card>
       </v-dialog>
-      </div>
+
+    </div>
   </div>
 </template>
 
 <script setup>
-
 import { ref, onMounted, reactive, watch, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -218,16 +267,17 @@ const followLoading = ref(false);
 const editDialog = ref(false);
 const isSaving = ref(false);
 const editFormRef = ref(null);
-const editForm = reactive({ nome: '', generos: '' });
 
 // Variáveis para o Modal de Conexões
 const conexoesDialog = ref(false);
 const conexoesTitulo = ref('');
 const conexoesLoading = ref(false);
 const listaConexoes = ref([]);
+const conexoesTipo = ref(''); // 'seguindo' ou 'seguidores'
 
 // --- Função para abrir o modal de conexões ---
 async function abrirModalConexoes(tipo) {
+  conexoesTipo.value = tipo;
   conexoesTitulo.value = tipo === 'seguindo' ? 'Seguindo' : 'Seguidores';
   conexoesDialog.value = true;
   conexoesLoading.value = true;
@@ -251,16 +301,48 @@ async function abrirModalConexoes(tipo) {
   }
 }
 
-// --- Resto das variáveis (generos, etc) ---
+// --- Função para remover conexão (Deixar de seguir na lista) ---
+async function removerConexao(userToRemove) {
+  if (!confirm(`Deixar de seguir ${userToRemove.nome}?`)) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/deixar_de_seguir.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: userToRemove.id })
+    });
+
+    const data = await res.json();
+    if (data.sucesso) {
+      // Remove da lista visualmente
+      listaConexoes.value = listaConexoes.value.filter(u => u.id !== userToRemove.id);
+      // Atualiza o contador do perfil
+      perfilUsuario.value.following_count--;
+    } else {
+      alert(data.mensagem);
+    }
+  } catch (err) {
+    console.error("Erro ao deixar de seguir:", err);
+  }
+}
+
+// Lista de géneros
 const generosDisponiveis = [
   'Pop', 'Rock', 'Hip Hop', 'Rap', 'R&B', 'Country', 'Eletrônica', 
   'Jazz', 'Clássica', 'Funk', 'Sertanejo', 'Pagode', 'Samba', 
   'Indie', 'Metal', 'Reggae', 'Soul', 'Blues', 'K-Pop', 'MPB'
 ];
 
-const fileInput = ref(null); 
-const isUploading = ref(false); 
+const editForm = reactive({ 
+  nome: '', 
+  generos: [] 
+});
 
+const fileInput = ref(null);
+const isUploading = ref(false);
+
+// --- Upload de Foto ---
 function triggerUpload() {
   fileInput.value.click();
 }
@@ -271,13 +353,13 @@ async function onFileChange(event) {
 
   isUploading.value = true;
   const formData = new FormData();
-  formData.append('foto', file); 
+  formData.append('foto', file);
 
   try {
     const res = await fetch(`${API_URL}/api/perfil_foto_update.php`, {
       method: 'POST',
-      credentials: 'include', 
-      body: formData, 
+      credentials: 'include',
+      body: formData,
     });
 
     const data = await res.json();
@@ -286,9 +368,11 @@ async function onFileChange(event) {
       perfilUsuario.value.foto_perfil = data.nova_url;
       atualizarLocalStorageFoto(data.nova_url);
       showAlert('Foto de perfil atualizada!', 'success');
+      
       setTimeout(() => {
         window.location.reload();
       }, 1000);
+      
     } else {
       showAlert(data.mensagem || 'Erro ao enviar imagem.', 'error');
     }
@@ -301,6 +385,7 @@ async function onFileChange(event) {
   }
 }
 
+// --- Remover Foto ---
 async function removePhoto() {
   if (!confirm('Tem a certeza que quer remover a sua foto de perfil?')) {
     return;
@@ -319,9 +404,11 @@ async function removePhoto() {
       perfilUsuario.value.foto_perfil = null;
       atualizarLocalStorageFoto(null);
       showAlert('Foto de perfil removida.', 'success');
+      
       setTimeout(() => {
         window.location.reload();
       }, 1000);
+
     } else {
       showAlert(data.mensagem || 'Erro ao remover foto.', 'error');
     }
@@ -342,6 +429,7 @@ function atualizarLocalStorageFoto(novaUrl) {
   }
 }
 
+// --- Edição de Perfil ---
 function openEditDialog() {
   editForm.nome = perfilUsuario.value.nome;
   const generosString = perfilUsuario.value.generos || '';
@@ -399,6 +487,7 @@ async function saveProfile() {
   }
 }
 
+// --- Curtidas ---
 async function toggleLike(review) {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -425,6 +514,7 @@ async function toggleLike(review) {
   }
 }
 
+// --- Seguir ---
 async function toggleFollow() {
   if (!loggedInUserId.value) return openLoginDialog();
 
@@ -455,6 +545,7 @@ async function toggleFollow() {
   }
 }
 
+// --- Carregar Dados ---
 const avaliacoes = ref([]);
 const reviewsVisiveisCount = ref(3);
 const isLoadingMoreReviews = ref(false);
