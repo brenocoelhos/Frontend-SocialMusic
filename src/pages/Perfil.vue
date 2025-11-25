@@ -411,7 +411,6 @@ async function executarRemocaoFoto() {
   }
 }
 
-// Mantemos a removePhoto original para compatibilidade, mas redirecionamos
 function removePhoto() {
   confirmarRemocaoFoto();
 }
