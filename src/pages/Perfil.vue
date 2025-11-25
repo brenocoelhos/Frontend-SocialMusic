@@ -288,7 +288,7 @@ async function abrirModalConexoes(tipo) {
 
   try {
     const perfilId = perfilUsuario.value.id; 
-    const res = await fetch(`${API_URL}/api/perfil_conexoes.php?id=${perfilId}&tipo=${tipo}`, {
+    const res = await fetch(`${API_URL}/api/users/perfil_conexoes.php?id=${perfilId}&tipo=${tipo}`, {
       method: 'GET',
       credentials: 'include'
     });
@@ -308,7 +308,7 @@ async function removerConexao(userToRemove) {
   // MUDANÇA: Usa o novo diálogo de confirmação
   showConfirm(`Deixar de seguir ${userToRemove.nome}?`, async () => {
     try {
-      const res = await fetch(`${API_URL}/api/deixar_de_seguir.php`, {
+      const res = await fetch(`${API_URL}/api/users/deixar_de_seguir.php`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -353,7 +353,7 @@ async function onFileChange(event) {
   formData.append('foto', file);
 
   try {
-    const res = await fetch(`${API_URL}/api/perfil_foto_update.php`, {
+    const res = await fetch(`${API_URL}/api/users/perfil_foto_update.php`, {
       method: 'POST',
       credentials: 'include',
       body: formData,
@@ -387,7 +387,7 @@ function confirmarRemocaoFoto() {
 async function executarRemocaoFoto() {
   isUploading.value = true;
   try {
-    const res = await fetch(`${API_URL}/api/perfil_foto_remove.php`, {
+    const res = await fetch(`${API_URL}/api/users/perfil_foto_remove.php`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -448,7 +448,7 @@ async function saveProfile() {
       ? editForm.generos.join(', ') 
       : editForm.generos;
 
-    const res = await fetch(`${API_URL}/api/perfil_update.php`, {
+    const res = await fetch(`${API_URL}/api/users/perfil_update.php`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -486,7 +486,7 @@ async function toggleLike(review) {
 
   likeLoadingId.value = review.id;
   try {
-    const res = await fetch(`${API_URL}/api/curtir_avaliacao.php`, {
+    const res = await fetch(`${API_URL}/api/reviews/curtir_avaliacao.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -576,7 +576,7 @@ async function carregarPerfil(id) {
   error.value = false;
   reviewsVisiveisCount.value = 3;
 
-  const url = id ? `${API_URL}/api/perfil.php?id=${id}` : `${API_URL}/api/perfil.php`;
+  const url = id ? `${API_URL}/api/users/perfil.php?id=${id}` : `${API_URL}/api/users/perfil.php`;
 
   try {
     const res = await fetch(url, {

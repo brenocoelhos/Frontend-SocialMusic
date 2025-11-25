@@ -507,7 +507,7 @@ async function logout() {
   loading.value = true;
   try {
     // Chama a API de logout
-    const res = await fetch(`${API_URL}/api/logout.php`, {
+    const res = await fetch(`${API_URL}/api/auth/logout.php`, {
       method: "POST",
       credentials: 'include'
     });
@@ -527,13 +527,13 @@ async function logout() {
 
 // --- FUNÇÃO DE LOGIN COM SPOTIFY ---
 function loginWithSpotify() {
-  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize&mode=login';
+  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify/spotify_user_auth.php?action=authorize&mode=login';
 }
 
 // --- FUNÇÃO PARA INICIAR CADASTRO COM SPOTIFY ---
 function startSpotifyRegister() {
   // Redireciona para o backend para autenticação Spotify
-  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify_user_auth.php?action=authorize&mode=register';
+  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify/spotify_user_auth.php?action=authorize&mode=register';
 }
 
 // --- FUNÇÃO PARA CAPTURAR DADOS DO SPOTIFY DA URL ---
@@ -617,7 +617,7 @@ async function submitForm() {
         payload.senha = formData.password;
       }
 
-      const res = await fetch(`${API_URL}/api/cadastro.php`, {
+      const res = await fetch(`${API_URL}/api/auth/cadastro.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -637,7 +637,7 @@ async function submitForm() {
         showAlert(data.mensagem, "error");
       }
     } else {
-      const res = await fetch(`${API_URL}/api/autentica.php`, {
+      const res = await fetch(`${API_URL}/api/auth/autentica.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',

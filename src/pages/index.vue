@@ -286,7 +286,7 @@ async function fetchMusicasPopulares() {
   loadingPopulares.value = true;
   try {
     const resPopulares = await fetch(
-      `${API_URL}/api/spotify_musicas.php?tipo=populares&limit=6`
+      `${API_URL}/api/spotify/spotify_musicas.php?tipo=populares&limit=6`
     );
     const dataPopulares = await resPopulares.json();
     if (dataPopulares.sucesso) {
@@ -304,7 +304,7 @@ async function fetchPrincipaisAvaliacoes() {
   loadingAvaliacoes.value = true;
   try {
     const res = await fetch(
-      `${API_URL}/api/principais_avaliacoes.php?limit=3`, {
+      `${API_URL}/api/reviews/principais_avaliacoes.php?limit=3`, {
       credentials: 'include'
     });
     const data = await res.json();
@@ -352,7 +352,7 @@ async function toggleLike(review) {
 
   likeLoadingId.value = review.id;
   try {
-    const res = await fetch(`${API_URL}/api/curtir_avaliacao.php`, {
+    const res = await fetch(`${API_URL}/api/reviews/curtir_avaliacao.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -378,7 +378,7 @@ async function fetchMusicasDestaque() {
   loadingMusicasDestaque.value = true;
   try {
     const res = await fetch(
-      `${API_URL}/api/musicas_destaque.php?limit=6`
+      `${API_URL}/api/spotify/musicas_destaque.php?limit=6`
     );
     const data = await res.json();
     if (data.sucesso) {
@@ -396,7 +396,7 @@ async function fetchUltimaAvaliacao() {
   loadingUltimaAvaliacao.value = true;
   try {
     const res = await fetch(
-      `${API_URL}/api/ultima_avaliacao.php?`, {
+      `${API_URL}/api/reviews/ultima_avaliacao.php?`, {
       credentials: 'include'
     });
     const data = await res.json();
@@ -414,7 +414,7 @@ async function fetchUsuariosRecomendados() {
   loadingRecomendados.value = true;
   try {
     const res = await fetch(
-      `${API_URL}/api/usuarios_recomendados.php?limit=5`, {
+      `${API_URL}/api/users/usuarios_recomendados.php?limit=5`, {
       credentials: 'include'
     });
     const data = await res.json();

@@ -379,7 +379,7 @@ async function checkExistingReview(spotifyId) {
   userReview.value = null;
   try {
     const response = await axios.get(
-      `/api/verificar_avaliacao.php?spotify_id=${spotifyId}`,
+      `/aapi/reviews/verificar_avaliacao.php?spotify_id=${spotifyId}`,
       { withCredentials: true }
     );
 
@@ -398,7 +398,7 @@ async function checkExistingReview(spotifyId) {
 async function fetchPageReviews(spotifyId, page = 1) {
   try {
     const response = await axios.get(
-      `/api/buscar_avaliacoes.php?spotify_id=${spotifyId}&page=${page}&limit=${reviewsPerPage}`
+      `/api/reviews/buscar_avaliacoes.php?spotify_id=${spotifyId}&page=${page}&limit=${reviewsPerPage}`
     );
     stats.value = response.data.stats;
 
@@ -522,7 +522,7 @@ async function toggleLike(review) {
 
   try {
     const response = await axios.post(
-      '/api/curtir_avaliacao.php',
+      '/api/reviews/curtir_avaliacao.php',
       { avaliacao_id: review.id }, // Envia o ID da avaliação
       { withCredentials: true }
     );
@@ -603,7 +603,7 @@ async function submitReview() {
       image_url: track.value.image_url,
     };
 
-    const response = await axios.post('/api/salvar_avaliacao.php', payload, {
+    const response = await axios.post('/api/reviews/salvar_avaliacao.php', payload, {
       withCredentials: true, // Inclui cookies de sessão
     });
 
@@ -635,7 +635,7 @@ async function deleteReview() {
   try {
     // userReview.value.id foi obtido do 'verificar_avaliacao.php'
     const response = await axios.post(
-      '/api/delete_avaliacao.php',
+      '/api/reviews/delete_avaliacao.php',
       { avaliacao_id: userReview.value.id },
       { withCredentials: true }
     );

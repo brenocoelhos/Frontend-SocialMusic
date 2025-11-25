@@ -89,8 +89,7 @@ function getAvaliacaoUrl(musica) {
 
 onMounted(async () => {
   try {
-   
-    const res = await fetch(`${API_URL}/api/musicas_destaque.php?limit=20`);
+    const res = await fetch(`${API_URL}/api/spotify/musicas_destaque.php?limit=20`);
     const data = await res.json();
     
     if (data.sucesso) {

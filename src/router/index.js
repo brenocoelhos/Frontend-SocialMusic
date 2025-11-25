@@ -36,7 +36,7 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAdmin) {
     try {
 
-      const response = await axios.get(`${API_URL}/api/auth.admin.php`, {
+      const response = await axios.get(`${API_URL}/api/auth/auth.admin.php`, {
         withCredentials: true,
         headers: {
           'Content-Type': 'application/json',

@@ -143,7 +143,7 @@ function getAvaliacaoUrl(track) {
 async function fetchTracks(query) {
   isLoadingTracks.value = true;
   trackResults.value = [];
-  const apiUrl = `${API_URL}/api/search.php?q=${encodeURIComponent(query)}`;
+  const apiUrl = `${API_URL}/api/spotify/search.php?q=${encodeURIComponent(query)}`;
   try {
     const response = await axios.get(apiUrl);
     trackResults.value = response.data;
@@ -157,7 +157,7 @@ async function fetchTracks(query) {
 async function fetchMembers(query) {
   isLoadingMembers.value = true;
   membersResults.value = [];
-  const apiUrl = `${API_URL}/api/buscar_membros.php?q=${encodeURIComponent(query)}`;
+  const apiUrl = `${API_URL}/api/users/buscar_membros.php?q=${encodeURIComponent(query)}`;
   try {
     const response = await axios.get(apiUrl);
     if (response.data.sucesso) {
