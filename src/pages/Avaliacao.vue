@@ -379,7 +379,7 @@ async function checkExistingReview(spotifyId) {
   userReview.value = null;
   try {
     const response = await axios.get(
-      `/aapi/reviews/verificar_avaliacao.php?spotify_id=${spotifyId}`,
+      `/api/reviews/verificar_avaliacao.php?spotify_id=${spotifyId}`,
       { withCredentials: true }
     );
 
@@ -495,7 +495,7 @@ async function toggleFollow(review) {
 
   try {
     const response = await axios.post(
-      `/api/${endpoint}`,
+      `/api/users/${endpoint}`,
       { id: review.usuario_id }, // Envia o ID do *autor da avaliação*
       { withCredentials: true }
     );

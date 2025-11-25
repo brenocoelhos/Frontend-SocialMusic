@@ -326,7 +326,7 @@ async function toggleFollow(review) {
   const endpoint = review.is_following ? 'deixar_de_seguir.php' : 'seguir.php';
 
   try {
-    const res = await fetch(`${API_URL}/api/${endpoint}`, {
+    const res = await fetch(`${API_URL}/api/users/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
