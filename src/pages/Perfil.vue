@@ -513,7 +513,7 @@ async function toggleFollow() {
   followLoading.value = true;
   const endpoint = isFollowing.value ? 'deixar_de_seguir.php' : 'seguir.php';
   try {
-    const res = await fetch(`${API_URL}/api/${endpoint}`, {
+    const res = await fetch(`${API_URL}/api/users/${endpoint}`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
