@@ -58,8 +58,10 @@
                     <div class="d-flex align-center gap-1 mb-2">
                       <v-icon icon="mdi-star" color="orange" size="28" class="pr-3" />
                       <h3 class="text-h6">
-                        <span class="text-black font-weight-bold">{{ stats.media > 0 ? stats.media.toFixed(1) : '--' }} </span>
-                        <span class="text-grey font-weight-medium">/5.0</span> </h3>
+                        <span class="text-black font-weight-bold">{{ stats.media > 0 ? stats.media.toFixed(1) : '--' }}
+                        </span>
+                        <span class="text-grey font-weight-medium">/5.0</span>
+                      </h3>
                     </div>
                     <p class="text-grey text-body-2">Média geral</p>
                   </div>
@@ -68,10 +70,11 @@
                 <v-col cols="4">
                   <div class="d-flex flex-column align-center">
                     <div class="d-flex align-center gap-1 mb-2">
-                      <v-icon icon="mdi-star-outline" color="grey" size="28" class="pr-3"/>
+                      <v-icon icon="mdi-star-outline" color="grey" size="28" class="pr-3" />
                       <h3 v-if="hasUserReview" class="text-h6">
                         <span class="text-black font-weight-bold">{{ userReview.nota }} </span>
-                        <span class="text-grey font-weight-medium">/5.0 </span> </h3>
+                        <span class="text-grey font-weight-medium">/5.0 </span>
+                      </h3>
                       <h3 v-else-if="isLoadingReview" class="text-h5 font-weight-bold">
                         <v-progress-circular indeterminate size="24" />
                       </h3>
@@ -173,7 +176,8 @@
                     <template v-slot:prepend>
                       <v-btn :to="`/perfil/${review.usuario_id}`" variant="text" class="pa-0" style="min-width: unset;">
                         <v-avatar size="56" class="mr-4">
-                          <v-img v-if="review.usuario_avatar" :src="review.usuario_avatar" alt="Avatar do usuário" cover />
+                          <v-img v-if="review.usuario_avatar" :src="review.usuario_avatar" alt="Avatar do usuário"
+                            cover />
                           <v-icon v-else size="56" color="grey-lighten-1">mdi-account-circle</v-icon>
                         </v-avatar>
                       </v-btn>
@@ -181,23 +185,27 @@
 
                     <template v-slot:append>
                       <v-btn v-if="loggedInUserId !== review.usuario_id" :loading="followLoadingId === review.id"
-                        :variant="review.is_following ? 'outlined' : 'flat'" :color="review.is_following ? 'grey-darken-1' : '#EEE8FF'" class="text-none" rounded="lg"
+                        :variant="review.is_following ? 'outlined' : 'flat'"
+                        :color="review.is_following ? 'grey-darken-1' : '#EEE8FF'" class="text-none" rounded="lg"
                         @click.prevent="toggleFollow(review)">
                         {{ review.is_following ? 'Seguindo' : 'Seguir' }}
                       </v-btn>
                     </template>
 
-                    <v-btn :to="`/perfil/${review.usuario_id}`" variant="text" class="text-none pa-0 justify-start" style="min-width: unset; text-decoration: none; color: inherit;">
-                      <v-list-item-title class="text-h6 font-weight-semibold">{{ review.usuario_nome }}</v-list-item-title>
+                    <v-btn :to="`/perfil/${review.usuario_id}`" variant="text" class="text-none pa-0 justify-start"
+                      style="min-width: unset; text-decoration: none; color: inherit;">
+                      <v-list-item-title class="text-h6 font-weight-semibold">{{ review.usuario_nome
+                      }}</v-list-item-title>
                     </v-btn>
-                    <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao) }}</v-list-item-subtitle>
+                    <v-list-item-subtitle class="text-grey text-caption">{{ formatTimeAgo(review.data_criacao)
+                    }}</v-list-item-subtitle>
 
                   </v-list-item>
 
                   <v-card-text class="pt-2 pl-21 ml-2">
                     <div class="mb-2">
-                      <v-rating :model-value="parseFloat(review.nota)" color="amber" half-increments readonly size="small"
-                        density="compact" />
+                      <v-rating :model-value="parseFloat(review.nota)" color="amber" half-increments readonly
+                        size="small" density="compact" />
                     </div>
 
                     <h4 v-if="review.titulo" class="text-body-1 font-weight-regular mb-1">{{ review.titulo }}</h4>
@@ -275,6 +283,9 @@
 import { ref, watch, computed, inject } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
+
+// Configuração da API URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
 
 const route = useRoute();
 const track = ref(null); // Armazena os detalhes da música
@@ -468,7 +479,7 @@ async function loadTrackFromQuery(query) {
   }
 }
 
-//
+// Função para carregar mais avaliações 
 async function loadMoreReviews() {
   isLoadingMore.value = true;
   currentPage.value++; // Incrementa a página
@@ -485,33 +496,33 @@ async function loadMoreReviews() {
 
 // Função para seguir/deixar de seguir o autor da avaliação
 async function toggleFollow(review) {
-  if (!loggedInUserId.value) {
-    openLoginDialog();
-    return;
-  }
+  if (!loggedInUserId.value) return openLoginDialog();
 
   followLoadingId.value = review.id;
-  const endpoint = review.isFollowing ? 'deixar_de_seguir.php' : 'seguir.php';
+  const actionEndpoint = review.is_following ? 'deixar_de_seguir.php' : 'seguir.php';
 
   try {
-    const response = await axios.post(
-      `/api/users/${endpoint}`,
-      { id: review.usuario_id }, // Envia o ID do *autor da avaliação*
-      { withCredentials: true }
-    );
+    const response = await axios.post(`${API_URL}/api/users/${actionEndpoint}`, {
+      id: review.usuario_id 
+    }, {
+      withCredentials: true
+    });
+
     if (response.data.sucesso) {
       review.is_following = !review.is_following;
     } else {
       showAlert(response.data.mensagem, 'error');
     }
-  } catch (err) {
-    console.error(`Erro ao ${endpoint}:`, err);
-    showAlert("Ocorreu um erro na solicitação.", 'error');
+  } catch (error) {
+    console.error('Erro ao seguir/deixar de seguir:', error);
+    const msg = error.response?.data?.mensagem || 'Erro ao processar solicitação.';
+    showAlert(msg, 'error');
   } finally {
-    followLoadingId.value = null; // Desativa o loading
+    followLoadingId.value = null;
   }
 }
 
+// Função para curtir/ descurtir avaliações
 async function toggleLike(review) {
   if (!loggedInUserId.value) {
     openLoginDialog();
@@ -677,6 +688,7 @@ watch(
 .v-list-item {
   background-color: transparent !important;
 }
+
 .pl-21 {
   padding-left: 84px !important;
 }
