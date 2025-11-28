@@ -202,7 +202,7 @@
               Ninguém aqui ainda.
             </div>
             <v-list v-else>
-              <v-list-item v-for="user in listaConexoes" :key="user.id" :to="`/perfil/${user.id}`" @click="conexoesDialog = false" class="py-2">
+              <v-list-item v-for="user in listaConexoes" :key="user.id" :to="`/perfil/${user.username}`" @click="conexoesDialog = false" class="py-2">
                 <template v-slot:prepend>
                   <v-avatar size="40"><v-img :src="user.foto_perfil"></v-img></v-avatar>
                 </template>
@@ -263,7 +263,6 @@ const conexoesLoading = ref(false);
 const listaConexoes = ref([]);
 const conexoesTipo = ref('');
 
-
 const confirmDialog = ref(false);
 const confirmMessage = ref('');
 let onConfirmCallback = null;
@@ -305,7 +304,6 @@ async function abrirModalConexoes(tipo) {
 }
 
 async function removerConexao(userToRemove) {
-  // MUDANÇA: Usa o novo diálogo de confirmação
   showConfirm(`Deixar de seguir ${userToRemove.nome}?`, async () => {
     try {
       const res = await fetch(`${API_URL}/api/users/deixar_de_seguir.php`, {
@@ -367,7 +365,6 @@ async function onFileChange(event) {
       showAlert('Foto de perfil atualizada!', 'success');
       setTimeout(() => { window.location.reload(); }, 1000);
     } else {
-      
       showAlert(data.mensagem || 'Erro ao enviar imagem.', 'error');
     }
 
@@ -378,7 +375,6 @@ async function onFileChange(event) {
     isUploading.value = false;
   }
 }
-
 
 function confirmarRemocaoFoto() {
   showConfirm('Tem a certeza que quer remover a sua foto de perfil?', executarRemocaoFoto);
@@ -409,10 +405,6 @@ async function executarRemocaoFoto() {
   } finally {
     isUploading.value = false;
   }
-}
-
-function removePhoto() {
-  confirmarRemocaoFoto();
 }
 
 function atualizarLocalStorageFoto(novaUrl) {
@@ -471,11 +463,11 @@ async function saveProfile() {
       closeEditDialog();
       showAlert('Perfil atualizado com sucesso!', 'success');
     } else {
-      showAlert(data.mensagem, 'error'); // MUDANÇA: showAlert
+      showAlert(data.mensagem, 'error');
     }
   } catch (err) {
     console.error('Erro ao salvar perfil:', err);
-    showAlert('Erro de rede ao tentar salvar.', 'error'); // MUDANÇA: showAlert
+    showAlert('Erro de rede ao tentar salvar.', 'error');
   } finally {
     isSaving.value = false;
   }
@@ -528,11 +520,11 @@ async function toggleFollow() {
         perfilUsuario.value.followers_count--;
       }
     } else {
-      showAlert(data.mensagem, 'error'); // MUDANÇA: showAlert
+      showAlert(data.mensagem, 'error');
     }
   } catch (err) {
     console.error(`Erro ao ${endpoint}:`, err);
-    showAlert('Erro na solicitação.', 'error'); // MUDANÇA: showAlert
+    showAlert('Erro na solicitação.', 'error');
   } finally {
     followLoading.value = false;
   }
@@ -571,12 +563,14 @@ function getAvaliacaoUrl(musica) {
   return `/avaliacao?${params.toString()}`;
 }
 
-async function carregarPerfil(id) {
+// ATUALIZADO: Recebe username, não mais ID
+async function carregarPerfil(username) {
   loading.value = true;
   error.value = false;
   reviewsVisiveisCount.value = 3;
 
-  const url = id ? `${API_URL}/api/users/perfil.php?id=${id}` : `${API_URL}/api/users/perfil.php`;
+  // ATUALIZADO: Muda o parâmetro da URL de ?id= para ?username=
+  const url = username ? `${API_URL}/api/users/perfil.php?username=${username}` : `${API_URL}/api/users/perfil.php`;
 
   try {
     const res = await fetch(url, {
@@ -614,13 +608,14 @@ onMounted(() => {
     loggedInUserId.value = JSON.parse(usuarioSalvo).id;
   }
 
-  const idDaUrl = route.params.id;
-  carregarPerfil(idDaUrl);
+  
+  const usernameDaUrl = route.params.username;
+  carregarPerfil(usernameDaUrl);
 });
 
-watch(() => route.params.id, (novoId) => {
+watch(() => route.params.username, (novoUsername) => {
   if (route.path.startsWith('/perfil')) {
-    carregarPerfil(novoId);
+    carregarPerfil(novoUsername);
   }
 });
 </script>
