@@ -93,9 +93,9 @@
                   <span class="text-subtitle-2 ml-1">{{ avaliacao.usuario.nome }}</span>
                 </v-btn>
 
-                <v-btn v-if="loggedInUserId !== avaliacao.usuario.id" size="small"
-                  :variant="avaliacao.is_following ? 'outlined' : 'flat'" color="#EEE8FF" rounded="lg"
-                  class="ml-2 text-none" :loading="followLoadingId === avaliacao.id"
+                <v-btn v-if="loggedInUserId !== avaliacao.usuario.id" size="small" :loading="followLoadingId === avaliacao.id"
+                  :variant="avaliacao.is_following ? 'outlined' : 'flat'" 
+                  :color="avaliacao.is_following ? 'grey-darken-1' : '#EEE8FF'" class="text-none" rounded="lg"
                   @click.prevent="toggleFollow(avaliacao)">
                   {{ avaliacao.is_following ? 'Seguindo' : 'Seguir' }}
                 </v-btn>
