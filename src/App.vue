@@ -547,7 +547,8 @@ const capturarDadosSpotify = () => {
       nome: urlParams.get('nome'),
       email: urlParams.get('email'),
       perfil: urlParams.get('perfil'),
-      foto: urlParams.get('foto')
+      foto: urlParams.get('foto'),
+      spotify_conectado: urlParams.get('spotify_conectado') === '1' ? 1 : 0
     };
 
     // Salva o usuário COMPLETO no localStorage
