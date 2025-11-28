@@ -589,6 +589,15 @@ async function carregarPerfil(username) {
       perfilUsuario.value = data.perfil;
       isSelf.value = data.is_self;
       isFollowing.value = data.is_following;
+
+      
+      if (route.params.username && route.params.username != data.perfil.username) {
+        // router.replace substitui a URL atual sem criar uma nova entrada no histórico
+        // Assim, o botão "Voltar" do navegador funciona corretamente
+        router.replace({ name: 'Perfil', params: { username: data.perfil.username } });
+      }
+     
+
       avaliacoes.value = data.avaliacoes;
     } else {
       errorMessage.value = data.mensagem;
