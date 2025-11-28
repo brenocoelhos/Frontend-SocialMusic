@@ -419,7 +419,6 @@ async function onFileChange(event) {
       perfilUsuario.value.foto_perfil = data.nova_url;
       atualizarLocalStorageFoto(data.nova_url);
       showAlert('Foto de perfil atualizada!', 'success');
-      setTimeout(() => { window.location.reload(); }, 1000);
     } else {
       showAlert(data.mensagem || 'Erro ao enviar imagem.', 'error');
     }
@@ -450,7 +449,6 @@ async function executarRemocaoFoto() {
       perfilUsuario.value.foto_perfil = null;
       atualizarLocalStorageFoto(null);
       showAlert('Foto de perfil removida.', 'success');
-      setTimeout(() => { window.location.reload(); }, 1000);
     } else {
       showAlert(data.mensagem || 'Erro ao remover foto.', 'error');
     }
