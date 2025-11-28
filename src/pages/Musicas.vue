@@ -7,7 +7,7 @@
           <div class="sticky-top">
             <h2 class="text-h5 font-weight-bold mb-6 text-grey darken-3 d-flex align-center">
               <v-icon icon="mdi-history" class="mr-2" color="primary"></v-icon>
-              Minhas Últimas
+              Músicas recentes
             </h2>
 
             <div v-if="loadingUltimas" class="py-4">
@@ -16,17 +16,29 @@
             </div>
 
             <v-sheet v-else-if="!isLoggedIn" rounded="xl" class="pa-6 text-center border-dashed" color="white">
-              <v-icon icon="mdi-spotify" size="48" color="success" class="mb-3"></v-icon>
-              <h3 class="text-subtitle-1 font-weight-bold mb-2">Conecte seu Spotify</h3>
-              <p class="text-body-2 text-grey mb-4"> Veja seu histórico recente e avalie o que você acabou de ouvir.</p>
-              <v-btn color="success" variant="flat" rounded="lg" @click="openLoginDialog" class="text-none">
-                Conectar Agora
+              <v-icon icon="mdi-account-circle-outline" size="48" color="grey" class="mb-3"></v-icon>
+              <h3 class="text-subtitle-1 font-weight-bold mb-2">Faça Login</h3>
+              <p class="text-body-2 text-grey mb-4">Entre para ver seu histórico e avaliar músicas.</p>
+              <v-btn color="primary" variant="flat" rounded="lg" @click="openLoginDialog" class="text-none">
+                Entrar
+              </v-btn>
+            </v-sheet>
+
+            <v-sheet v-else-if="usuario && !usuario.spotify_conectado" rounded="xl"
+              class="pa-6 text-center border-dashed" color="white">
+              <v-icon icon="mdi-spotify" size="48" color="#1DB954" class="mb-3"></v-icon>
+              <h3 class="text-subtitle-1 font-weight-bold mb-2">Vincule seu Spotify</h3>
+              <p class="text-body-2 text-grey mb-4">
+                Sua conta atual não está conectada ao Spotify. Conecte agora para ver seu histórico automaticamente.
+              </p>
+              <v-btn color="#1DB954" variant="flat" rounded="lg" class="text-none text-white" @click="connectSpotify">
+                Conectar Spotify
               </v-btn>
             </v-sheet>
 
             <v-alert v-else-if="ultimasEscutadas.length === 0" type="info" variant="tonal" class="mb-4"
-              density="compact" color="success">
-              Não encontramos histórico recente no seu Spotify.
+              density="compact">
+              Não encontramos histórico recente. Ouça algo no Spotify e clique em atualizar!
             </v-alert>
 
             <v-list v-else bg-color="transparent" class="pa-0">
@@ -121,11 +133,24 @@ const loadingUltimas = ref(false);
 const isLoggedIn = ref(false);
 
 // Verifica login
+const usuario = ref(null);
 const checkLogin = () => {
-  const user = localStorage.getItem('usuario');
-  isLoggedIn.value = !!user;
-  return isLoggedIn.value;
+  const userStr = localStorage.getItem('usuario');
+  if (userStr) {
+    const user = JSON.parse(userStr);
+    usuario.value = user;
+    isLoggedIn.value = true;
+    return true;
+  }
+  usuario.value = null;
+  isLoggedIn.value = false;
+  return false;
 };
+
+// Redireciona para conectar o Spotify caso o e-mail for o mesmo
+function connectSpotify() {
+  window.location.href = `${API_URL}/api/spotify/spotify_user_auth.php?action=authorize&mode=login`;
+}
 
 // Função para gerar URL da página de avaliação
 function getAvaliacaoUrl(musica) {
@@ -173,7 +198,7 @@ async function fetchUltimas() {
   loadingUltimas.value = true;
   try {
     const res = await fetch(`${API_URL}/api/spotify/ultimas_escutadas.php?limit=10`, {
-      credentials: 'include' 
+      credentials: 'include'
     });
     const data = await res.json();
 
@@ -215,12 +240,12 @@ onMounted(() => {
 /* Efeito Sticky para a coluna lateral ficar fixa ao rolar */
 .sticky-top {
   position: sticky;
-  top: 100px; /* Ajuste conforme a altura da sua Navbar */
+  top: 100px;
+  /* Ajuste conforme a altura da sua Navbar */
 }
 
 /* Borda tracejada suave para o card de login */
 .border-dashed {
   border: 2px dashed #e0e0e0 !important;
 }
-
 </style>
