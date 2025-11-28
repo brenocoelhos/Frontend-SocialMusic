@@ -147,7 +147,21 @@
                   {{ perfilUsuario.generos || 'Sem gêneros preferidos' }}
                 </p>
               </div>
-            </v-card>
+
+              <div v-if="isSelf" class="mt-6 pt-4">
+                <v-divider class="mb-4"></v-divider>
+                <v-btn
+                  color="error"
+                  variant="text"
+                  size="small"
+                  prepend-icon="mdi-delete-alert"
+                  @click="confirmarExclusaoConta"
+                  :loading="isDeleting"
+                >
+                  Excluir minha conta
+                </v-btn>
+              </div>
+              </v-card>
           </v-col>
         </v-row>
       </v-container>
@@ -254,6 +268,7 @@ const isFollowing = ref(false);
 const followLoading = ref(false);
 const editDialog = ref(false);
 const isSaving = ref(false);
+const isDeleting = ref(false); // Novo estado
 const editFormRef = ref(null);
 const editForm = reactive({ nome: '', generos: '' });
 
@@ -277,6 +292,47 @@ function confirmAction() {
   if (onConfirmCallback) onConfirmCallback();
   confirmDialog.value = false;
 }
+
+// --- Funções de Exclusão de Conta ---
+function confirmarExclusaoConta() {
+  showConfirm(
+    'Tem certeza absoluta? Sua conta e dados serão apagados permanentemente e não poderão ser recuperados.', 
+    executarExclusaoConta
+  );
+}
+
+async function executarExclusaoConta() {
+  isDeleting.value = true;
+  try {
+    const res = await fetch(`${API_URL}/api/users/excluir_conta.php`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    
+    const data = await res.json();
+    
+    if (data.sucesso) {
+      // Limpa dados locais
+      localStorage.removeItem('usuario');
+      loggedInUserId.value = null;
+      
+      showAlert('Sua conta foi excluída.', 'success');
+      
+      // Redireciona para home e recarrega para limpar estados
+      router.push('/').then(() => {
+        window.location.reload();
+      });
+    } else {
+      showAlert(data.mensagem || 'Erro ao excluir conta.', 'error');
+    }
+  } catch (err) {
+    console.error('Erro ao excluir conta:', err);
+    showAlert('Erro de conexão.', 'error');
+  } finally {
+    isDeleting.value = false;
+  }
+}
+// ------------------------------------
 
 async function abrirModalConexoes(tipo) {
   conexoesTipo.value = tipo;
