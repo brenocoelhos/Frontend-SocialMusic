@@ -105,7 +105,6 @@
                       <v-icon color="orange" size="20" class="mr-1">mdi-star</v-icon>
                       <span class="text-h6 font-weight-bold text-grey-darken-3">{{ musica.media_nota }}</span>
                     </div>
-                    <span class="text-caption text-grey mt-1">{{ musica.total_avaliacoes || 0 }} avaliações</span>
                   </div>
                 </template>
               </v-list-item>
