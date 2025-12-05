@@ -106,36 +106,38 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import brenoImg from '@/assets/team/brenocoelho.png';
+import brenoImg from '@/assets/team/brenocoelho.jpg';
+import isaImg from '@/assets/team/isabellaBarbosa.jpg';
+import pedroImg from '@/assets/team/pedroMaciel.jpg';
 
 const router = useRouter();
 
 const fundadores = ref([
   {
     nome: 'Breno Coelho',
-    cargo: 'Backend Developer',
+    cargo: 'fullstack Developer',
     foto: brenoImg,
     socials: [
-      { tipo: 'linkedin', icon: 'mdi-linkedin', url: '#', color: '#0077B5' },
-      { tipo: 'github', icon: 'mdi-github', url: '#', color: '#333' }
+      { tipo: 'linkedin', icon: 'mdi-linkedin', url: 'https://www.linkedin.com/in/brenocoelhos/', color: '#0077B5' },
+      { tipo: 'github', icon: 'mdi-github', url: 'https://github.com/brenocoelhos', color: '#333' }
     ]
   },
   {
     nome: 'Isabella Barbosa',
     cargo: 'Backend Developer',
-    foto: 'https://i.pravatar.cc/300?img=8',
+    foto: isaImg,
     socials: [
-      { tipo: 'linkedin', icon: 'mdi-linkedin', url: '#', color: '#0077B5' },
-      { tipo: 'github', icon: 'mdi-github', url: '#', color: '#333' }
+      { tipo: 'linkedin', icon: 'mdi-linkedin', url: 'https://www.linkedin.com/in/isabella-barbosa-9140ba303/', color: '#0077B5' },
+      { tipo: 'github', icon: 'mdi-github', url: 'https://github.com/IsaBarb0sa', color: '#333' }
     ]
   },
   {
     nome: 'Pedro Maciel',
     cargo: 'Backend Developer',
-    foto: 'https://i.pravatar.cc/300?img=8',
+    foto: pedroImg,
     socials: [
-      { tipo: 'linkedin', icon: 'mdi-linkedin', url: '#', color: '#0077B5' },
-      { tipo: 'github', icon: 'mdi-github', url: '#', color: '#333' }
+      { tipo: 'linkedin', icon: 'mdi-linkedin', url: 'https://www.linkedin.com/in/pedro-maciel-8a91b3306/', color: '#0077B5' },
+      { tipo: 'github', icon: 'mdi-github', url: 'https://github.com/pdromciel', color: '#333' }
     ]
   }
 
