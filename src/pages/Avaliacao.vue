@@ -252,11 +252,11 @@
 
             <p class="text-grey-darken-1 mb-2">Dê um título para sua avaliação:</p>
             <v-text-field v-model="reviewForm.titulo" label="Título da avaliação" variant="outlined" maxlength="255"
-              rounded="lg" class="mb-4" />
+              rounded="lg" class="mb-4" :rules="[rules.textoPermitido]" />
 
             <p class="text-grey-darken-1 mb-2">Escreva seu comentário:</p>
             <v-textarea v-model="reviewForm.comentario" label="Seu comentário" variant="outlined" rows="5" counter
-              maxlength="1000" rounded="lg" />
+              maxlength="1000" rounded="lg" :rules="[rules.textoPermitido]" />
           </v-form>
         </v-card-text>
         <v-card-actions class="pa-4">
@@ -316,8 +316,99 @@ const reviewForm = ref({
   titulo: '',
   comentario: '',
 });
+
+// Palavras e expressões bloqueadas nos títulos e comentários.
+// A lista fica somente neste arquivo para não alterar nenhuma outra parte do projeto.
+const palavrasBloqueadas = [
+  'porra',
+  'caralho',
+  'merda',
+  'bosta',
+  'puta',
+  'puto',
+  'foda',
+  'foder',
+  'fodase',
+  'buceta',
+  'cu',
+  'arrombado',
+  'arrombada',
+  'desgracado',
+  'desgracada',
+  'imbecil',
+  'idiota',
+  'otario',
+  'otaria',
+  'vagabundo',
+  'vagabunda'
+];
+
+// Expressões de ameaça/violência que não devem ser publicadas.
+const expressoesBloqueadas = [
+  'vou te matar',
+  'vou matar voce',
+  'vou te assassinar',
+  'vou assassinar voce',
+  'vou te estuprar',
+  'vou estuprar voce',
+  'vou te sequestrar',
+  'vou sequestrar voce',
+  'voce merece morrer',
+  'tem que morrer',
+  'mate ele',
+  'mate ela',
+  'matem ele',
+  'matem ela'
+];
+
+// Normaliza o texto para dificultar tentativas simples de burlar o filtro,
+// como p0rr4, P.O.R.R.A ou letras repetidas.
+function normalizarTexto(texto) {
+  return String(texto || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/@/g, 'a')
+    .replace(/4/g, 'a')
+    .replace(/3/g, 'e')
+    .replace(/[1!]/g, 'i')
+    .replace(/0/g, 'o')
+    .replace(/5/g, 's')
+    .replace(/7/g, 't')
+    .replace(/\$/g, 's')
+    .replace(/(.)\1{1,}/g, '$1')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function contemConteudoBloqueado(texto) {
+  const textoNormalizado = normalizarTexto(texto);
+
+  if (!textoNormalizado) {
+    return false;
+  }
+
+  const palavrasDoTexto = textoNormalizado.split(' ');
+
+  const encontrouPalavra = palavrasBloqueadas.some((palavra) =>
+    palavrasDoTexto.includes(normalizarTexto(palavra))
+  );
+
+  if (encontrouPalavra) {
+    return true;
+  }
+
+  return expressoesBloqueadas.some((expressao) =>
+    textoNormalizado.includes(normalizarTexto(expressao))
+  );
+}
+
 const rules = {
   required: (v) => v > 0 || "A nota é obrigatória.",
+  textoPermitido: (v) =>
+    !contemConteudoBloqueado(v) ||
+    "O texto contém palavras ou expressões não permitidas.",
 };
 
 // Função para lidar com o clique no botão de escrever avaliação
@@ -595,6 +686,14 @@ async function submitReview() {
   const { valid } = await form.value.validate();
 
   if (!valid) {
+    return;
+  }
+
+  if (
+    contemConteudoBloqueado(reviewForm.value.titulo) ||
+    contemConteudoBloqueado(reviewForm.value.comentario)
+  ) {
+    showAlert('Sua avaliação contém palavras ou expressões não permitidas.', 'error');
     return;
   }
 
