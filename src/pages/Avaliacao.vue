@@ -183,6 +183,88 @@
                 </v-col>
               </v-row>
             </v-card>
+
+            <!-- Letra da música: carregada somente quando o usuário pedir -->
+            <v-card rounded="xl" elevation="2" class="pa-6 mt-4 lyrics-card">
+              <div class="d-flex align-center justify-space-between mb-3">
+                <div class="d-flex align-center">
+                  <v-icon icon="mdi-music-note-text" color="deep-purple-darken-1" size="28" class="mr-3" />
+                  <div>
+                    <h3 class="text-h6 font-weight-bold">Letra</h3>
+                    <p class="text-caption text-grey-darken-1 mb-0">{{ track.track_name }} · {{ track.artist_name }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="isLoadingLyrics" class="lyrics-loading d-flex flex-column align-center justify-center py-6">
+                <v-progress-circular indeterminate color="deep-purple-darken-1" size="36" />
+                <span class="text-body-2 text-grey-darken-1 mt-3">Buscando letra...</span>
+              </div>
+
+              <template v-else-if="lyricsData?.instrumental">
+                <div class="lyrics-empty-state text-center py-5">
+                  <v-icon icon="mdi-music-note" size="42" color="grey-darken-1" class="mb-2" />
+                  <div class="text-body-1 font-weight-medium">Esta faixa é instrumental.</div>
+                  <div class="text-caption text-grey-darken-1 mt-1">Não há letra para exibir.</div>
+                </div>
+              </template>
+
+              <template v-else-if="lyricsData?.letra">
+                <div class="lyrics-preview-wrap mb-4">
+                  <div class="lyrics-preview-text">{{ lyricsPreviewText }}</div>
+                  <div v-if="lyricsHasMore" class="lyrics-preview-fade"></div>
+                </div>
+
+                <div class="d-flex flex-wrap align-center justify-space-between ga-2">
+                  <a
+                    class="text-caption text-grey-darken-1 lyrics-source-link"
+                    href="https://lrclib.net"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Fonte: LRCLIB
+                  </a>
+
+                  <v-btn
+                    color="#EEE8FF"
+                    variant="flat"
+                    rounded="lg"
+                    class="text-none"
+                    prepend-icon="mdi-text-box-search-outline"
+                    @click="lyricsDialog = true"
+                  >
+                    Ver letra completa
+                  </v-btn>
+                </div>
+              </template>
+
+              <template v-else-if="lyricsLoaded">
+                <div class="lyrics-empty-state text-center py-5">
+                  <v-icon icon="mdi-text-box-remove-outline" size="40" color="grey" class="mb-2" />
+                  <div class="text-body-2 text-grey-darken-1">
+                    {{ lyricsMessage || 'Letra não disponível para esta música.' }}
+                  </div>
+                </div>
+              </template>
+
+              <template v-else>
+                <p class="text-body-2 text-grey-darken-1 mb-4">
+                  Veja a letra desta música sem sair do SocialMusic. Ela só será buscada quando você solicitar,
+                  mantendo a página leve.
+                </p>
+                <v-btn
+                  color="#EEE8FF"
+                  variant="flat"
+                  rounded="lg"
+                  class="text-none"
+                  prepend-icon="mdi-music-note-text"
+                  :loading="isLoadingLyrics"
+                  @click="loadLyrics"
+                >
+                  Ver letra
+                </v-btn>
+              </template>
+            </v-card>
           </v-col>
         </v-row>
       </v-container>
@@ -326,6 +408,45 @@
       </v-card>
     </v-dialog>
 
+
+    <!-- Letra completa -->
+    <v-dialog v-model="lyricsDialog" max-width="760px" scrollable>
+      <v-card rounded="xl" class="lyrics-dialog-card">
+        <v-card-title class="pa-5 d-flex align-center">
+          <v-avatar color="#EEE8FF" size="42" class="mr-3">
+            <v-icon icon="mdi-music-note-text" color="deep-purple-darken-2" />
+          </v-avatar>
+          <div class="flex-grow-1" style="min-width: 0;">
+            <div class="text-h6 font-weight-bold text-truncate">{{ track?.track_name }}</div>
+            <div class="text-caption text-grey-darken-1 text-truncate">{{ track?.artist_name }}</div>
+          </div>
+          <v-btn icon="mdi-close" variant="text" @click="lyricsDialog = false" />
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text class="pa-6 lyrics-dialog-content">
+          <div v-if="lyricsData?.letra" class="lyrics-full-text">{{ lyricsData.letra }}</div>
+          <div v-else class="text-center text-grey py-8">Letra não disponível.</div>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="pa-4 px-5">
+          <a
+            href="https://lrclib.net"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-caption text-grey-darken-1 lyrics-source-link"
+          >
+            Letra fornecida por LRCLIB
+          </a>
+          <v-spacer />
+          <v-btn variant="text" rounded="lg" class="text-none" @click="lyricsDialog = false">Fechar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Caixa de diálogo de denúncia -->
     <v-dialog v-model="reportDialog" persistent max-width="520px">
       <v-card rounded="xl">
@@ -406,6 +527,30 @@ const youtubeId = ref(null);
 const isLoadingYoutube = ref(false);
 const youtubeMessage = ref('');
 const youtubeRequestId = ref(0);
+
+// Letras via LRCLIB. Nada é salvo no MySQL: a busca acontece somente quando o
+// usuário pede e o resultado permanece apenas em memória enquanto a página está aberta.
+const lyricsData = ref(null);
+const lyricsLoaded = ref(false);
+const isLoadingLyrics = ref(false);
+const lyricsMessage = ref('');
+const lyricsDialog = ref(false);
+const lyricsRequestId = ref(0);
+
+const lyricsPreviewText = computed(() => {
+  const letra = String(lyricsData.value?.letra || '').trim();
+  if (!letra) return '';
+
+  const linhas = letra.split(/\r?\n/);
+  return linhas.slice(0, 8).join('\n').trim();
+});
+
+const lyricsHasMore = computed(() => {
+  const letra = String(lyricsData.value?.letra || '').trim();
+  if (!letra) return false;
+  return letra.split(/\r?\n/).length > 8;
+});
+
 
 // Estado do player persistente, mantido fora desta página.
 const { player: globalPlayer, playTrack: playGlobalTrack, expandPlayer: expandGlobalPlayer } = useGlobalPlayer();
@@ -745,6 +890,78 @@ async function loadYoutubePlayer(currentTrack) {
   }
 }
 
+
+
+function resetLyricsState() {
+  lyricsRequestId.value++;
+  lyricsData.value = null;
+  lyricsLoaded.value = false;
+  isLoadingLyrics.value = false;
+  lyricsMessage.value = '';
+  lyricsDialog.value = false;
+}
+
+// Busca sob demanda. O backend consulta o LRCLIB e valida título, artista,
+// álbum e duração antes de devolver uma correspondência.
+async function loadLyrics() {
+  if (isLoadingLyrics.value || lyricsLoaded.value) return;
+
+  const currentTrack = track.value;
+  if (!currentTrack?.track_name || !currentTrack?.artist_name) {
+    lyricsLoaded.value = true;
+    lyricsMessage.value = 'Não foi possível identificar esta música para buscar a letra.';
+    return;
+  }
+
+  const requestId = ++lyricsRequestId.value;
+  isLoadingLyrics.value = true;
+  lyricsMessage.value = '';
+
+  try {
+    const response = await api.get('/api/lyrics/buscar_letra.php', {
+      params: {
+        track_name: currentTrack.track_name,
+        artist_name: currentTrack.artist_name,
+        album_name: currentTrack.album_name || undefined,
+        duration_ms: currentTrack.duration_ms_raw || undefined,
+      },
+      signal: trackDataController?.signal,
+    });
+
+    if (requestId !== lyricsRequestId.value || track.value?.id !== currentTrack.id) return;
+
+    const data = response.data || {};
+
+    if (data.sucesso && data.encontrada) {
+      lyricsData.value = {
+        letra: data.letra || '',
+        letraSincronizada: data.letra_sincronizada || '',
+        instrumental: Boolean(data.instrumental),
+        fonte: data.fonte || 'LRCLIB',
+      };
+      lyricsMessage.value = '';
+    } else {
+      lyricsData.value = null;
+      lyricsMessage.value = data.mensagem || 'Letra não disponível para esta música.';
+    }
+
+    lyricsLoaded.value = true;
+  } catch (err) {
+    if (requestId !== lyricsRequestId.value) return;
+    if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') return;
+
+    console.warn('Não foi possível carregar a letra:', err);
+    lyricsData.value = null;
+    lyricsLoaded.value = true;
+    lyricsMessage.value = err.response?.data?.mensagem || 'Não foi possível carregar a letra no momento.';
+  } finally {
+    if (requestId === lyricsRequestId.value) {
+      isLoadingLyrics.value = false;
+    }
+  }
+}
+
+
 // Função que lê os dados da URL e monta o objeto 'track'
 let trackLoadId = 0;
 async function loadTrackFromQuery(query) {
@@ -769,6 +986,7 @@ async function loadTrackFromQuery(query) {
   youtubeId.value = null;
   youtubeMessage.value = '';
   isLoadingYoutube.value = false;
+  resetLyricsState();
 
   try {
     track.value = {
@@ -1108,6 +1326,7 @@ watch(
 onBeforeUnmount(() => {
   trackDataController?.abort();
   youtubeRequestId.value++;
+  lyricsRequestId.value++;
 });
 
 </script>
@@ -1137,4 +1356,81 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: 158px;
 }
+
+
+.lyrics-card {
+  overflow: hidden;
+  border: 1px solid rgba(98, 74, 140, 0.08);
+}
+
+.lyrics-loading,
+.lyrics-empty-state {
+  min-height: 120px;
+}
+
+.lyrics-preview-wrap {
+  position: relative;
+  max-height: 215px;
+  overflow: hidden;
+  border-radius: 12px;
+  padding: 18px 18px 26px;
+  background: linear-gradient(145deg, #faf9ff 0%, #f5f2ff 100%);
+  border: 1px solid #ebe5ff;
+}
+
+.lyrics-preview-text {
+  white-space: pre-line;
+  line-height: 1.85;
+  font-size: 0.98rem;
+  color: #34313b;
+}
+
+.lyrics-preview-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 72px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(245, 242, 255, 0), #f5f2ff 82%);
+}
+
+.lyrics-dialog-card {
+  max-height: 88vh;
+}
+
+.lyrics-dialog-content {
+  max-height: 68vh;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfaff 100%);
+}
+
+.lyrics-full-text {
+  white-space: pre-wrap;
+  line-height: 1.95;
+  font-size: 1.05rem;
+  color: #2f2c35;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.lyrics-source-link {
+  text-decoration: none;
+}
+
+.lyrics-source-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .lyrics-dialog-content {
+    max-height: 72vh;
+    padding: 22px !important;
+  }
+
+  .lyrics-full-text {
+    font-size: 1rem;
+    line-height: 1.85;
+  }
+}
+
 </style>
