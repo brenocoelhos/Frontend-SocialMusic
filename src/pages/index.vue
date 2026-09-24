@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-img :src="fundoUrl" cover height="85vh" class="hero-banner">
+    <v-img :src="fundoUrl" cover height="85vh" class="hero-banner" eager>
       <div class="fill-height hero-overlay">
         <v-container id="intro" class="fill-height">
           <v-row align-content="end" justify="start" class="fill-height">
@@ -225,19 +225,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, computed } from 'vue';
-import fundoUrl from '@/assets/fundoArrumado.png'
-
-// Configuração da API URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
+import { ref, onMounted, onBeforeUnmount, inject, computed, watch } from 'vue';
+import fundoUrl from '@/assets/fundoArrumado.webp';
+import { useAuth } from '@/composables/useAuth';
+import { API_URL } from '@/config/api';
 
 // Injeta a função para abrir o diálogo de login e mostrar alertas
 const openLoginDialog = inject('openLoginDialog');
 const showAlert = inject('showAlert');
 
-// estado do usuário
-const usuario = ref(null);
-const loggedInUserId = ref(null);
+// Estado de sessão compartilhado com App.vue e as demais páginas.
+const { usuario, usuarioId } = useAuth();
+const loggedInUserId = computed(() => usuarioId.value);
+
+const homeDataController = new AbortController();
 
 // estado das musicas populares
 const musicasPopulares = ref([]);
@@ -261,14 +262,8 @@ const loadingUltimaAvaliacao = ref(true);
 const usuariosRecomendados = ref([]);
 const loadingRecomendados = ref(true);
 
-onMounted(async () => {
-  // Verifica se o usuário está logado
-  const usuarioSalvo = localStorage.getItem('usuario');
-  if (usuarioSalvo) {
-    const user = JSON.parse(usuarioSalvo);
-    usuario.value = user;
-    loggedInUserId.value = user.id
-  }
+onMounted(() => {
+  // As chamadas continuam independentes/paralelas, como antes.
   fetchMusicasPopulares();
   fetchPrincipaisAvaliacoes();
   fetchMusicasDestaque();
@@ -281,18 +276,36 @@ onMounted(async () => {
   }
 });
 
+// Login/logout agora atualiza a Home sem recarregar toda a aplicação.
+// Revalida apenas os blocos cujo conteúdo depende da sessão.
+watch(usuarioId, (novoId, idAnterior) => {
+  if (novoId === idAnterior) return;
+
+  fetchPrincipaisAvaliacoes();
+  fetchUsuariosRecomendados();
+
+  if (novoId) {
+    fetchUltimaAvaliacao();
+  } else {
+    ultimaAvaliacao.value = null;
+    loadingUltimaAvaliacao.value = false;
+  }
+});
+
 // Funções para buscar dados da API
 async function fetchMusicasPopulares() {
   loadingPopulares.value = true;
   try {
     const resPopulares = await fetch(
-      `${API_URL}/api/spotify/spotify_musicas.php?tipo=populares&limit=6`
+      `${API_URL}/api/spotify/spotify_musicas.php?tipo=populares&limit=6`,
+      { signal: homeDataController.signal }
     );
     const dataPopulares = await resPopulares.json();
     if (dataPopulares.sucesso) {
       musicasPopulares.value = dataPopulares.musicas;
     }
   } catch (error) {
+    if (error.name === 'AbortError') return;
     console.error('Erro ao carregar músicas do Spotify:', error);
   } finally {
     loadingPopulares.value = false;
@@ -305,13 +318,15 @@ async function fetchPrincipaisAvaliacoes() {
   try {
     const res = await fetch(
       `${API_URL}/api/reviews/principais_avaliacoes.php?limit=3`, {
-      credentials: 'include'
+      credentials: 'include',
+      signal: homeDataController.signal,
     });
     const data = await res.json();
     if (data.sucesso) {
       avaliacoes.value = data.avaliacoes;
     }
   } catch (error) {
+    if (error.name === 'AbortError') return;
     console.error('Erro ao carregar principais avaliações:', error);
   } finally {
     loadingAvaliacoes.value = false;
@@ -378,13 +393,15 @@ async function fetchMusicasDestaque() {
   loadingMusicasDestaque.value = true;
   try {
     const res = await fetch(
-      `${API_URL}/api/spotify/musicas_destaque.php?limit=6`
+      `${API_URL}/api/spotify/musicas_destaque.php?limit=6`,
+      { signal: homeDataController.signal }
     );
     const data = await res.json();
     if (data.sucesso) {
       musicasDestaque.value = data.musicas;
     }
   } catch (error) {
+    if (error.name === 'AbortError') return;
     console.error('Erro ao carregar músicas em destaque:', error);
   } finally {
     loadingMusicasDestaque.value = false;
@@ -397,13 +414,15 @@ async function fetchUltimaAvaliacao() {
   try {
     const res = await fetch(
       `${API_URL}/api/reviews/ultima_avaliacao.php?`, {
-      credentials: 'include'
+      credentials: 'include',
+      signal: homeDataController.signal,
     });
     const data = await res.json();
     if (data.sucesso) {
       ultimaAvaliacao.value = data.avaliacao;
     }
   } catch (error) {
+    if (error.name === 'AbortError') return;
     console.error('Erro ao carregar última avaliação:', error);
   } finally {
     loadingUltimaAvaliacao.value = false;
@@ -415,18 +434,24 @@ async function fetchUsuariosRecomendados() {
   try {
     const res = await fetch(
       `${API_URL}/api/users/usuarios_recomendados.php?limit=5`, {
-      credentials: 'include'
+      credentials: 'include',
+      signal: homeDataController.signal,
     });
     const data = await res.json();
     if (data.sucesso) {
       usuariosRecomendados.value = data.usuarios;
     }
   } catch (error) {
+    if (error.name === 'AbortError') return;
     console.error('Erro ao carregar usuários recomendados:', error);
   } finally {
     loadingRecomendados.value = false;
   }
 }
+
+onBeforeUnmount(() => {
+  homeDataController.abort();
+});
 
 // Função para direcionar para a página de avaliação
 function getAvaliacaoUrl(musica) {

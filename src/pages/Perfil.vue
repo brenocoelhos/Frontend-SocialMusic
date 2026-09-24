@@ -247,17 +247,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, watch, computed, inject } from 'vue';
+import { ref, onMounted, onBeforeUnmount, reactive, watch, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
+import { useAuth } from '@/composables/useAuth';
+import { API_URL } from '@/config/api';
 const router = useRouter();
 const route = useRoute();
 
 const openLoginDialog = inject('openLoginDialog');
 const showAlert = inject('showAlert');
 
-const loggedInUserId = ref(null);
+const { usuarioId, updateUsuario, clearUsuario } = useAuth();
+const loggedInUserId = computed(() => usuarioId.value);
 const likeLoadingId = ref(null);
 const loading = ref(true);
 const error = ref(false);
@@ -312,16 +313,10 @@ async function executarExclusaoConta() {
     const data = await res.json();
     
     if (data.sucesso) {
-      // Limpa dados locais
-      localStorage.removeItem('usuario');
-      loggedInUserId.value = null;
-      
+      // Limpa a sessão reativa e volta para a Home sem recarregar a SPA.
+      clearUsuario();
       showAlert('Sua conta foi excluída.', 'success');
-      
-      // Redireciona para home e recarrega para limpar estados
-      router.push('/').then(() => {
-        window.location.reload();
-      });
+      await router.push('/');
     } else {
       showAlert(data.mensagem || 'Erro ao excluir conta.', 'error');
     }
@@ -462,11 +457,11 @@ async function executarRemocaoFoto() {
 }
 
 function atualizarLocalStorageFoto(novaUrl) {
-  const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
-  if (usuarioLocal) {
-    usuarioLocal.foto_perfil = novaUrl;
-    localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
-  }
+  // Mantém a foto do cabeçalho e do perfil sincronizadas sem F5.
+  updateUsuario({
+    foto: novaUrl,
+    foto_perfil: novaUrl,
+  });
 }
 
 function openEditDialog() {
@@ -509,11 +504,10 @@ async function saveProfile() {
       perfilUsuario.value.nome = data.dados_atualizados.nome;
       perfilUsuario.value.generos = data.dados_atualizados.generos;
 
-      const usuarioLocal = JSON.parse(localStorage.getItem('usuario'));
-      if (usuarioLocal) {
-        usuarioLocal.nome = data.dados_atualizados.nome;
-        localStorage.setItem('usuario', JSON.stringify(usuarioLocal));
-      }
+      updateUsuario({
+        nome: data.dados_atualizados.nome,
+        generos: data.dados_atualizados.generos,
+      });
       closeEditDialog();
       showAlert('Perfil atualizado com sucesso!', 'success');
     } else {
@@ -618,7 +612,12 @@ function getAvaliacaoUrl(musica) {
 }
 
 
+let perfilController = null;
+
 async function carregarPerfil(username) {
+  perfilController?.abort();
+  const controller = new AbortController();
+  perfilController = controller;
   loading.value = true;
   error.value = false;
   reviewsVisiveisCount.value = 3;
@@ -629,7 +628,8 @@ async function carregarPerfil(username) {
   try {
     const res = await fetch(url, {
       method: 'GET',
-      credentials: 'include'
+      credentials: 'include',
+      signal: controller.signal,
     });
     if (!res.ok) {
       if (res.status === 401) router.push('/');
@@ -639,6 +639,8 @@ async function carregarPerfil(username) {
     }
 
     const data = await res.json();
+    if (perfilController !== controller) return;
+
     if (data.sucesso) {
       perfilUsuario.value = data.perfil;
       isSelf.value = data.is_self;
@@ -657,20 +659,17 @@ async function carregarPerfil(username) {
       error.value = true;
     }
   } catch (err) {
-    console.error('Erro em onMounted (Perfil.vue):', err);
+    if (err.name === 'AbortError') return;
+    console.error('Erro ao carregar perfil:', err);
     error.value = true;
   } finally {
-    loading.value = false;
+    if (perfilController === controller) {
+      loading.value = false;
+    }
   }
 }
 
 onMounted(() => {
-  const usuarioSalvo = localStorage.getItem('usuario');
-  if (usuarioSalvo) {
-    loggedInUserId.value = JSON.parse(usuarioSalvo).id;
-  }
-
-  
   const usernameDaUrl = route.params.username;
   carregarPerfil(usernameDaUrl);
 });
@@ -679,6 +678,16 @@ watch(() => route.params.username, (novoUsername) => {
   if (route.path.startsWith('/perfil')) {
     carregarPerfil(novoUsername);
   }
+});
+
+// Recalcula permissões/seguimento quando a sessão muda sem recarregar a página.
+watch(usuarioId, (novoId, idAnterior) => {
+  if (isDeleting.value || novoId === idAnterior || !route.path.startsWith('/perfil')) return;
+  carregarPerfil(route.params.username);
+});
+
+onBeforeUnmount(() => {
+  perfilController?.abort();
 });
 </script>
 

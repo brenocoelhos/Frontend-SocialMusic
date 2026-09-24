@@ -1,67 +1,62 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import axios from 'axios'
-import Admin from '../pages/Admin.vue'
 import Index from '../pages/index.vue'
-import Perfil from '../pages/Perfil.vue'
-import Avaliacao from '../pages/Avaliacao.vue'
-import Busca from '../pages/Busca.vue'
-import Musicas from '../pages/Musicas.vue'
-import Sobre from '../pages/Sobre.vue'
+import { API_URL } from '@/config/api'
+import { useAuth } from '@/composables/useAuth'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend'
-
-// Configuração global do axios
-axios.defaults.withCredentials = true
-axios.defaults.baseURL = API_URL
-axios.defaults.headers.common['Accept'] = 'application/json'
-axios.defaults.headers.common['Content-Type'] = 'application/json'
+// A Home continua no bundle inicial; as páginas secundárias só são baixadas
+// quando o usuário realmente navega até elas.
+const Admin = () => import('../pages/Admin.vue')
+const Perfil = () => import('../pages/Perfil.vue')
+const Avaliacao = () => import('../pages/Avaliacao.vue')
+const Busca = () => import('../pages/Busca.vue')
+const Musicas = () => import('../pages/Musicas.vue')
+const Sobre = () => import('../pages/Sobre.vue')
 
 const routes = [
-  { path: '/', name: 'Página Inicial', component: Index},
-  { path: '/admin', name: 'Admin', component: Admin, meta: {requiresAdmin: true }},
+  { path: '/', name: 'Página Inicial', component: Index },
+  { path: '/admin', name: 'Admin', component: Admin, meta: { requiresAdmin: true } },
   { path: '/perfil/:username?', name: 'Perfil', component: Perfil },
   { path: '/avaliacao', name: 'Avaliacao', component: Avaliacao },
-  { path: '/busca', name:'Busca', component: Busca },
+  { path: '/busca', name: 'Busca', component: Busca },
   { path: '/musicas', name: 'Musicas', component: Musicas },
-  { path: '/sobre', name: 'Sobre', component: Sobre }
-  
+  { path: '/sobre', name: 'Sobre', component: Sobre },
 ]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
+  // Preserva o comportamento anterior do App.vue: só mudanças de path
+  // levam a página ao topo. Trocas apenas de query não forçam o scroll.
+  scrollBehavior(to, from) {
+    if (to.path !== from.path) {
+      return { top: 0, behavior: 'smooth' }
+    }
+    return false
+  },
 })
 
-router.beforeEach(async (to, from, next) => {
-  if (to.meta.requiresAdmin) {
-    try {
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAdmin) return true
 
-      const response = await axios.get(`${API_URL}/api/auth/auth.admin.php`, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
+  try {
+    const response = await fetch(`${API_URL}/api/auth/auth.admin.php`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
 
-      if (response.data.success && response.data.perfil === 'admin') {
-        console.log('Acesso admin autorizado:', response.data);
-        next(); // Permite o acesso
-      } else {
-        console.log('Acesso negado (pela API):', response.data);
-        next('/'); // Redireciona se a API negar
+    if (response.ok) {
+      const data = await response.json()
+      if (data.success && data.perfil === 'admin') {
+        return true
       }
-    } catch (error) {
-      
-      const errorData = (error.response && error.response.data) ? error.response.data : error.message;
-      console.log('Erro ao verificar auth admin:', errorData);
-      localStorage.removeItem('usuario');
-
-      next('/'); // Redireciona se a API der erro (ex: 403, 401)
     }
-  } else {
-    next();
+  } catch (error) {
+    console.warn('Não foi possível validar a sessão de admin:', error)
   }
-});
+
+  // Mantém cabeçalho e páginas sincronizados quando a sessão não é mais válida.
+  useAuth().clearUsuario()
+  return '/'
+})
 
 export default router

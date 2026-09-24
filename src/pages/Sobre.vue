@@ -104,15 +104,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import brenoImg from '@/assets/team/brenocoelho.jpg';
-import isaImg from '@/assets/team/isabellaBarbosa.jpg';
-import pedroImg from '@/assets/team/pedroMaciel.jpg';
+import brenoImg from '@/assets/team/brenocoelho.webp';
+import isaImg from '@/assets/team/isabellaBarbosa.webp';
+import pedroImg from '@/assets/team/pedroMaciel.webp';
 
 const router = useRouter();
 
-const fundadores = ref([
+const fundadores = [
   {
     nome: 'Breno Coelho',
     cargo: 'fullstack Developer',
@@ -141,7 +140,7 @@ const fundadores = ref([
     ]
   }
 
-]);
+];
 
 
 function goHome() {

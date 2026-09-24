@@ -117,9 +117,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, computed } from 'vue';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
+import { ref, onMounted, onBeforeUnmount, inject, computed, watch } from 'vue';
+import { useAuth } from '@/composables/useAuth';
+import { API_URL } from '@/config/api';
 
 // Injeções globais 
 const openLoginDialog = inject('openLoginDialog');
@@ -129,22 +129,12 @@ const musicasMaisAvaliadas = ref([]);
 const ultimasEscutadas = ref([]);
 const loadingCommunity = ref(true);
 const loadingUltimas = ref(false);
-const isLoggedIn = ref(false);
 
-// Verifica login
-const usuario = ref(null);
-const checkLogin = () => {
-  const userStr = localStorage.getItem('usuario');
-  if (userStr) {
-    const user = JSON.parse(userStr);
-    usuario.value = user;
-    isLoggedIn.value = true;
-    return true;
-  }
-  usuario.value = null;
-  isLoggedIn.value = false;
-  return false;
-};
+// Sessão compartilhada: login/logout reflete nesta página sem F5.
+const { usuario, usuarioId, isLoggedIn } = useAuth();
+
+let rankingController = null;
+let ultimasController = null;
 
 // Redireciona para conectar o Spotify caso o e-mail for o mesmo
 function connectSpotify() {
@@ -175,18 +165,27 @@ function getAvaliacaoUrl(musica) {
 
 // Fetch Top Comunidade
 async function fetchRanking() {
+  rankingController?.abort();
+  const controller = new AbortController();
+  rankingController = controller;
   loadingCommunity.value = true;
   try {
-    const res = await fetch(`${API_URL}/api/spotify/musicas_destaque.php?limit=20`);
+    const res = await fetch(`${API_URL}/api/spotify/musicas_destaque.php?limit=20`, {
+      signal: controller.signal,
+    });
     const data = await res.json();
 
     if (data.sucesso) {
       musicasMaisAvaliadas.value = data.musicas;
     }
   } catch (error) {
-    console.error('Erro ao carregar ranking:', error);
+    if (error.name !== 'AbortError') {
+      console.error('Erro ao carregar ranking:', error);
+    }
   } finally {
-    loadingCommunity.value = false;
+    if (rankingController === controller) {
+      loadingCommunity.value = false;
+    }
   }
 }
 
@@ -194,10 +193,14 @@ async function fetchRanking() {
 async function fetchUltimas() {
   if (!isLoggedIn.value) return;
 
+  ultimasController?.abort();
+  const controller = new AbortController();
+  ultimasController = controller;
   loadingUltimas.value = true;
   try {
     const res = await fetch(`${API_URL}/api/spotify/ultimas_escutadas.php?limit=10`, {
-      credentials: 'include'
+      credentials: 'include',
+      signal: controller.signal,
     });
     const data = await res.json();
 
@@ -205,18 +208,38 @@ async function fetchUltimas() {
       ultimasEscutadas.value = data.musicas;
     }
   } catch (error) {
-    console.error('Erro ao carregar histórico:', error);
+    if (error.name !== 'AbortError') {
+      console.error('Erro ao carregar histórico:', error);
+    }
   } finally {
-    loadingUltimas.value = false;
+    if (ultimasController === controller) {
+      loadingUltimas.value = false;
+    }
   }
 }
 
 onMounted(() => {
-  checkLogin();
   fetchRanking();
   if (isLoggedIn.value) {
     fetchUltimas();
   }
+});
+
+watch(usuarioId, (novoId, idAnterior) => {
+  if (novoId === idAnterior) return;
+
+  if (novoId) {
+    fetchUltimas();
+  } else {
+    ultimasController?.abort();
+    ultimasEscutadas.value = [];
+    loadingUltimas.value = false;
+  }
+});
+
+onBeforeUnmount(() => {
+  rankingController?.abort();
+  ultimasController?.abort();
 });
 </script>
 

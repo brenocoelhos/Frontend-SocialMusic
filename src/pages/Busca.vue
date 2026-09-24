@@ -92,12 +92,9 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
-import axios from "axios";
-
-// Configuração da API URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
+import { api } from "@/services/api";
 
 const route = useRoute();
 const searchTerm = ref(route.query?.q || "");
@@ -110,6 +107,9 @@ const isLoadingTracks = ref(false);
 // Estado dos membros
 const membersResults = ref([]);
 const isLoadingMembers = ref(false);
+
+let tracksController = null;
+let membersController = null;
 
 // Computed para o primeiro track (destaque)
 const firstTrack = computed(() => {
@@ -141,32 +141,54 @@ function getAvaliacaoUrl(track) {
 }
 
 async function fetchTracks(query) {
+  tracksController?.abort();
+  const controller = new AbortController();
+  tracksController = controller;
+
   isLoadingTracks.value = true;
   trackResults.value = [];
-  const apiUrl = `${API_URL}/api/spotify/search.php?q=${encodeURIComponent(query)}`;
   try {
-    const response = await axios.get(apiUrl);
-    trackResults.value = response.data;
+    const response = await api.get('/api/spotify/search.php', {
+      params: { q: query },
+      signal: controller.signal,
+    });
+    if (tracksController === controller) {
+      trackResults.value = response.data;
+    }
   } catch (err) {
-    console.error("Erro ao buscar músicas:", err);
+    if (err.code !== 'ERR_CANCELED' && err.name !== 'CanceledError') {
+      console.error("Erro ao buscar músicas:", err);
+    }
   } finally {
-    isLoadingTracks.value = false;
+    if (tracksController === controller) {
+      isLoadingTracks.value = false;
+    }
   }
 }
 
 async function fetchMembers(query) {
+  membersController?.abort();
+  const controller = new AbortController();
+  membersController = controller;
+
   isLoadingMembers.value = true;
   membersResults.value = [];
-  const apiUrl = `${API_URL}/api/users/buscar_membros.php?q=${encodeURIComponent(query)}`;
   try {
-    const response = await axios.get(apiUrl);
-    if (response.data.sucesso) {
+    const response = await api.get('/api/users/buscar_membros.php', {
+      params: { q: query },
+      signal: controller.signal,
+    });
+    if (membersController === controller && response.data.sucesso) {
       membersResults.value = response.data.usuarios;
     }
   } catch (err) {
-    console.error("Erro ao buscar membros:", err);
+    if (err.code !== 'ERR_CANCELED' && err.name !== 'CanceledError') {
+      console.error("Erro ao buscar membros:", err);
+    }
   } finally {
-    isLoadingMembers.value = false;
+    if (membersController === controller) {
+      isLoadingMembers.value = false;
+    }
   }
 }
 
@@ -180,12 +202,21 @@ watch(
       fetchTracks(newQuery);
       fetchMembers(newQuery);
     } else {
-      // Limpa tudo se a busca for vazia
+      // Limpa tudo se a busca for vazia e cancela chamadas antigas.
+      tracksController?.abort();
+      membersController?.abort();
       searched.value = false;
       trackResults.value = [];
       membersResults.value = [];
+      isLoadingTracks.value = false;
+      isLoadingMembers.value = false;
     }
   },
   { immediate: true },
 );
+
+onBeforeUnmount(() => {
+  tracksController?.abort();
+  membersController?.abort();
+});
 </script>

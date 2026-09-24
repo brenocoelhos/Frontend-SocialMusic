@@ -236,8 +236,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
+import { API_URL } from '@/config/api';
 
 // Dados
 const totalUsers = ref(0);

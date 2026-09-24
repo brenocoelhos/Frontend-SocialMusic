@@ -388,18 +388,17 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, inject } from "vue";
+import { ref, watch, computed, inject, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
-import axios from "axios";
+import { api } from "@/services/api";
 import { useGlobalPlayer } from "@/composables/useGlobalPlayer";
-
-// Configuração da API URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
+import { useAuth } from "@/composables/useAuth";
 
 const route = useRoute();
 const track = ref(null); // Armazena os detalhes da música
 const isLoading = ref(false);
 const error = ref(null);
+let trackDataController = null;
 
 // Player do YouTube. A chave da API nunca fica no frontend; este componente
 // conversa apenas com o nosso endpoint PHP, que usa cache no MySQL.
@@ -424,7 +423,8 @@ const userReview = ref(null); // Para guardar a avaliação existente
 const hasUserReview = computed(() => userReview.value !== null);
 const stats = ref({ total: 0, media: 0.0 });
 const reviewsList = ref([]);
-const loggedInUserId = ref(null); // ID do usuário logado
+const { usuarioId } = useAuth();
+const loggedInUserId = computed(() => usuarioId.value); // ID do usuário logado
 const followLoadingId = ref(null); // Para saber qual botão está carregando
 const currentPage = ref(1); // Página atual para paginação
 const reviewsPerPage = 3; // Número de avaliações por página igual ao limit do PHP
@@ -620,28 +620,39 @@ async function checkExistingReview(spotifyId) {
   isLoadingReview.value = true;
   userReview.value = null;
   try {
-    const response = await axios.get(
+    const response = await api.get(
       `/api/reviews/verificar_avaliacao.php?spotify_id=${spotifyId}`,
-      { withCredentials: true }
+      { signal: trackDataController?.signal }
     );
+
+    // Se o usuário já navegou para outra música, ignora a resposta antiga.
+    if (track.value?.id !== spotifyId) return;
 
     if (response.data.existe) {
       userReview.value = response.data.avaliacao;
     }
   } catch (err) {
+    if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') return;
+    if (track.value?.id !== spotifyId) return;
     console.warn("Erro ao verificar avaliação (pode ser 401)", err);
     userReview.value = null;
   } finally {
-    isLoadingReview.value = false;
+    if (track.value?.id === spotifyId) {
+      isLoadingReview.value = false;
+    }
   }
 }
 
 // Função para buscar as avaliações da página
 async function fetchPageReviews(spotifyId, page = 1) {
   try {
-    const response = await axios.get(
-      `/api/reviews/buscar_avaliacoes.php?spotify_id=${spotifyId}&page=${page}&limit=${reviewsPerPage}`
+    const response = await api.get(
+      `/api/reviews/buscar_avaliacoes.php?spotify_id=${spotifyId}&page=${page}&limit=${reviewsPerPage}`,
+      { signal: trackDataController?.signal }
     );
+
+    if (track.value?.id !== spotifyId) return;
+
     stats.value = response.data.stats;
 
     if (page === 1) {
@@ -652,6 +663,8 @@ async function fetchPageReviews(spotifyId, page = 1) {
       reviewsList.value.push(...response.data.avaliacoes);
     }
   } catch (err) {
+    if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') return;
+    if (track.value?.id !== spotifyId) return;
     console.error("Erro ao buscar avaliações:", err);
     stats.value = { total: 0, media: 0.0 };
     reviewsList.value = [];
@@ -697,13 +710,14 @@ async function loadYoutubePlayer(currentTrack) {
   youtubeMessage.value = '';
 
   try {
-    const response = await axios.get('/api/youtube/buscar_video.php', {
+    const response = await api.get('/api/youtube/buscar_video.php', {
       params: {
         spotify_id: currentTrack.id,
         track_name: currentTrack.track_name,
         artist_name: currentTrack.artist_name,
         duration_ms: currentTrack.duration_ms_raw || undefined,
       },
+      signal: trackDataController?.signal,
     });
 
     // Evita que uma resposta de uma música anterior sobrescreva a música atual
@@ -719,6 +733,7 @@ async function loadYoutubePlayer(currentTrack) {
     }
   } catch (err) {
     if (requestId !== youtubeRequestId.value) return;
+    if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') return;
 
     console.warn('Não foi possível carregar o player do YouTube:', err);
     youtubeId.value = null;
@@ -731,11 +746,11 @@ async function loadYoutubePlayer(currentTrack) {
 }
 
 // Função que lê os dados da URL e monta o objeto 'track'
+let trackLoadId = 0;
 async function loadTrackFromQuery(query) {
-  const usuarioLocal = localStorage.getItem('usuario');
-  if (usuarioLocal) {
-    loggedInUserId.value = JSON.parse(usuarioLocal).id;
-  }
+  const requestId = ++trackLoadId;
+  trackDataController?.abort();
+  trackDataController = new AbortController();
 
   if (!query.id) {
     track.value = null;
@@ -784,7 +799,9 @@ async function loadTrackFromQuery(query) {
     console.error("Erro ao processar dados da URL:", err);
     error.value = err.message || "Erro desconhecido";
   } finally {
-    isLoading.value = false;
+    if (requestId === trackLoadId) {
+      isLoading.value = false;
+    }
   }
 }
 
@@ -811,7 +828,7 @@ async function toggleFollow(review) {
   const actionEndpoint = review.is_following ? 'deixar_de_seguir.php' : 'seguir.php';
 
   try {
-    const response = await axios.post(`${API_URL}/api/users/${actionEndpoint}`, {
+    const response = await api.post(`/api/users/${actionEndpoint}`, {
       id: review.usuario_id 
     }, {
       withCredentials: true
@@ -841,7 +858,7 @@ async function toggleLike(review) {
   likeLoadingId.value = review.id;
 
   try {
-    const response = await axios.post(
+    const response = await api.post(
       '/api/reviews/curtir_avaliacao.php',
       { avaliacao_id: review.id }, // Envia o ID da avaliação
       { withCredentials: true }
@@ -904,7 +921,7 @@ async function submitReport() {
   reportLoadingId.value = review.id;
 
   try {
-    const response = await axios.post(
+    const response = await api.post(
       '/api/reviews/denunciar_avaliacao.php',
       {
         avaliacao_id: review.id,
@@ -1001,7 +1018,7 @@ async function submitReview() {
       image_url: track.value.image_url,
     };
 
-    const response = await axios.post('/api/reviews/salvar_avaliacao.php', payload, {
+    const response = await api.post('/api/reviews/salvar_avaliacao.php', payload, {
       withCredentials: true, // Inclui cookies de sessão
     });
 
@@ -1032,7 +1049,7 @@ async function deleteReview() {
   isDeleting.value = true;
   try {
     // userReview.value.id foi obtido do 'verificar_avaliacao.php'
-    const response = await axios.post(
+    const response = await api.post(
       '/api/reviews/delete_avaliacao.php',
       { avaliacao_id: userReview.value.id },
       { withCredentials: true }
@@ -1061,13 +1078,37 @@ async function deleteReview() {
   }
 }
 
+// Quando a sessão muda, atualiza somente os dados personalizados da página.
+// Isso substitui o antigo F5 após login/logout sem interromper o player global.
+watch(usuarioId, async (novoId, idAnterior) => {
+  if (novoId === idAnterior || !track.value?.id) return;
+
+  currentPage.value = 1;
+
+  if (novoId) {
+    await Promise.all([
+      checkExistingReview(track.value.id),
+      fetchPageReviews(track.value.id, 1),
+    ]);
+  } else {
+    userReview.value = null;
+    isLoadingReview.value = false;
+    await fetchPageReviews(track.value.id, 1);
+  }
+});
+
 watch(
   () => route.query,
   (newQuery) => {
     loadTrackFromQuery(newQuery);
   },
-  { immediate: true, deep: true },
+  { immediate: true },
 );
+
+onBeforeUnmount(() => {
+  trackDataController?.abort();
+  youtubeRequestId.value++;
+});
 
 </script>
 
