@@ -32,6 +32,33 @@
             <div class="d-flex flex-column align-center">
               <h1 class="text-h4 font-weight-bold mb-2">{{ track.track_name }}</h1>
               <h2 class="text-h6 text-grey-darken-1 mb-4">{{ track.artist_name }}</h2>
+
+              <!-- Player do YouTube: o vídeo é localizado pelo backend e fica em cache no MySQL. -->
+              <div class="youtube-player-container mb-4">
+                <div v-if="isLoadingYoutube" class="youtube-player-placeholder d-flex flex-column align-center justify-center">
+                  <v-progress-circular indeterminate color="red" size="36" />
+                  <span class="text-caption text-grey-darken-1 mt-3">Carregando player...</span>
+                </div>
+
+                <iframe
+                  v-else-if="youtubeId"
+                  class="youtube-player-frame"
+                  :src="youtubeEmbedUrl"
+                  :title="`Ouvir ${track.track_name} de ${track.artist_name} no YouTube`"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allowfullscreen
+                ></iframe>
+
+                <div v-else class="youtube-player-placeholder d-flex flex-column align-center justify-center text-center pa-4">
+                  <v-icon icon="mdi-youtube" color="grey" size="36" class="mb-2" />
+                  <span class="text-caption text-grey-darken-1">
+                    {{ youtubeMessage || 'Player do YouTube indisponível para esta música.' }}
+                  </span>
+                </div>
+              </div>
+
               <v-btn prepend-icon="mdi-spotify" variant="flat" class="text-none" rounded="lg" color="#1DB954"
                 size="large" block :href="track.spotify_url" target="_blank">
                 Escutar no Spotify
@@ -364,6 +391,19 @@ const route = useRoute();
 const track = ref(null); // Armazena os detalhes da música
 const isLoading = ref(false);
 const error = ref(null);
+
+// Player do YouTube. A chave da API nunca fica no frontend; este componente
+// conversa apenas com o nosso endpoint PHP, que usa cache no MySQL.
+const youtubeId = ref(null);
+const isLoadingYoutube = ref(false);
+const youtubeMessage = ref('');
+const youtubeRequestId = ref(0);
+const youtubeEmbedUrl = computed(() =>
+  youtubeId.value
+    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId.value)}?rel=0`
+    : ''
+);
+
 const dialog = ref(false);
 const form = ref(null);
 const isSubmitting = ref(false);
@@ -606,6 +646,54 @@ async function fetchPageReviews(spotifyId, page = 1) {
   }
 }
 
+// Busca o vídeo correspondente à música. O backend primeiro consulta o cache
+// e só usa a YouTube Data API quando ainda não existe um resultado recente.
+async function loadYoutubePlayer(currentTrack) {
+  if (!currentTrack?.id || !currentTrack?.track_name || !currentTrack?.artist_name) {
+    youtubeId.value = null;
+    youtubeMessage.value = 'Não foi possível identificar esta música para o player.';
+    return;
+  }
+
+  const requestId = ++youtubeRequestId.value;
+  isLoadingYoutube.value = true;
+  youtubeId.value = null;
+  youtubeMessage.value = '';
+
+  try {
+    const response = await axios.get('/api/youtube/buscar_video.php', {
+      params: {
+        spotify_id: currentTrack.id,
+        track_name: currentTrack.track_name,
+        artist_name: currentTrack.artist_name,
+        duration_ms: currentTrack.duration_ms_raw || undefined,
+      },
+    });
+
+    // Evita que uma resposta de uma música anterior sobrescreva a música atual
+    // quando o usuário navega rapidamente entre páginas.
+    if (requestId !== youtubeRequestId.value) return;
+
+    if (response.data?.sucesso && response.data?.encontrado && response.data?.youtube_id) {
+      youtubeId.value = response.data.youtube_id;
+      youtubeMessage.value = '';
+    } else {
+      youtubeId.value = null;
+      youtubeMessage.value = response.data?.mensagem || 'Player do YouTube indisponível para esta música.';
+    }
+  } catch (err) {
+    if (requestId !== youtubeRequestId.value) return;
+
+    console.warn('Não foi possível carregar o player do YouTube:', err);
+    youtubeId.value = null;
+    youtubeMessage.value = 'Player do YouTube indisponível no momento.';
+  } finally {
+    if (requestId === youtubeRequestId.value) {
+      isLoadingYoutube.value = false;
+    }
+  }
+}
+
 // Função que lê os dados da URL e monta o objeto 'track'
 async function loadTrackFromQuery(query) {
   const usuarioLocal = localStorage.getItem('usuario');
@@ -626,6 +714,10 @@ async function loadTrackFromQuery(query) {
   stats.value = { total: 0, media: 0.0 };
   reviewsList.value = [];
   currentPage.value = 1;
+  youtubeRequestId.value++;
+  youtubeId.value = null;
+  youtubeMessage.value = '';
+  isLoadingYoutube.value = false;
 
   try {
     track.value = {
@@ -635,6 +727,7 @@ async function loadTrackFromQuery(query) {
       image_url: query.image,
       // Formata os dados que vieram da URL
       duration: formatDuration(query.duration_ms),
+      duration_ms_raw: query.duration_ms ? Number(query.duration_ms) : null,
       release_date: formatDate(query.release_date),
       popularity: query.popularity,
       explicit: query.explicit === 'true',
@@ -645,7 +738,8 @@ async function loadTrackFromQuery(query) {
 
     const promises = [
       checkExistingReview(track.value.id),
-      fetchPageReviews(track.value.id, 1)
+      fetchPageReviews(track.value.id, 1),
+      loadYoutubePlayer(track.value)
     ];
 
     await Promise.all(promises);
@@ -952,5 +1046,29 @@ watch(
 
 .v-list-item:hover {
   background-color: transparent !important;
+}
+
+.youtube-player-container {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.youtube-player-frame,
+.youtube-player-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.youtube-player-frame {
+  display: block;
+  border: 0;
+}
+
+.youtube-player-placeholder {
+  min-height: 160px;
+  background: #f1f1f1;
 }
 </style>
