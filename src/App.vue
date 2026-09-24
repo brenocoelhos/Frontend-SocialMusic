@@ -300,21 +300,27 @@
     </v-footer>
 
     <!-- Player persistente: permanece montado enquanto o usuário navega pelo Vue Router. -->
-    <GlobalMusicPlayer />
+    <GlobalMusicPlayer v-if="globalPlayerState.visible" />
   </v-app>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch, provide } from 'vue';
+import { ref, reactive, computed, defineAsyncComponent, onMounted, onUnmounted, watch, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import GlobalMusicPlayer from '@/components/GlobalMusicPlayer.vue';
-
-// Configuração da API URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
+import { useGlobalPlayer } from '@/composables/useGlobalPlayer';
+import { useAuth } from '@/composables/useAuth';
+import { API_URL } from '@/config/api';
+import { authFetch } from '@/services/authFetch';
 
 const route = useRoute(); // Rota atual
 const router = useRouter(); // Roteador para navegação programática
 const searchQuery = ref('');
+const { usuario, setUsuario, clearAuth, setAuthToken, syncUsuarioFromStorage } = useAuth();
+const { player: globalPlayerState } = useGlobalPlayer();
+
+// O componente mais pesado do player só é baixado quando realmente existe
+// uma reprodução/restauração para mostrar.
+const GlobalMusicPlayer = defineAsyncComponent(() => import('@/components/GlobalMusicPlayer.vue'));
 
 function goToBusca() {
   if (!searchQuery.value.trim())
@@ -344,7 +350,9 @@ const textColor = computed(() => {
 });
 
 
-const handleScroll = () => {
+let scrollFrame = null;
+
+function updateScrollState() {
   if (!isHomePage.value) {
     isScrolled.value = true;
     return;
@@ -357,14 +365,21 @@ const handleScroll = () => {
   }
 
   const popularesSection = document.getElementById('populares');
-
   if (popularesSection) {
-    const sectionTop = popularesSection.offsetTop;
-    const threshold = sectionTop - 64;
-
+    const threshold = popularesSection.offsetTop - 64;
     isScrolled.value = scrollPosition >= threshold;
   }
-};
+}
+
+// Limita o trabalho de scroll a no máximo uma atualização por frame.
+function handleScroll() {
+  if (scrollFrame !== null) return;
+
+  scrollFrame = window.requestAnimationFrame(() => {
+    scrollFrame = null;
+    updateScrollState();
+  });
+}
 
 watch(isHomePage, (newVal) => {
   if (newVal) {
@@ -375,25 +390,20 @@ watch(isHomePage, (newVal) => {
   }
 });
 
-// Observa mudanças de rota e faz scroll para o topo
-watch(() => route.path, () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
 // Função para lidar com a mudança de storage
 function handleStorageChange(event) {
-  if (event.key === 'usuario' && event.newValue === null) {
-    // Se o 'usuario' foi removido do localStorage (ex: pelo index.js)
-    // força o logout na interface.
-    usuario.value = null;
+  if (event.key !== 'usuario') return;
+
+  syncUsuarioFromStorage();
+  if (event.newValue === null) {
     showAlert("A sua sessão expirou.", "warning");
   }
 }
 
 // Inicializa e limpa os event listeners
 onMounted(() => {
-  handleScroll();
-  window.addEventListener('scroll', handleScroll);
+  updateScrollState();
+  window.addEventListener('scroll', handleScroll, { passive: true });
 
   // Ouve por mudanças no localStorage
   window.addEventListener('storage', handleStorageChange);
@@ -401,15 +411,14 @@ onMounted(() => {
   // Captura dados do Spotify se houver na URL
   capturarDadosSpotify();
 
-  // Verifica se já existe uma sessão
-  const usuarioSalvo = localStorage.getItem('usuario');
-  if (usuarioSalvo) {
-    usuario.value = JSON.parse(usuarioSalvo);
-  }
 });
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
+  if (scrollFrame !== null) {
+    window.cancelAnimationFrame(scrollFrame);
+    scrollFrame = null;
+  }
 
   // Remove o ouvinte ao sair
   window.removeEventListener('storage', handleStorageChange);
@@ -419,7 +428,7 @@ onUnmounted(() => {
 
 
 // --- GERENCIAMENTO DE ESTADO E SESSÃO ---
-const usuario = ref(null);
+// O estado do usuário é compartilhado por todas as páginas via useAuth().
 
 // --- CONTROLE DO FORMULÁRIO ---
 const dialog = ref(false);
@@ -511,7 +520,7 @@ async function logout() {
   loading.value = true;
   try {
     // Chama a API de logout
-    const res = await fetch(`${API_URL}/api/auth/logout.php`, {
+    const res = await authFetch(`${API_URL}/api/auth/logout.php`, {
       method: "POST",
       credentials: 'include'
     });
@@ -521,28 +530,33 @@ async function logout() {
   } catch (err) {
     console.error("Erro ao fazer logout:", err);
   } finally {
-    usuario.value = null;
-    localStorage.removeItem('usuario');
+    clearAuth();
     searchQuery.value = ''; // Limpa o input de busca
     loading.value = false;
-    location.reload();
+
+    // O painel admin depende de sessão válida. Nas demais páginas a SPA
+    // continua no mesmo lugar, agora sem destruir o player global.
+    if (route.meta.requiresAdmin) {
+      router.push('/');
+    }
   }
 }
 
 // --- FUNÇÃO DE LOGIN COM SPOTIFY ---
 function loginWithSpotify() {
-  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify/spotify_user_auth.php?action=authorize&mode=login';
+  window.location.href = `${API_URL}/api/spotify/spotify_user_auth.php?action=authorize&mode=login`;
 }
 
 // --- FUNÇÃO PARA INICIAR CADASTRO COM SPOTIFY ---
 function startSpotifyRegister() {
   // Redireciona para o backend para autenticação Spotify
-  window.location.href = 'https://backend-socialmusic.onrender.com/api/spotify/spotify_user_auth.php?action=authorize&mode=register';
+  window.location.href = `${API_URL}/api/spotify/spotify_user_auth.php?action=authorize&mode=register`;
 }
 
 // --- FUNÇÃO PARA CAPTURAR DADOS DO SPOTIFY DA URL ---
 const capturarDadosSpotify = () => {
   const urlParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 
   // Verifica se é LOGIN com Spotify (usuário já existe)
   if (urlParams.get('spotify_login') === 'success') {
@@ -555,9 +569,16 @@ const capturarDadosSpotify = () => {
       spotify_conectado: urlParams.get('spotify_conectado') === '1' ? 1 : 0
     };
 
-    // Salva o usuário COMPLETO no localStorage
-    localStorage.setItem('usuario', JSON.stringify(userData));
-    usuario.value = userData;
+    // O token da aplicação chega no fragmento (#), sem ser enviado ao
+    // servidor do frontend. Ele permite autenticação mesmo quando o navegador
+    // bloqueia o cookie cross-site.
+    const appToken = hashParams.get('auth_token');
+    if (appToken) {
+      setAuthToken(appToken);
+    }
+
+    // Salva o usuário COMPLETO no estado compartilhado/localStorage.
+    setUsuario(userData);
 
     // Mostra mensagem de sucesso
     showAlert(`Bem-vindo de volta, ${userData.nome}!`, 'success');
@@ -565,8 +586,6 @@ const capturarDadosSpotify = () => {
     // Limpa a URL IMEDIATAMENTE (sem recarregar a página)
     window.history.replaceState({}, document.title, window.location.pathname);
 
-    // RECARREGA A PÁGINA, reconhecer o novo estado de login
-    location.reload();
   }
   // Verifica se é CADASTRO com Spotify (success=1 para cadastro)
   else if (urlParams.get('success') === '1') {
@@ -622,7 +641,7 @@ async function submitForm() {
         payload.senha = formData.password;
       }
 
-      const res = await fetch(`${API_URL}/api/auth/cadastro.php`, {
+      const res = await authFetch(`${API_URL}/api/auth/cadastro.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -642,7 +661,7 @@ async function submitForm() {
         showAlert(data.mensagem, "error");
       }
     } else {
-      const res = await fetch(`${API_URL}/api/auth/autentica.php`, {
+      const res = await authFetch(`${API_URL}/api/auth/login_token.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -654,11 +673,9 @@ async function submitForm() {
       const data = await res.json();
 
       if (data.sucesso) {
-        usuario.value = data.usuario;
-        console.log(data.usuario.perfil);
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        setAuthToken(data.token);
+        setUsuario(data.usuario);
         closeDialog();
-        location.reload(); // Recarrega a página para atualizar o estado global da sessão
       } else {
         showAlert(data.mensagem, "error");
       }

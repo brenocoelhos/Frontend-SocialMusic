@@ -120,6 +120,7 @@
 import { ref, onMounted, onBeforeUnmount, inject, computed, watch } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import { API_URL } from '@/config/api';
+import { authFetch } from '@/services/authFetch';
 
 // Injeções globais 
 const openLoginDialog = inject('openLoginDialog');
@@ -170,7 +171,7 @@ async function fetchRanking() {
   rankingController = controller;
   loadingCommunity.value = true;
   try {
-    const res = await fetch(`${API_URL}/api/spotify/musicas_destaque.php?limit=20`, {
+    const res = await authFetch(`${API_URL}/api/spotify/musicas_destaque.php?limit=20`, {
       signal: controller.signal,
     });
     const data = await res.json();
@@ -198,7 +199,7 @@ async function fetchUltimas() {
   ultimasController = controller;
   loadingUltimas.value = true;
   try {
-    const res = await fetch(`${API_URL}/api/spotify/ultimas_escutadas.php?limit=10`, {
+    const res = await authFetch(`${API_URL}/api/spotify/ultimas_escutadas.php?limit=10`, {
       credentials: 'include',
       signal: controller.signal,
     });

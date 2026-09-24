@@ -229,6 +229,7 @@ import { ref, onMounted, onBeforeUnmount, inject, computed, watch } from 'vue';
 import fundoUrl from '@/assets/fundoArrumado.webp';
 import { useAuth } from '@/composables/useAuth';
 import { API_URL } from '@/config/api';
+import { authFetch } from '@/services/authFetch';
 
 // Injeta a função para abrir o diálogo de login e mostrar alertas
 const openLoginDialog = inject('openLoginDialog');
@@ -296,7 +297,7 @@ watch(usuarioId, (novoId, idAnterior) => {
 async function fetchMusicasPopulares() {
   loadingPopulares.value = true;
   try {
-    const resPopulares = await fetch(
+    const resPopulares = await authFetch(
       `${API_URL}/api/spotify/spotify_musicas.php?tipo=populares&limit=6`,
       { signal: homeDataController.signal }
     );
@@ -316,7 +317,7 @@ async function fetchMusicasPopulares() {
 async function fetchPrincipaisAvaliacoes() {
   loadingAvaliacoes.value = true;
   try {
-    const res = await fetch(
+    const res = await authFetch(
       `${API_URL}/api/reviews/principais_avaliacoes.php?limit=3`, {
       credentials: 'include',
       signal: homeDataController.signal,
@@ -341,7 +342,7 @@ async function toggleFollow(review) {
   const endpoint = review.is_following ? 'deixar_de_seguir.php' : 'seguir.php';
 
   try {
-    const res = await fetch(`${API_URL}/api/users/${endpoint}`, {
+    const res = await authFetch(`${API_URL}/api/users/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -367,7 +368,7 @@ async function toggleLike(review) {
 
   likeLoadingId.value = review.id;
   try {
-    const res = await fetch(`${API_URL}/api/reviews/curtir_avaliacao.php`, {
+    const res = await authFetch(`${API_URL}/api/reviews/curtir_avaliacao.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -392,7 +393,7 @@ async function toggleLike(review) {
 async function fetchMusicasDestaque() {
   loadingMusicasDestaque.value = true;
   try {
-    const res = await fetch(
+    const res = await authFetch(
       `${API_URL}/api/spotify/musicas_destaque.php?limit=6`,
       { signal: homeDataController.signal }
     );
@@ -412,7 +413,7 @@ async function fetchMusicasDestaque() {
 async function fetchUltimaAvaliacao() {
   loadingUltimaAvaliacao.value = true;
   try {
-    const res = await fetch(
+    const res = await authFetch(
       `${API_URL}/api/reviews/ultima_avaliacao.php?`, {
       credentials: 'include',
       signal: homeDataController.signal,
@@ -432,7 +433,7 @@ async function fetchUltimaAvaliacao() {
 async function fetchUsuariosRecomendados() {
   loadingRecomendados.value = true;
   try {
-    const res = await fetch(
+    const res = await authFetch(
       `${API_URL}/api/users/usuarios_recomendados.php?limit=5`, {
       credentials: 'include',
       signal: homeDataController.signal,

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Index from '../pages/index.vue'
 import { API_URL } from '@/config/api'
 import { useAuth } from '@/composables/useAuth'
+import { authFetch } from '@/services/authFetch'
 
 // A Home continua no bundle inicial; as páginas secundárias só são baixadas
 // quando o usuário realmente navega até elas.
@@ -39,7 +40,7 @@ router.beforeEach(async (to) => {
   if (!to.meta.requiresAdmin) return true
 
   try {
-    const response = await fetch(`${API_URL}/api/auth/auth.admin.php`, {
+    const response = await authFetch(`${API_URL}/api/auth/auth.admin.php`, {
       credentials: 'include',
       headers: { Accept: 'application/json' },
     })
@@ -55,7 +56,7 @@ router.beforeEach(async (to) => {
   }
 
   // Mantém cabeçalho e páginas sincronizados quando a sessão não é mais válida.
-  useAuth().clearUsuario()
+  useAuth().clearAuth()
   return '/'
 })
 

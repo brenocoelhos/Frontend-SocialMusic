@@ -251,6 +251,7 @@ import { ref, onMounted, onBeforeUnmount, reactive, watch, computed, inject } fr
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import { API_URL } from '@/config/api';
+import { authFetch } from '@/services/authFetch';
 const router = useRouter();
 const route = useRoute();
 
@@ -305,7 +306,7 @@ function confirmarExclusaoConta() {
 async function executarExclusaoConta() {
   isDeleting.value = true;
   try {
-    const res = await fetch(`${API_URL}/api/users/excluir_conta.php`, {
+    const res = await authFetch(`${API_URL}/api/users/excluir_conta.php`, {
       method: 'POST',
       credentials: 'include'
     });
@@ -338,7 +339,7 @@ async function abrirModalConexoes(tipo) {
 
   try {
     const perfilId = perfilUsuario.value.id; 
-    const res = await fetch(`${API_URL}/api/users/perfil_conexoes.php?id=${perfilId}&tipo=${tipo}`, {
+    const res = await authFetch(`${API_URL}/api/users/perfil_conexoes.php?id=${perfilId}&tipo=${tipo}`, {
       method: 'GET',
       credentials: 'include'
     });
@@ -357,7 +358,7 @@ async function abrirModalConexoes(tipo) {
 async function removerConexao(userToRemove) {
   showConfirm(`Deixar de seguir ${userToRemove.nome}?`, async () => {
     try {
-      const res = await fetch(`${API_URL}/api/users/deixar_de_seguir.php`, {
+      const res = await authFetch(`${API_URL}/api/users/deixar_de_seguir.php`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -402,7 +403,7 @@ async function onFileChange(event) {
   formData.append('foto', file);
 
   try {
-    const res = await fetch(`${API_URL}/api/users/perfil_foto_update.php`, {
+    const res = await authFetch(`${API_URL}/api/users/perfil_foto_update.php`, {
       method: 'POST',
       credentials: 'include',
       body: formData,
@@ -433,7 +434,7 @@ function confirmarRemocaoFoto() {
 async function executarRemocaoFoto() {
   isUploading.value = true;
   try {
-    const res = await fetch(`${API_URL}/api/users/perfil_foto_remove.php`, {
+    const res = await authFetch(`${API_URL}/api/users/perfil_foto_remove.php`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -489,7 +490,7 @@ async function saveProfile() {
       ? editForm.generos.join(', ') 
       : editForm.generos;
 
-    const res = await fetch(`${API_URL}/api/users/perfil_update.php`, {
+    const res = await authFetch(`${API_URL}/api/users/perfil_update.php`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -526,7 +527,7 @@ async function toggleLike(review) {
 
   likeLoadingId.value = review.id;
   try {
-    const res = await fetch(`${API_URL}/api/reviews/curtir_avaliacao.php`, {
+    const res = await authFetch(`${API_URL}/api/reviews/curtir_avaliacao.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -553,7 +554,7 @@ async function toggleFollow() {
   followLoading.value = true;
   const endpoint = isFollowing.value ? 'deixar_de_seguir.php' : 'seguir.php';
   try {
-    const res = await fetch(`${API_URL}/api/users/${endpoint}`, {
+    const res = await authFetch(`${API_URL}/api/users/${endpoint}`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -626,7 +627,7 @@ async function carregarPerfil(username) {
   const url = username ? `${API_URL}/api/users/perfil.php?username=${username}` : `${API_URL}/api/users/perfil.php`;
 
   try {
-    const res = await fetch(url, {
+    const res = await authFetch(url, {
       method: 'GET',
       credentials: 'include',
       signal: controller.signal,

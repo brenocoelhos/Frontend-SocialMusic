@@ -1,17 +1,21 @@
 import { computed, ref } from 'vue';
 
-const STORAGE_KEY = 'usuario';
+const USER_STORAGE_KEY = 'usuario';
+const TOKEN_STORAGE_KEY = 'auth_token';
 
-function readStoredUser() {
-  if (typeof window === 'undefined') return null;
-
+function safeParseUser(raw) {
+  if (!raw) return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    return JSON.parse(raw);
   } catch (error) {
     console.warn('Não foi possível ler a sessão local:', error);
     return null;
   }
+}
+
+function readStoredUser() {
+  if (typeof window === 'undefined') return null;
+  return safeParseUser(window.localStorage.getItem(USER_STORAGE_KEY));
 }
 
 // Singleton de módulo: todas as páginas compartilham a mesma referência reativa.
@@ -23,10 +27,29 @@ function persistUser(user) {
   if (typeof window === 'undefined') return;
 
   if (user) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
   } else {
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(USER_STORAGE_KEY);
   }
+}
+
+function getAuthToken() {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem(TOKEN_STORAGE_KEY);
+}
+
+function setAuthToken(token) {
+  if (typeof window === 'undefined') return;
+
+  if (token) {
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  } else {
+    window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
+}
+
+function clearAuthToken() {
+  setAuthToken(null);
 }
 
 function setUsuario(user) {
@@ -44,6 +67,11 @@ function clearUsuario() {
   persistUser(null);
 }
 
+function clearAuth() {
+  clearUsuario();
+  clearAuthToken();
+}
+
 // Usado para sincronização entre abas/janelas via evento "storage".
 function syncUsuarioFromStorage() {
   usuario.value = readStoredUser();
@@ -58,5 +86,9 @@ export function useAuth() {
     updateUsuario,
     clearUsuario,
     syncUsuarioFromStorage,
+    getAuthToken,
+    setAuthToken,
+    clearAuthToken,
+    clearAuth,
   };
 }

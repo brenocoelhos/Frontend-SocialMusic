@@ -237,6 +237,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { API_URL } from '@/config/api';
+import { authFetch } from '@/services/authFetch';
 
 // Dados
 const totalUsers = ref(0);
@@ -294,7 +295,7 @@ function editUser(user) {
 async function deleteUser(user) {
   if (confirm(`Tem certeza que deseja excluir ${user.nome}?`)) {
     try {
-      const res = await fetch(`${API_URL}/api/admin/usuario_delete.php`, {
+      const res = await authFetch(`${API_URL}/api/admin/usuario_delete.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -315,7 +316,7 @@ async function deleteUser(user) {
 
 async function saveUser() {
   try {
-    const res = await fetch(`${API_URL}/api/admin/usuario_update.php`, {
+    const res = await authFetch(`${API_URL}/api/admin/usuario_update.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -355,7 +356,7 @@ async function ignoreReport(report) {
   reportActionLoadingId.value = report.id;
 
   try {
-    const res = await fetch(`${API_URL}/api/admin/denuncia_update.php`, {
+    const res = await authFetch(`${API_URL}/api/admin/denuncia_update.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -389,7 +390,7 @@ async function deleteReportedReview(report) {
   reportActionLoadingId.value = report.id;
 
   try {
-    const res = await fetch(`${API_URL}/api/admin/avaliacao_delete.php`, {
+    const res = await authFetch(`${API_URL}/api/admin/avaliacao_delete.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -417,7 +418,7 @@ async function loadDashboard() {
   loading.value = true;
 
   try {
-    const res = await fetch(`${API_URL}/api/admin/dashboard.php`, {
+    const res = await authFetch(`${API_URL}/api/admin/dashboard.php`, {
       credentials: 'include'
     });
 
