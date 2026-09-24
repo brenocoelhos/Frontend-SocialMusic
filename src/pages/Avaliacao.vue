@@ -185,52 +185,70 @@
             </v-card>
 
             <!-- Letra da música: carregada somente quando o usuário pedir -->
-            <v-card rounded="xl" elevation="2" class="pa-6 mt-4 lyrics-card">
-              <div class="d-flex align-center justify-space-between mb-3">
-                <div class="d-flex align-center">
-                  <v-icon icon="mdi-music-note-text" color="deep-purple-darken-1" size="28" class="mr-3" />
-                  <div>
-                    <h3 class="text-h6 font-weight-bold">Letra</h3>
-                    <p class="text-caption text-grey-darken-1 mb-0">{{ track.track_name }} · {{ track.artist_name }}</p>
-                  </div>
-                </div>
-              </div>
+            <v-card rounded="xl" elevation="0" class="mt-4 lyrics-card">
+              <template v-if="!lyricsLoaded && !isLoadingLyrics">
+                <button type="button" class="lyrics-trigger" @click="loadLyrics">
+                  <span class="lyrics-trigger-left">
+                    <span class="lyrics-trigger-icon">
+                      <v-icon icon="mdi-music-note-text" size="21" />
+                    </span>
+                    <span class="lyrics-trigger-label">Ver letra da música</span>
+                  </span>
+                  <v-icon icon="mdi-chevron-right" size="22" class="text-grey-darken-1" />
+                </button>
+              </template>
 
-              <div v-if="isLoadingLyrics" class="lyrics-loading d-flex flex-column align-center justify-center py-6">
-                <v-progress-circular indeterminate color="deep-purple-darken-1" size="36" />
-                <span class="text-body-2 text-grey-darken-1 mt-3">Buscando letra...</span>
+              <div v-else-if="isLoadingLyrics" class="lyrics-state-row">
+                <v-progress-circular indeterminate color="deep-purple-darken-1" size="22" width="2" />
+                <span class="text-body-2 text-grey-darken-1 ml-3">Buscando letra...</span>
               </div>
 
               <template v-else-if="lyricsData?.instrumental">
-                <div class="lyrics-empty-state text-center py-5">
-                  <v-icon icon="mdi-music-note" size="42" color="grey-darken-1" class="mb-2" />
-                  <div class="text-body-1 font-weight-medium">Esta faixa é instrumental.</div>
-                  <div class="text-caption text-grey-darken-1 mt-1">Não há letra para exibir.</div>
+                <div class="lyrics-state-row">
+                  <span class="lyrics-trigger-icon">
+                    <v-icon icon="mdi-music-note" size="21" />
+                  </span>
+                  <div class="ml-3">
+                    <div class="text-body-2 font-weight-medium">Esta faixa é instrumental</div>
+                    <div class="text-caption text-grey-darken-1">Não há letra para exibir.</div>
+                  </div>
                 </div>
               </template>
 
               <template v-else-if="lyricsData?.letra">
-                <div class="lyrics-preview-wrap mb-4">
+                <div class="lyrics-loaded-head">
+                  <div class="d-flex align-center min-width-0">
+                    <span class="lyrics-trigger-icon mr-3">
+                      <v-icon icon="mdi-music-note-text" size="20" />
+                    </span>
+                    <div class="min-width-0">
+                      <div class="text-body-2 font-weight-bold">Letra da música</div>
+                      <div class="text-caption text-grey-darken-1 text-truncate">{{ track.track_name }} · {{ track.artist_name }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="lyrics-preview-wrap">
                   <div class="lyrics-preview-text">{{ lyricsPreviewText }}</div>
                   <div v-if="lyricsHasMore" class="lyrics-preview-fade"></div>
                 </div>
 
-                <div class="d-flex flex-wrap align-center justify-space-between ga-2">
+                <div class="lyrics-footer">
                   <a
                     class="text-caption text-grey-darken-1 lyrics-source-link"
                     href="https://lrclib.net"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Fonte: LRCLIB
+                    LRCLIB
                   </a>
 
                   <v-btn
                     color="#EEE8FF"
                     variant="flat"
                     rounded="lg"
-                    class="text-none"
-                    prepend-icon="mdi-text-box-search-outline"
+                    size="small"
+                    class="text-none font-weight-medium"
                     @click="lyricsDialog = true"
                   >
                     Ver letra completa
@@ -239,30 +257,14 @@
               </template>
 
               <template v-else-if="lyricsLoaded">
-                <div class="lyrics-empty-state text-center py-5">
-                  <v-icon icon="mdi-text-box-remove-outline" size="40" color="grey" class="mb-2" />
-                  <div class="text-body-2 text-grey-darken-1">
+                <div class="lyrics-state-row">
+                  <span class="lyrics-trigger-icon">
+                    <v-icon icon="mdi-text-box-remove-outline" size="21" />
+                  </span>
+                  <span class="text-body-2 text-grey-darken-1 ml-3">
                     {{ lyricsMessage || 'Letra não disponível para esta música.' }}
-                  </div>
+                  </span>
                 </div>
-              </template>
-
-              <template v-else>
-                <p class="text-body-2 text-grey-darken-1 mb-4">
-                  Veja a letra desta música sem sair do SocialMusic. Ela só será buscada quando você solicitar,
-                  mantendo a página leve.
-                </p>
-                <v-btn
-                  color="#EEE8FF"
-                  variant="flat"
-                  rounded="lg"
-                  class="text-none"
-                  prepend-icon="mdi-music-note-text"
-                  :loading="isLoadingLyrics"
-                  @click="loadLyrics"
-                >
-                  Ver letra
-                </v-btn>
               </template>
             </v-card>
           </v-col>
@@ -542,13 +544,13 @@ const lyricsPreviewText = computed(() => {
   if (!letra) return '';
 
   const linhas = letra.split(/\r?\n/);
-  return linhas.slice(0, 8).join('\n').trim();
+  return linhas.slice(0, 6).join('\n').trim();
 });
 
 const lyricsHasMore = computed(() => {
   const letra = String(lyricsData.value?.letra || '').trim();
   if (!letra) return false;
-  return letra.split(/\r?\n/).length > 8;
+  return letra.split(/\r?\n/).length > 6;
 });
 
 
@@ -1360,29 +1362,87 @@ onBeforeUnmount(() => {
 
 .lyrics-card {
   overflow: hidden;
-  border: 1px solid rgba(98, 74, 140, 0.08);
+  border: 1px solid #ececf1;
+  background: #ffffff;
+  box-shadow: 0 3px 14px rgba(37, 32, 50, 0.045);
 }
 
-.lyrics-loading,
-.lyrics-empty-state {
-  min-height: 120px;
+.lyrics-trigger {
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  color: #29272f;
+  font: inherit;
+  transition: background-color 0.18s ease;
+}
+
+.lyrics-trigger:hover {
+  background: #faf9fd;
+}
+
+.lyrics-trigger-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.lyrics-trigger-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #66558a;
+  background: #f3effb;
+}
+
+.lyrics-trigger-label {
+  margin-left: 12px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+
+.lyrics-state-row {
+  min-height: 58px;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+}
+
+.lyrics-loaded-head {
+  padding: 13px 14px 11px;
+  border-bottom: 1px solid #f1f1f4;
+}
+
+.min-width-0 {
+  min-width: 0;
 }
 
 .lyrics-preview-wrap {
   position: relative;
-  max-height: 215px;
+  max-height: 164px;
   overflow: hidden;
+  margin: 12px 14px 0;
   border-radius: 12px;
-  padding: 18px 18px 26px;
-  background: linear-gradient(145deg, #faf9ff 0%, #f5f2ff 100%);
-  border: 1px solid #ebe5ff;
+  padding: 13px 14px 20px;
+  background: #fafafd;
+  border: 1px solid #f0eef5;
 }
 
 .lyrics-preview-text {
   white-space: pre-line;
-  line-height: 1.85;
-  font-size: 0.98rem;
-  color: #34313b;
+  line-height: 1.72;
+  font-size: 0.91rem;
+  color: #45424b;
 }
 
 .lyrics-preview-fade {
@@ -1390,9 +1450,17 @@ onBeforeUnmount(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 72px;
+  height: 52px;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(245, 242, 255, 0), #f5f2ff 82%);
+  background: linear-gradient(to bottom, rgba(250, 250, 253, 0), #fafafd 86%);
+}
+
+.lyrics-footer {
+  padding: 10px 14px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .lyrics-dialog-card {
