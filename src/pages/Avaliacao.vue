@@ -211,7 +211,22 @@
                     <h4 v-if="review.titulo" class="text-body-1 font-weight-regular mb-1">{{ review.titulo }}</h4>
                     <p class="text-body-1 mb-2 text-grey">{{ review.comentario }}</p>
 
-                    <div class="d-flex align-center justify-end">
+                    <div class="d-flex align-center justify-space-between">
+                      <v-btn
+                        v-if="Number(loggedInUserId) !== Number(review.usuario_id)"
+                        variant="text"
+                        size="small"
+                        class="text-none"
+                        :color="review.usuario_denunciou ? 'success' : 'grey-darken-1'"
+                        :loading="reportLoadingId === review.id"
+                        :disabled="review.usuario_denunciou || reportLoadingId === review.id"
+                        @click.prevent="openReportDialog(review)"
+                      >
+                        <v-icon start>{{ review.usuario_denunciou ? 'mdi-check-circle-outline' : 'mdi-flag-outline' }}</v-icon>
+                        {{ review.usuario_denunciou ? 'Denunciado' : 'Denunciar' }}
+                      </v-btn>
+                      <v-spacer v-else />
+
                       <v-btn variant="text" size="small" class="text-none"
                         :color="review.usuario_curtiu ? 'red' : 'grey-darken-1'" :loading="likeLoadingId === review.id"
                         @click.prevent="toggleLike(review)" :disabled="likeLoadingId === review.id">
@@ -276,6 +291,64 @@
       </v-card>
     </v-dialog>
 
+    <!-- Caixa de diálogo de denúncia -->
+    <v-dialog v-model="reportDialog" persistent max-width="520px">
+      <v-card rounded="xl">
+        <v-card-title class="pa-4">
+          <span class="text-h5">Denunciar avaliação</span>
+        </v-card-title>
+
+        <v-card-text class="pa-4">
+          <p class="text-grey-darken-1 mb-4">
+            Informe o motivo da denúncia. O administrador poderá analisar esta avaliação.
+          </p>
+
+          <v-select
+            v-model="reportForm.motivo"
+            :items="reportReasons"
+            item-title="title"
+            item-value="value"
+            label="Motivo"
+            variant="outlined"
+            rounded="lg"
+            class="mb-3"
+          />
+
+          <v-textarea
+            v-model="reportForm.descricao"
+            label="Detalhes adicionais (opcional)"
+            variant="outlined"
+            rows="4"
+            counter
+            maxlength="500"
+            rounded="lg"
+          />
+        </v-card-text>
+
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn
+            variant="text"
+            class="text-none"
+            rounded="lg"
+            @click="closeReportDialog"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn
+            color="warning"
+            variant="flat"
+            class="text-none"
+            rounded="lg"
+            :loading="reportLoadingId !== null"
+            @click="submitReport"
+          >
+            Enviar denúncia
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </div>
 </template>
 
@@ -305,6 +378,21 @@ const currentPage = ref(1); // Página atual para paginação
 const reviewsPerPage = 3; // Número de avaliações por página igual ao limit do PHP
 const isLoadingMore = ref(false); // Indica se está carregando mais avaliações
 const likeLoadingId = ref(null); // Para saber qual avaliação está sendo curtida
+const reportDialog = ref(false);
+const reportLoadingId = ref(null);
+const selectedReportReview = ref(null);
+const reportForm = ref({
+  motivo: '',
+  descricao: '',
+});
+const reportReasons = [
+  { title: 'Spam', value: 'spam' },
+  { title: 'Ofensa ou assédio', value: 'ofensa' },
+  { title: 'Discurso de ódio', value: 'odio' },
+  { title: 'Ameaça ou violência', value: 'ameaca' },
+  { title: 'Conteúdo ilegal', value: 'conteudo_ilegal' },
+  { title: 'Outro', value: 'outro' },
+];
 const showAlert = inject("showAlert");// Função global para mostrar alertas
 const openLoginDialog = inject("openLoginDialog");// Função global para abrir o diálogo de login
 const isDeleting = ref(false);
@@ -639,6 +727,76 @@ async function toggleLike(review) {
     showAlert("Ocorreu um erro na solicitação de curtida.", 'error');
   } finally {
     likeLoadingId.value = null; // Desativa o loading
+  }
+}
+
+// Funções de denúncia de avaliações
+function openReportDialog(review) {
+  if (!loggedInUserId.value) {
+    openLoginDialog();
+    return;
+  }
+
+  if (Number(loggedInUserId.value) === Number(review.usuario_id)) {
+    showAlert('Você não pode denunciar a própria avaliação.', 'error');
+    return;
+  }
+
+  if (review.usuario_denunciou) {
+    showAlert('Você já denunciou esta avaliação.', 'error');
+    return;
+  }
+
+  selectedReportReview.value = review;
+  reportForm.value.motivo = '';
+  reportForm.value.descricao = '';
+  reportDialog.value = true;
+}
+
+function closeReportDialog() {
+  reportDialog.value = false;
+  selectedReportReview.value = null;
+  reportForm.value.motivo = '';
+  reportForm.value.descricao = '';
+}
+
+async function submitReport() {
+  if (!selectedReportReview.value) {
+    return;
+  }
+
+  if (!reportForm.value.motivo) {
+    showAlert('Selecione o motivo da denúncia.', 'error');
+    return;
+  }
+
+  const review = selectedReportReview.value;
+  reportLoadingId.value = review.id;
+
+  try {
+    const response = await axios.post(
+      '/api/reviews/denunciar_avaliacao.php',
+      {
+        avaliacao_id: review.id,
+        motivo: reportForm.value.motivo,
+        descricao: reportForm.value.descricao.trim(),
+      },
+      { withCredentials: true }
+    );
+
+    review.usuario_denunciou = true;
+    showAlert(response.data.mensagem || 'Denúncia enviada com sucesso.', 'success');
+    closeReportDialog();
+  } catch (err) {
+    console.error('Erro ao denunciar avaliação:', err);
+
+    const mensagem =
+      err.response?.data?.mensagem ||
+      'Erro ao enviar a denúncia.';
+
+    showAlert(mensagem, 'error');
+  } finally {
+    reportLoadingId.value = null;
   }
 }
 
