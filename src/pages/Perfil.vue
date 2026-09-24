@@ -48,17 +48,46 @@
                     </p>
                   </div>
 
-                  <v-btn
-                    color="primary"
-                    variant="tonal"
-                    rounded="lg"
-                    class="text-none"
-                    :prepend-icon="recomendacoes.length ? 'mdi-refresh' : 'mdi-sparkles'"
-                    :loading="recomendacoesLoading"
-                    @click="gerarRecomendacoes(recomendacoes.length > 0)"
-                  >
-                    {{ recomendacoes.length ? 'Novas sugestões' : 'Descobrir músicas' }}
-                  </v-btn>
+                  <div class="d-flex flex-wrap align-center ga-2">
+                    <v-btn
+                      color="primary"
+                      variant="tonal"
+                      rounded="lg"
+                      class="text-none"
+                      :prepend-icon="recomendacoes.length ? 'mdi-refresh' : 'mdi-sparkles'"
+                      :loading="recomendacoesLoading"
+                      @click="gerarRecomendacoes(recomendacoes.length > 0)"
+                    >
+                      {{ recomendacoes.length ? 'Novas sugestões' : 'Descobrir músicas' }}
+                    </v-btn>
+
+                    <v-btn
+                      v-if="recomendacoes.length && spotifyConectado && !spotifyPlaylistUrl"
+                      color="#1DB954"
+                      variant="flat"
+                      rounded="lg"
+                      class="text-none text-white"
+                      prepend-icon="mdi-spotify"
+                      :loading="spotifyPlaylistLoading"
+                      @click="salvarPlaylistSpotify"
+                    >
+                      Salvar no Spotify
+                    </v-btn>
+
+                    <v-btn
+                      v-else-if="recomendacoes.length && spotifyPlaylistUrl"
+                      :href="spotifyPlaylistUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      color="#1DB954"
+                      variant="outlined"
+                      rounded="lg"
+                      class="text-none"
+                      prepend-icon="mdi-open-in-new"
+                    >
+                      Abrir no Spotify
+                    </v-btn>
+                  </div>
                 </div>
 
                 <div v-if="recomendacoesLoading && !recomendacoes.length" class="d-flex ga-4 overflow-hidden py-1">
@@ -395,7 +424,7 @@ const route = useRoute();
 const openLoginDialog = inject('openLoginDialog');
 const showAlert = inject('showAlert');
 
-const { usuarioId, updateUsuario, clearUsuario } = useAuth();
+const { usuario, usuarioId, updateUsuario, clearUsuario } = useAuth();
 const loggedInUserId = computed(() => usuarioId.value);
 const likeLoadingId = ref(null);
 const loading = ref(true);
@@ -418,6 +447,12 @@ const recomendacoesMensagem = ref('');
 const recomendacoesPrecisaContexto = ref(false);
 const recomendacaoPlayLoadingId = ref(null);
 const recomendacaoAvaliacaoLoadingId = ref(null);
+const spotifyPlaylistLoading = ref(false);
+const spotifyPlaylistUrl = ref('');
+const spotifyConectado = computed(() => {
+  const valor = usuario.value?.spotify_conectado;
+  return valor === true || valor === 1 || valor === '1';
+});
 const { playTrack: playGlobalTrack } = useGlobalPlayer();
 
 const conexoesDialog = ref(false);
@@ -741,6 +776,15 @@ async function carregarRecomendacoesCache() {
     const data = await res.json();
     if (res.ok && data.sucesso && data.tem_playlist && Array.isArray(data.playlist)) {
       recomendacoes.value = data.playlist;
+      spotifyPlaylistUrl.value = data.spotify_export?.url || '';
+
+      // Se o usuário acabou de autorizar a permissão de playlist no Spotify,
+      // concluímos automaticamente a ação que ele iniciou antes do redirect.
+      const pendente = sessionStorage.getItem('socialmusic_playlist_spotify_pendente') === '1';
+      if (pendente && !spotifyPlaylistUrl.value && spotifyConectado.value) {
+        sessionStorage.removeItem('socialmusic_playlist_spotify_pendente');
+        await salvarPlaylistSpotify();
+      }
     }
   } catch (err) {
     console.warn('Não foi possível carregar o cache de recomendações:', err);
@@ -771,9 +815,11 @@ async function gerarRecomendacoes(forcar = false) {
     if (data.tem_playlist && Array.isArray(data.playlist)) {
       recomendacoes.value = data.playlist;
       recomendacoesMensagem.value = '';
+      spotifyPlaylistUrl.value = data.spotify_export?.url || '';
       if (data.cooldown && data.mensagem) showAlert(data.mensagem, 'info');
     } else {
       recomendacoes.value = [];
+      spotifyPlaylistUrl.value = '';
       recomendacoesMensagem.value = data.mensagem || 'Ainda não há dados suficientes para montar sua seleção.';
       recomendacoesPrecisaContexto.value = !!data.precisa_contexto;
     }
@@ -783,6 +829,49 @@ async function gerarRecomendacoes(forcar = false) {
     if (showAlert) showAlert(recomendacoesMensagem.value, 'error');
   } finally {
     recomendacoesLoading.value = false;
+  }
+}
+
+async function salvarPlaylistSpotify() {
+  if (!isSelf.value || !recomendacoes.value.length || spotifyPlaylistLoading.value) return;
+
+  if (!spotifyConectado.value) {
+    showAlert('Conecte sua conta Spotify para salvar esta seleção.', 'info');
+    return;
+  }
+
+  spotifyPlaylistLoading.value = true;
+  try {
+    const res = await authFetch(`${API_URL}/api/recommendations/criar_playlist_spotify.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+
+    if (data.necessita_autorizacao) {
+      // Usuários que vincularam o Spotify antes desta funcionalidade ainda não
+      // concederam playlist-modify-private. Guardamos a intenção, autorizamos e
+      // voltamos ao perfil para concluir automaticamente.
+      sessionStorage.setItem('socialmusic_playlist_spotify_pendente', '1');
+      const returnTo = route.fullPath || `/perfil/${perfilUsuario.value.username || ''}`;
+      const authUrl = `${API_URL}/api/spotify/spotify_user_auth.php?action=authorize&mode=login&return_to=${encodeURIComponent(returnTo)}`;
+      window.location.href = authUrl;
+      return;
+    }
+
+    if (!res.ok || !data.sucesso) {
+      throw new Error(data.mensagem || 'Não foi possível criar a playlist no Spotify.');
+    }
+
+    spotifyPlaylistUrl.value = data.playlist_url || '';
+    showAlert(data.ja_criada ? 'Esta seleção já está salva no Spotify.' : 'Playlist criada no Spotify!', 'success');
+  } catch (err) {
+    console.error('Erro ao criar playlist no Spotify:', err);
+    showAlert(err.message || 'Não foi possível criar a playlist no Spotify.', 'error');
+  } finally {
+    spotifyPlaylistLoading.value = false;
   }
 }
 
@@ -969,6 +1058,7 @@ async function carregarPerfil(username) {
         await carregarRecomendacoesCache();
       } else {
         recomendacoes.value = [];
+        spotifyPlaylistUrl.value = '';
         recomendacoesMensagem.value = '';
         recomendacoesPrecisaContexto.value = false;
       }

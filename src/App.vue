@@ -560,6 +560,7 @@ const capturarDadosSpotify = () => {
 
   // Verifica se é LOGIN com Spotify (usuário já existe)
   if (urlParams.get('spotify_login') === 'success') {
+    const returnTo = urlParams.get('return_to');
     const userData = {
       id: urlParams.get('id'),
       nome: urlParams.get('nome'),
@@ -585,6 +586,13 @@ const capturarDadosSpotify = () => {
 
     // Limpa a URL IMEDIATAMENTE (sem recarregar a página)
     window.history.replaceState({}, document.title, window.location.pathname);
+
+    // Em autorizações adicionais (como criar playlists), o Spotify volta pela
+    // Home para o App salvar o novo Bearer primeiro. Só depois retornamos ao
+    // perfil de origem, evitando requisições com o token antigo.
+    if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+      router.replace(returnTo);
+    }
 
   }
   // Verifica se é CADASTRO com Spotify (success=1 para cadastro)
