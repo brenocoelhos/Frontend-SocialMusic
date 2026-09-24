@@ -33,25 +33,33 @@
               <h1 class="text-h4 font-weight-bold mb-2">{{ track.track_name }}</h1>
               <h2 class="text-h6 text-grey-darken-1 mb-4">{{ track.artist_name }}</h2>
 
-              <!-- Player do YouTube: o vídeo é localizado pelo backend e fica em cache no MySQL. -->
-              <div class="youtube-player-container mb-4">
+              <!-- O vídeo é localizado pelo backend, mas a reprodução acontece no player global.
+                   Assim a música continua tocando ao navegar para outras páginas do site. -->
+              <div class="youtube-player-container mb-4 pa-4">
                 <div v-if="isLoadingYoutube" class="youtube-player-placeholder d-flex flex-column align-center justify-center">
                   <v-progress-circular indeterminate color="red" size="36" />
-                  <span class="text-caption text-grey-darken-1 mt-3">Carregando player...</span>
+                  <span class="text-caption text-grey-darken-1 mt-3">Localizando música no YouTube...</span>
                 </div>
 
-                <iframe
-                  v-else-if="youtubeId"
-                  class="youtube-player-frame"
-                  :src="youtubeEmbedUrl"
-                  :title="`Ouvir ${track.track_name} de ${track.artist_name} no YouTube`"
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerpolicy="strict-origin-when-cross-origin"
-                  allowfullscreen
-                ></iframe>
+                <div v-else-if="youtubeId" class="youtube-player-placeholder d-flex flex-column align-center justify-center text-center">
+                  <v-icon icon="mdi-youtube" color="red" size="44" class="mb-2" />
+                  <div class="text-body-2 font-weight-medium mb-1">Ouça sem sair do SocialMusic</div>
+                  <div class="text-caption text-grey-darken-1 mb-3">
+                    O player continuará ativo enquanto você navegar pelo site.
+                  </div>
+                  <v-btn
+                    color="red"
+                    variant="flat"
+                    rounded="lg"
+                    class="text-none"
+                    prepend-icon="mdi-play-circle"
+                    @click="playInGlobalPlayer"
+                  >
+                    {{ isCurrentGlobalTrack ? 'Continuar no player' : 'Ouvir no SocialMusic' }}
+                  </v-btn>
+                </div>
 
-                <div v-else class="youtube-player-placeholder d-flex flex-column align-center justify-center text-center pa-4">
+                <div v-else class="youtube-player-placeholder d-flex flex-column align-center justify-center text-center">
                   <v-icon icon="mdi-youtube" color="grey" size="36" class="mb-2" />
                   <span class="text-caption text-grey-darken-1">
                     {{ youtubeMessage || 'Player do YouTube indisponível para esta música.' }}
@@ -383,6 +391,7 @@
 import { ref, watch, computed, inject } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
+import { useGlobalPlayer } from "@/composables/useGlobalPlayer";
 
 // Configuração da API URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/socialmusic_backend';
@@ -398,10 +407,13 @@ const youtubeId = ref(null);
 const isLoadingYoutube = ref(false);
 const youtubeMessage = ref('');
 const youtubeRequestId = ref(0);
-const youtubeEmbedUrl = computed(() =>
-  youtubeId.value
-    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId.value)}?rel=0`
-    : ''
+
+// Estado do player persistente, mantido fora desta página.
+const { player: globalPlayer, playTrack: playGlobalTrack, expandPlayer: expandGlobalPlayer } = useGlobalPlayer();
+const isCurrentGlobalTrack = computed(() =>
+  !!youtubeId.value &&
+  globalPlayer.visible &&
+  globalPlayer.youtubeId === String(youtubeId.value)
 );
 
 const dialog = ref(false);
@@ -643,6 +655,30 @@ async function fetchPageReviews(spotifyId, page = 1) {
     console.error("Erro ao buscar avaliações:", err);
     stats.value = { total: 0, media: 0.0 };
     reviewsList.value = [];
+  }
+}
+
+// Envia a música atual para o player persistente do App.vue.
+// O iframe fica fora do router-view, por isso não é destruído ao trocar de rota.
+function playInGlobalPlayer() {
+  if (!youtubeId.value || !track.value) return;
+
+  const sameTrackAlreadyOpen =
+    globalPlayer.visible &&
+    globalPlayer.youtubeId === String(youtubeId.value);
+
+  playGlobalTrack({
+    youtubeId: youtubeId.value,
+    trackName: track.value.track_name,
+    artistName: track.value.artist_name,
+    imageUrl: track.value.image_url,
+    spotifyUrl: track.value.spotify_url,
+  });
+
+  // Se já era a mesma música, também amplia o player para dar feedback visual
+  // de onde a reprodução está acontecendo.
+  if (sameTrackAlreadyOpen) {
+    expandGlobalPlayer();
   }
 }
 
@@ -1050,25 +1086,14 @@ watch(
 
 .youtube-player-container {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  min-height: 190px;
   border-radius: 12px;
-  overflow: hidden;
-  background: #000;
+  background: #f1f1f1;
+  border: 1px solid #e5e5e5;
 }
 
-.youtube-player-frame,
 .youtube-player-placeholder {
   width: 100%;
-  height: 100%;
-}
-
-.youtube-player-frame {
-  display: block;
-  border: 0;
-}
-
-.youtube-player-placeholder {
-  min-height: 160px;
-  background: #f1f1f1;
+  min-height: 158px;
 }
 </style>

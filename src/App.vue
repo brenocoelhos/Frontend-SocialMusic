@@ -298,12 +298,16 @@
         </v-row>
       </v-container>
     </v-footer>
+
+    <!-- Player persistente: permanece montado enquanto o usuário navega pelo Vue Router. -->
+    <GlobalMusicPlayer />
   </v-app>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import GlobalMusicPlayer from '@/components/GlobalMusicPlayer.vue';
 
 // Configuração da API URL
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-socialmusic.onrender.com';
