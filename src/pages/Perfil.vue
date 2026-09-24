@@ -31,6 +31,142 @@
               </v-btn>
             </div>
 
+            <!-- Descobertas personalizadas: exibidas somente no próprio perfil -->
+            <v-card v-if="isSelf" rounded="xl" flat class="mb-7 discovery-card">
+              <v-card-text class="pa-5">
+                <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-4">
+                  <div>
+                    <div class="d-flex align-center ga-2 mb-1">
+                      <v-icon icon="mdi-compass-outline" color="primary" size="22" />
+                      <h2 class="text-h6 font-weight-bold text-grey-darken-4">Descobertas para você</h2>
+                      <v-chip v-if="recomendacoes.length" size="x-small" color="primary" variant="tonal">
+                        {{ recomendacoes.length }} faixas
+                      </v-chip>
+                    </div>
+                    <p class="text-body-2 text-grey-darken-1 mb-0">
+                      Uma seleção feita a partir do seu gosto no SocialMusic.
+                    </p>
+                  </div>
+
+                  <v-btn
+                    color="primary"
+                    variant="tonal"
+                    rounded="lg"
+                    class="text-none"
+                    :prepend-icon="recomendacoes.length ? 'mdi-refresh' : 'mdi-sparkles'"
+                    :loading="recomendacoesLoading"
+                    @click="gerarRecomendacoes(recomendacoes.length > 0)"
+                  >
+                    {{ recomendacoes.length ? 'Novas sugestões' : 'Descobrir músicas' }}
+                  </v-btn>
+                </div>
+
+                <div v-if="recomendacoesLoading && !recomendacoes.length" class="d-flex ga-4 overflow-hidden py-1">
+                  <v-skeleton-loader
+                    v-for="n in 3"
+                    :key="n"
+                    type="image, article"
+                    width="180"
+                    class="flex-shrink-0 rounded-lg"
+                  />
+                </div>
+
+                <v-alert
+                  v-else-if="recomendacoesMensagem && !recomendacoes.length"
+                  type="info"
+                  variant="tonal"
+                  density="comfortable"
+                  class="mb-0"
+                >
+                  {{ recomendacoesMensagem }}
+                  <template #append>
+                    <v-btn v-if="recomendacoesPrecisaContexto" variant="text" size="small" class="text-none" @click="openEditDialog">
+                      Ajustar perfil
+                    </v-btn>
+                  </template>
+                </v-alert>
+
+                <v-slide-group v-else-if="recomendacoes.length" show-arrows class="discovery-slider">
+                  <v-slide-group-item v-for="musica in recomendacoes" :key="musica.spotify_id">
+                    <v-card
+                      width="188"
+                      rounded="lg"
+                      flat
+                      class="mr-4 discovery-track-card"
+                      @click="abrirAvaliacaoRecomendada(musica)"
+                    >
+                      <div class="discovery-cover-wrap">
+                        <v-img
+                          :src="musica.image_url"
+                          :alt="`Capa de ${musica.track_name}`"
+                          width="188"
+                          height="188"
+                          cover
+                          class="discovery-cover"
+                        >
+                          <template #placeholder>
+                            <div class="fill-height d-flex align-center justify-center bg-grey-lighten-4">
+                              <v-icon icon="mdi-music" color="grey-lighten-1" size="42" />
+                            </div>
+                          </template>
+                        </v-img>
+
+                        <v-btn
+                          icon="mdi-play"
+                          size="small"
+                          color="white"
+                          class="discovery-play-btn"
+                          :loading="recomendacaoPlayLoadingId === musica.spotify_id"
+                          @click.stop="ouvirRecomendacao(musica)"
+                          aria-label="Ouvir no SocialMusic"
+                        />
+                      </div>
+
+                      <div class="pa-3">
+                        <div class="text-body-2 font-weight-bold text-grey-darken-4 text-truncate" :title="musica.track_name">
+                          {{ musica.track_name }}
+                        </div>
+                        <div class="text-caption text-grey-darken-1 text-truncate mb-2" :title="musica.artist_name">
+                          {{ musica.artist_name }}
+                        </div>
+
+                        <div class="discovery-reason text-caption mb-3">
+                          <v-icon icon="mdi-sparkles" size="13" class="mr-1" />
+                          <span>{{ musica.motivo }}</span>
+                        </div>
+
+                        <div class="d-flex align-center justify-space-between">
+                          <v-btn
+                            size="x-small"
+                            variant="tonal"
+                            color="primary"
+                            class="text-none"
+                            prepend-icon="mdi-star-outline"
+                            :loading="recomendacaoAvaliacaoLoadingId === musica.spotify_id"
+                            @click.stop="abrirAvaliacaoRecomendada(musica)"
+                          >
+                            Avaliar
+                          </v-btn>
+
+                          <v-btn
+                            :href="musica.spotify_url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            icon="mdi-spotify"
+                            color="#1DB954"
+                            variant="text"
+                            size="small"
+                            @click.stop
+                            aria-label="Abrir no Spotify"
+                          />
+                        </div>
+                      </div>
+                    </v-card>
+                  </v-slide-group-item>
+                </v-slide-group>
+              </v-card-text>
+            </v-card>
+
             <div>
               <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">
                 {{ isSelf ? 'Minhas Avaliações' : `Avaliações de ${perfilUsuario.nome}` }}
@@ -252,6 +388,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import { API_URL } from '@/config/api';
 import { authFetch } from '@/services/authFetch';
+import { useGlobalPlayer } from '@/composables/useGlobalPlayer';
 const router = useRouter();
 const route = useRoute();
 
@@ -273,6 +410,15 @@ const isSaving = ref(false);
 const isDeleting = ref(false); // Novo estado
 const editFormRef = ref(null);
 const editForm = reactive({ nome: '', generos: '' });
+
+// --- Descobertas personalizadas ---
+const recomendacoes = ref([]);
+const recomendacoesLoading = ref(false);
+const recomendacoesMensagem = ref('');
+const recomendacoesPrecisaContexto = ref(false);
+const recomendacaoPlayLoadingId = ref(null);
+const recomendacaoAvaliacaoLoadingId = ref(null);
+const { playTrack: playGlobalTrack } = useGlobalPlayer();
 
 const conexoesDialog = ref(false);
 const conexoesTitulo = ref('');
@@ -579,6 +725,169 @@ async function toggleFollow() {
   }
 }
 
+async function carregarRecomendacoesCache() {
+  if (!isSelf.value) {
+    recomendacoes.value = [];
+    recomendacoesMensagem.value = '';
+    recomendacoesPrecisaContexto.value = false;
+    return;
+  }
+
+  try {
+    const res = await authFetch(`${API_URL}/api/recommendations/descobertas.php`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    const data = await res.json();
+    if (res.ok && data.sucesso && data.tem_playlist && Array.isArray(data.playlist)) {
+      recomendacoes.value = data.playlist;
+    }
+  } catch (err) {
+    console.warn('Não foi possível carregar o cache de recomendações:', err);
+  }
+}
+
+async function gerarRecomendacoes(forcar = false) {
+  if (!loggedInUserId.value) return openLoginDialog();
+  if (!isSelf.value || recomendacoesLoading.value) return;
+
+  recomendacoesLoading.value = true;
+  recomendacoesMensagem.value = '';
+  recomendacoesPrecisaContexto.value = false;
+
+  try {
+    const res = await authFetch(`${API_URL}/api/recommendations/descobertas.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ forcar }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.sucesso) {
+      throw new Error(data.mensagem || 'Não foi possível gerar as recomendações.');
+    }
+
+    if (data.tem_playlist && Array.isArray(data.playlist)) {
+      recomendacoes.value = data.playlist;
+      recomendacoesMensagem.value = '';
+      if (data.cooldown && data.mensagem) showAlert(data.mensagem, 'info');
+    } else {
+      recomendacoes.value = [];
+      recomendacoesMensagem.value = data.mensagem || 'Ainda não há dados suficientes para montar sua seleção.';
+      recomendacoesPrecisaContexto.value = !!data.precisa_contexto;
+    }
+  } catch (err) {
+    console.error('Erro ao gerar recomendações:', err);
+    recomendacoesMensagem.value = err.message || 'Não foi possível gerar suas descobertas agora.';
+    if (showAlert) showAlert(recomendacoesMensagem.value, 'error');
+  } finally {
+    recomendacoesLoading.value = false;
+  }
+}
+
+async function ouvirRecomendacao(musica) {
+  if (!musica?.spotify_id || recomendacaoPlayLoadingId.value) return;
+  recomendacaoPlayLoadingId.value = musica.spotify_id;
+
+  try {
+    const params = new URLSearchParams({
+      spotify_id: musica.spotify_id,
+      track_name: musica.track_name || '',
+      artist_name: musica.artist_name || '',
+    });
+    if (musica.duration_ms) params.set('duration_ms', String(musica.duration_ms));
+
+    const res = await authFetch(`${API_URL}/api/youtube/buscar_video.php?${params.toString()}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.sucesso || !data.encontrado || !data.youtube_id) {
+      throw new Error(data.mensagem || 'Player indisponível para esta música.');
+    }
+
+    playGlobalTrack({
+      youtubeId: data.youtube_id,
+      trackName: musica.track_name,
+      artistName: musica.artist_name,
+      imageUrl: musica.image_url,
+      spotifyUrl: musica.spotify_url,
+    });
+  } catch (err) {
+    console.error('Erro ao abrir recomendação no player:', err);
+    showAlert(err.message || 'Não foi possível reproduzir esta música.', 'error');
+  } finally {
+    recomendacaoPlayLoadingId.value = null;
+  }
+}
+
+function recomendacaoParaMusica(musica) {
+  return {
+    id: musica.spotify_id,
+    titulo: musica.track_name,
+    artista: musica.artist_name,
+    capa: musica.image_url,
+    spotify_url: musica.spotify_url,
+    duration_ms: musica.duration_ms,
+    release_date: musica.release_date,
+    popularity: musica.popularity,
+    explicit: musica.explicit,
+    album_name: musica.album_name,
+    album_type: musica.album_type,
+  };
+}
+
+async function abrirAvaliacaoRecomendada(musica) {
+  if (!musica?.spotify_id || recomendacaoAvaliacaoLoadingId.value) return;
+  recomendacaoAvaliacaoLoadingId.value = musica.spotify_id;
+
+  try {
+    let completa = { ...musica };
+
+    // Recomendações vindas apenas do banco social podem não ter duração/álbum.
+    // Enriquecemos somente quando o usuário realmente decide abrir a avaliação.
+    if (!completa.duration_ms || !completa.album_name) {
+      const artistaPrincipal = (completa.artist_name || '').split(',')[0].trim();
+      const busca = `track:"${completa.track_name}" artist:"${artistaPrincipal}"`;
+      const res = await authFetch(`${API_URL}/api/spotify/search.php?q=${encodeURIComponent(busca)}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const resultados = await res.json();
+        if (Array.isArray(resultados)) {
+          const exata = resultados.find(item => item.id === completa.spotify_id) || resultados[0];
+          if (exata) {
+            completa = {
+              ...completa,
+              track_name: exata.track_name || completa.track_name,
+              artist_name: exata.artist_name || completa.artist_name,
+              image_url: exata.image_url || completa.image_url,
+              spotify_url: exata.spotify_url || completa.spotify_url,
+              duration_ms: exata.duration_ms ?? completa.duration_ms,
+              release_date: exata.release_date ?? completa.release_date,
+              popularity: exata.popularity ?? completa.popularity,
+              explicit: exata.explicit ?? completa.explicit,
+              album_name: exata.album_name ?? completa.album_name,
+              album_type: exata.album_type ?? completa.album_type,
+            };
+          }
+        }
+      }
+    }
+
+    await router.push(getAvaliacaoUrl(recomendacaoParaMusica(completa)));
+  } catch (err) {
+    console.error('Erro ao abrir avaliação recomendada:', err);
+    showAlert('Não foi possível abrir esta música agora.', 'error');
+  } finally {
+    recomendacaoAvaliacaoLoadingId.value = null;
+  }
+}
+
 const avaliacoes = ref([]);
 const reviewsVisiveisCount = ref(3);
 const isLoadingMoreReviews = ref(false);
@@ -655,6 +964,14 @@ async function carregarPerfil(username) {
       // --------------------------
 
       avaliacoes.value = data.avaliacoes;
+
+      if (isSelf.value) {
+        await carregarRecomendacoesCache();
+      } else {
+        recomendacoes.value = [];
+        recomendacoesMensagem.value = '';
+        recomendacoesPrecisaContexto.value = false;
+      }
     } else {
       errorMessage.value = data.mensagem;
       error.value = true;
@@ -699,5 +1016,68 @@ onBeforeUnmount(() => {
 }
 .clickable-stat:hover {
   opacity: 0.7;
+}
+
+.discovery-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.045);
+}
+
+.discovery-slider {
+  margin-inline: -4px;
+}
+
+.discovery-track-card {
+  border: 1px solid rgba(0, 0, 0, 0.055);
+  background: #fff;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  overflow: hidden;
+}
+
+.discovery-track-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--v-theme-primary), 0.22);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.07);
+}
+
+.discovery-cover-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.discovery-cover {
+  transition: transform 0.25s ease;
+}
+
+.discovery-track-card:hover .discovery-cover {
+  transform: scale(1.015);
+}
+
+.discovery-play-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  color: #212121 !important;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.18);
+}
+
+.discovery-reason {
+  min-height: 34px;
+  display: flex;
+  align-items: flex-start;
+  color: #757575;
+  line-height: 1.3;
+}
+
+@media (max-width: 600px) {
+  .discovery-track-card {
+    width: 172px !important;
+  }
+
+  .discovery-cover,
+  .discovery-cover-wrap {
+    width: 172px !important;
+  }
 }
 </style>
