@@ -99,7 +99,7 @@
                   </div>
                 </div>
 
-                <div v-if="recomendacoesLoading && !recomendacoes.length" class="d-flex ga-4 overflow-hidden py-1">
+                <div v-if="(recomendacoesLoading || recomendacoesCacheLoading) && !recomendacoes.length" class="d-flex ga-4 overflow-hidden py-1">
                   <v-skeleton-loader
                     v-for="n in 3"
                     :key="n"
@@ -208,17 +208,30 @@
             <div>
               <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">
                 {{ isSelf ? 'Minhas Avaliações' : `Avaliações de ${perfilUsuario.nome}` }}
-                ({{ avaliacoes.length }})
+                ({{ avaliacoesTotal }})
               </h2>
 
-              <v-alert v-if="avaliacoes.length === 0" type="info" variant="tonal">
+              <div v-if="avaliacoesLoading && !avaliacoes.length" class="mb-4">
+                <v-skeleton-loader
+                  v-for="n in 2"
+                  :key="n"
+                  type="list-item-avatar-two-line, paragraph, actions"
+                  class="mb-4 rounded-lg"
+                />
+              </div>
+
+              <v-alert v-else-if="!avaliacoesLoading && avaliacoes.length === 0" type="info" variant="tonal">
                 Este usuário ainda não fez nenhuma avaliação.
               </v-alert>
 
-              <div v-for="(avaliacao, i) in reviewsVisiveis" :key="i" class="mb-4">
+              <div v-for="avaliacao in reviewsVisiveis" :key="avaliacao.id" class="mb-4">
                 <v-card rounded="lg" flat>
                   <v-card-text class="pa-5">
-                    <v-list-item :to="getAvaliacaoUrl(avaliacao.musica)" class="pa-0 mb-3" lines="two">
+                    <v-list-item
+                      class="pa-0 mb-3 profile-review-link"
+                      lines="two"
+                      @click="abrirAvaliacaoDoPerfil(avaliacao.musica)"
+                    >
                       <template v-slot:prepend>
                         <v-avatar size="70" rounded="lg" class="mr-4">
                           <v-img :src="avaliacao.musica.capa"></v-img>
@@ -229,15 +242,24 @@
                       }}</v-list-item-title>
                       <v-list-item-subtitle class="text-body-2 text-grey">{{ avaliacao.musica.artista
                       }}</v-list-item-subtitle>
-                    </v-list-item> 
-                    
+                      <template #append>
+                        <v-progress-circular
+                          v-if="perfilAvaliacaoLoadingId === avaliacao.musica.id"
+                          indeterminate
+                          size="20"
+                          width="2"
+                          color="primary"
+                        />
+                      </template>
+                    </v-list-item>
+
                     <v-rating :model-value="avaliacao.nota" color="amber" density="compact"
                       half-increments readonly size="small" class="mb-2"></v-rating>
-                    
+
                     <h3 class="text-body-1 font-weight-bold mb-2 text-grey-darken-4">{{ avaliacao.titulo }}</h3>
                     <p class="text-body-2 text-grey-darken-1 mb-4" style="line-height: 1.5;">{{ avaliacao.comentario }}
                     </p>
-                    
+
                     <div class="d-flex align-center">
                       <v-btn :color="avaliacao.usuario_curtiu ? 'red' : 'grey-darken-1'" variant="text" size="small"
                         class="text-none ml-n2" :loading="likeLoadingId === avaliacao.id"
@@ -252,7 +274,7 @@
                 </v-card>
               </div>
 
-              <div v-if="reviewsVisiveis.length < avaliacoes.length" class="text-center mt-6">
+              <div v-if="avaliacoesTemMais" class="text-center mt-6">
                 <v-btn :loading="isLoadingMoreReviews" variant="outlined" class="text-none" rounded="lg" size="large"
                   @click="carregarMaisAvaliacoes">
                   Carregar Mais Avaliações
@@ -436,7 +458,8 @@ const showAlert = inject('showAlert');
 const { usuario, usuarioId, updateUsuario, clearUsuario } = useAuth();
 const loggedInUserId = computed(() => usuarioId.value);
 const likeLoadingId = ref(null);
-const loading = ref(true);
+const loading = ref(true); // somente os dados essenciais do perfil
+const avaliacoesLoading = ref(false);
 const error = ref(false);
 const errorMessage = ref('');
 const perfilUsuario = ref({});
@@ -452,11 +475,14 @@ const editForm = reactive({ nome: '', generos: '' });
 // --- Descobertas personalizadas ---
 const recomendacoes = ref([]);
 const recomendacoesLoading = ref(false);
+const recomendacoesCacheLoading = ref(false);
+let recomendacoesCacheController = null;
 const recomendacoesMensagem = ref('');
 const recomendacoesPrecisaContexto = ref(false);
 const recomendacoesContexto = ref({});
 const recomendacaoPlayLoadingId = ref(null);
 const recomendacaoAvaliacaoLoadingId = ref(null);
+const perfilAvaliacaoLoadingId = ref(null);
 const spotifyPlaylistLoading = ref(false);
 const spotifyPlaylistUrl = ref('');
 const spotifyConectado = computed(() => {
@@ -868,20 +894,31 @@ async function toggleFollow() {
 }
 
 async function carregarRecomendacoesCache() {
+  recomendacoesCacheController?.abort();
+
   if (!isSelf.value) {
     recomendacoes.value = [];
     recomendacoesMensagem.value = '';
     recomendacoesPrecisaContexto.value = false;
     recomendacoesContexto.value = {};
+    recomendacoesCacheLoading.value = false;
     return;
   }
+
+  const controller = new AbortController();
+  recomendacoesCacheController = controller;
+  recomendacoesCacheLoading.value = true;
 
   try {
     const res = await authFetch(`${API_URL}/api/recommendations/descobertas.php`, {
       method: 'GET',
       credentials: 'include',
+      signal: controller.signal,
     });
     const data = await res.json();
+
+    if (recomendacoesCacheController !== controller) return;
+
     if (res.ok && data.sucesso && data.tem_playlist && Array.isArray(data.playlist)) {
       recomendacoes.value = data.playlist;
       recomendacoesContexto.value = data.contexto || {};
@@ -896,7 +933,12 @@ async function carregarRecomendacoesCache() {
       }
     }
   } catch (err) {
+    if (err.name === 'AbortError') return;
     console.warn('Não foi possível carregar o cache de recomendações:', err);
+  } finally {
+    if (recomendacoesCacheController === controller) {
+      recomendacoesCacheLoading.value = false;
+    }
   }
 }
 
@@ -1089,19 +1131,114 @@ async function abrirAvaliacaoRecomendada(musica) {
 }
 
 const avaliacoes = ref([]);
-const reviewsVisiveisCount = ref(3);
+const avaliacoesTotal = ref(0);
+const avaliacoesTemMais = ref(false);
+const avaliacoesCursor = ref('');
 const isLoadingMoreReviews = ref(false);
+let avaliacoesController = null;
 
-const reviewsVisiveis = computed(() => {
-  return avaliacoes.value.slice(0, reviewsVisiveisCount.value);
-});
+const reviewsVisiveis = computed(() => avaliacoes.value);
+
+async function carregarAvaliacoes({ reset = false } = {}) {
+  if (!perfilUsuario.value?.id) return;
+  if ((avaliacoesLoading.value || isLoadingMoreReviews.value) && !reset) return;
+
+  if (reset) {
+    avaliacoesController?.abort();
+    avaliacoesController = new AbortController();
+    avaliacoes.value = [];
+    avaliacoesCursor.value = '';
+    avaliacoesTemMais.value = false;
+    avaliacoesLoading.value = true;
+  } else {
+    isLoadingMoreReviews.value = true;
+  }
+
+  const params = new URLSearchParams({
+    perfil_id: String(perfilUsuario.value.id),
+    limit: '3',
+  });
+  if (!reset && avaliacoesCursor.value) params.set('cursor', avaliacoesCursor.value);
+
+  try {
+    const res = await authFetch(`${API_URL}/api/users/perfil_avaliacoes.php?${params.toString()}`, {
+      method: 'GET',
+      credentials: 'include',
+      signal: avaliacoesController?.signal,
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.sucesso) {
+      throw new Error(data.mensagem || 'Não foi possível carregar as avaliações.');
+    }
+
+    const novas = Array.isArray(data.avaliacoes) ? data.avaliacoes : [];
+    avaliacoes.value = reset ? novas : [...avaliacoes.value, ...novas];
+    avaliacoesTemMais.value = !!data.tem_mais;
+    avaliacoesCursor.value = data.proximo_cursor || '';
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    console.error('Erro ao carregar avaliações do perfil:', err);
+    if (reset && showAlert) showAlert('Não foi possível carregar as avaliações agora.', 'error');
+  } finally {
+    if (reset) avaliacoesLoading.value = false;
+    isLoadingMoreReviews.value = false;
+  }
+}
 
 function carregarMaisAvaliacoes() {
-  isLoadingMoreReviews.value = true;
-  setTimeout(() => {
-    reviewsVisiveisCount.value += 3;
-    isLoadingMoreReviews.value = false;
-  }, 300);
+  if (!avaliacoesTemMais.value) return;
+  carregarAvaliacoes({ reset: false });
+}
+
+async function abrirAvaliacaoDoPerfil(musica) {
+  if (!musica?.id || perfilAvaliacaoLoadingId.value) return;
+  perfilAvaliacaoLoadingId.value = musica.id;
+
+  try {
+    let completa = { ...musica };
+
+    // A listagem do perfil é propositalmente leve e não consulta o Spotify.
+    // Só enriquecemos os metadados quando o usuário realmente abre a música.
+    if (!completa.duration_ms || !completa.album_name) {
+      const artistaPrincipal = (completa.artista || '').split(',')[0].trim();
+      const busca = `track:"${completa.titulo}" artist:"${artistaPrincipal}"`;
+      const res = await authFetch(`${API_URL}/api/spotify/search.php?q=${encodeURIComponent(busca)}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const resultados = await res.json();
+        if (Array.isArray(resultados)) {
+          const exata = resultados.find(item => item.id === completa.id) || resultados[0];
+          if (exata) {
+            completa = {
+              ...completa,
+              id: exata.id || completa.id,
+              titulo: exata.track_name || completa.titulo,
+              artista: exata.artist_name || completa.artista,
+              capa: exata.image_url || completa.capa,
+              spotify_url: exata.spotify_url || completa.spotify_url,
+              duration_ms: exata.duration_ms ?? completa.duration_ms,
+              release_date: exata.release_date ?? completa.release_date,
+              popularity: exata.popularity ?? completa.popularity,
+              explicit: exata.explicit ?? completa.explicit,
+              album_name: exata.album_name ?? completa.album_name,
+              album_type: exata.album_type ?? completa.album_type,
+            };
+          }
+        }
+      }
+    }
+
+    await router.push(getAvaliacaoUrl(completa));
+  } catch (err) {
+    console.error('Erro ao abrir avaliação do perfil:', err);
+    showAlert('Não foi possível abrir esta música agora.', 'error');
+  } finally {
+    perfilAvaliacaoLoadingId.value = null;
+  }
 }
 
 function getAvaliacaoUrl(musica) {
@@ -1124,16 +1261,37 @@ function getAvaliacaoUrl(musica) {
 
 let perfilController = null;
 
+function limparDadosSecundarios() {
+  avaliacoesController?.abort();
+  recomendacoesCacheController?.abort();
+  recomendacoesCacheController = null;
+  avaliacoes.value = [];
+  avaliacoesTotal.value = 0;
+  avaliacoesCursor.value = '';
+  avaliacoesTemMais.value = false;
+  avaliacoesLoading.value = false;
+  isLoadingMoreReviews.value = false;
+  recomendacoes.value = [];
+  recomendacoesCacheLoading.value = false;
+  recomendacoesContexto.value = {};
+  recomendacoesMensagem.value = '';
+  recomendacoesPrecisaContexto.value = false;
+  spotifyPlaylistUrl.value = '';
+}
+
 async function carregarPerfil(username) {
   perfilController?.abort();
   const controller = new AbortController();
   perfilController = controller;
+
   loading.value = true;
   error.value = false;
-  reviewsVisiveisCount.value = 3;
+  errorMessage.value = '';
+  limparDadosSecundarios();
 
-
-  const url = username ? `${API_URL}/api/users/perfil.php?username=${username}` : `${API_URL}/api/users/perfil.php`;
+  const url = username
+    ? `${API_URL}/api/users/perfil.php?username=${encodeURIComponent(username)}`
+    : `${API_URL}/api/users/perfil.php`;
 
   try {
     const res = await authFetch(url, {
@@ -1141,65 +1299,69 @@ async function carregarPerfil(username) {
       credentials: 'include',
       signal: controller.signal,
     });
+
     if (!res.ok) {
-      if (res.status === 401) router.push('/');
-      else errorMessage.value = 'Não foi possível carregar o perfil.';
-      error.value = true;
-      throw new Error('Falha ao buscar dados');
+      if (res.status === 401) {
+        await router.push('/');
+        return;
+      }
+      throw new Error('Não foi possível carregar o perfil.');
     }
 
     const data = await res.json();
     if (perfilController !== controller) return;
 
-    if (data.sucesso) {
-      perfilUsuario.value = data.perfil;
-      isSelf.value = data.is_self;
-      isFollowing.value = data.is_following;
+    if (!data.sucesso) {
+      throw new Error(data.mensagem || 'Não foi possível carregar o perfil.');
+    }
 
-   
+    perfilUsuario.value = data.perfil;
+    isSelf.value = !!data.is_self;
+    isFollowing.value = !!data.is_following;
+    avaliacoesTotal.value = Number(data.perfil?.avaliacoes_count || 0);
 
-      if (data.perfil.username && route.params.username !== data.perfil.username) {
-        router.replace({ name: 'Perfil', params: { username: data.perfil.username } });
-      }
-      // --------------------------
+    // O conteúdo principal já está pronto: não espera avaliações nem recomendações.
+    loading.value = false;
 
-      avaliacoes.value = data.avaliacoes;
+    // Carregamento progressivo: as seções secundárias começam imediatamente
+    // e não bloqueiam a renderização do nome/foto/contadores do perfil.
+    void carregarAvaliacoes({ reset: true });
 
-      if (isSelf.value) {
-        await carregarRecomendacoesCache();
-      } else {
-        recomendacoes.value = [];
-        spotifyPlaylistUrl.value = '';
-        recomendacoesMensagem.value = '';
-        recomendacoesPrecisaContexto.value = false;
-      }
-    } else {
-      errorMessage.value = data.mensagem;
-      error.value = true;
+    if (isSelf.value) {
+      void carregarRecomendacoesCache();
+    }
+
+    // Normaliza a URL sem disparar uma segunda requisição para o mesmo perfil.
+    const usernameCarregado = data.perfil?.username;
+    if (usernameCarregado && route.params.username !== usernameCarregado) {
+      void router.replace({ name: 'Perfil', params: { username: usernameCarregado } });
     }
   } catch (err) {
     if (err.name === 'AbortError') return;
     console.error('Erro ao carregar perfil:', err);
+    errorMessage.value = err.message || 'Não foi possível carregar o perfil.';
     error.value = true;
   } finally {
-    if (perfilController === controller) {
+    if (perfilController === controller && loading.value) {
       loading.value = false;
     }
   }
 }
 
 onMounted(() => {
-  const usernameDaUrl = route.params.username;
-  carregarPerfil(usernameDaUrl);
+  carregarPerfil(route.params.username);
 });
 
 watch(() => route.params.username, (novoUsername) => {
-  if (route.path.startsWith('/perfil')) {
-    carregarPerfil(novoUsername);
-  }
+  if (!route.path.startsWith('/perfil')) return;
+
+  // router.replace feito pelo próprio carregarPerfil apenas sincroniza a URL.
+  // Se o perfil exibido já é o mesmo, não buscamos tudo novamente.
+  if (novoUsername && perfilUsuario.value?.username === novoUsername) return;
+
+  carregarPerfil(novoUsername);
 });
 
-// Recalcula permissões/seguimento quando a sessão muda sem recarregar a página.
 watch(usuarioId, (novoId, idAnterior) => {
   if (isDeleting.value || novoId === idAnterior || !route.path.startsWith('/perfil')) return;
   carregarPerfil(route.params.username);
@@ -1207,6 +1369,8 @@ watch(usuarioId, (novoId, idAnterior) => {
 
 onBeforeUnmount(() => {
   perfilController?.abort();
+  avaliacoesController?.abort();
+  recomendacoesCacheController?.abort();
 });
 </script>
 
@@ -1217,6 +1381,16 @@ onBeforeUnmount(() => {
 }
 .clickable-stat:hover {
   opacity: 0.7;
+}
+
+.profile-review-link {
+  cursor: pointer;
+}
+
+.profile-review-link:hover .v-list-item-title {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .discovery-card {
