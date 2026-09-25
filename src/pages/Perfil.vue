@@ -42,6 +42,15 @@
                       <v-chip v-if="recomendacoes.length" size="x-small" color="primary" variant="tonal">
                         {{ recomendacoes.length }} faixas
                       </v-chip>
+                      <v-chip
+                        v-if="recomendacoes.length && recomendacoesContexto.lastfm_usado"
+                        size="x-small"
+                        color="red-darken-1"
+                        variant="tonal"
+                        prepend-icon="mdi-music-circle-outline"
+                      >
+                        Last.fm
+                      </v-chip>
                     </div>
                     <p class="text-body-2 text-grey-darken-1 mb-0">
                       Uma seleção feita a partir do seu gosto no SocialMusic.
@@ -445,6 +454,7 @@ const recomendacoes = ref([]);
 const recomendacoesLoading = ref(false);
 const recomendacoesMensagem = ref('');
 const recomendacoesPrecisaContexto = ref(false);
+const recomendacoesContexto = ref({});
 const recomendacaoPlayLoadingId = ref(null);
 const recomendacaoAvaliacaoLoadingId = ref(null);
 const spotifyPlaylistLoading = ref(false);
@@ -862,6 +872,7 @@ async function carregarRecomendacoesCache() {
     recomendacoes.value = [];
     recomendacoesMensagem.value = '';
     recomendacoesPrecisaContexto.value = false;
+    recomendacoesContexto.value = {};
     return;
   }
 
@@ -873,6 +884,7 @@ async function carregarRecomendacoesCache() {
     const data = await res.json();
     if (res.ok && data.sucesso && data.tem_playlist && Array.isArray(data.playlist)) {
       recomendacoes.value = data.playlist;
+      recomendacoesContexto.value = data.contexto || {};
       spotifyPlaylistUrl.value = data.spotify_export?.url || '';
 
       // Se o usuário acabou de autorizar a permissão de playlist no Spotify,
@@ -911,11 +923,13 @@ async function gerarRecomendacoes(forcar = false) {
 
     if (data.tem_playlist && Array.isArray(data.playlist)) {
       recomendacoes.value = data.playlist;
+      recomendacoesContexto.value = data.contexto || {};
       recomendacoesMensagem.value = '';
       spotifyPlaylistUrl.value = data.spotify_export?.url || '';
       if (data.cooldown && data.mensagem) showAlert(data.mensagem, 'info');
     } else {
       recomendacoes.value = [];
+      recomendacoesContexto.value = data.contexto || {};
       spotifyPlaylistUrl.value = '';
       recomendacoesMensagem.value = data.mensagem || 'Ainda não há dados suficientes para montar sua seleção.';
       recomendacoesPrecisaContexto.value = !!data.precisa_contexto;
