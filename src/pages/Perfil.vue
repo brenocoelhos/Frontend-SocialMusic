@@ -205,6 +205,107 @@
               </v-card-text>
             </v-card>
 
+            <!-- Playlists escolhidas pelo usuário no Spotify -->
+            <v-card
+              v-if="isSelf || playlistsCompartilhadasLoading || playlistsCompartilhadas.length"
+              rounded="xl"
+              flat
+              class="mb-7 shared-playlists-card"
+            >
+              <v-card-text class="pa-5">
+                <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-4">
+                  <div>
+                    <div class="d-flex align-center ga-2 mb-1">
+                      <v-icon icon="mdi-spotify" color="#1DB954" size="23" />
+                      <h2 class="text-h6 font-weight-bold text-grey-darken-4">Playlists compartilhadas</h2>
+                      <v-chip v-if="playlistsCompartilhadas.length" size="x-small" color="grey-darken-1" variant="tonal">
+                        {{ playlistsCompartilhadas.length }}
+                      </v-chip>
+                    </div>
+                    <p class="text-body-2 text-grey-darken-1 mb-0">
+                      {{ isSelf ? 'Escolha playlists do seu Spotify para mostrar no perfil.' : `Playlists que ${perfilUsuario.nome} escolheu compartilhar.` }}
+                    </p>
+                  </div>
+
+                  <v-btn
+                    v-if="isSelf"
+                    color="#1DB954"
+                    variant="tonal"
+                    rounded="lg"
+                    class="text-none"
+                    prepend-icon="mdi-playlist-music-outline"
+                    @click="abrirGerenciarPlaylists"
+                  >
+                    Gerenciar playlists
+                  </v-btn>
+                </div>
+
+                <div v-if="playlistsCompartilhadasLoading && !playlistsCompartilhadas.length" class="d-flex ga-4 overflow-hidden py-1">
+                  <v-skeleton-loader
+                    v-for="n in 3"
+                    :key="n"
+                    type="image, article"
+                    width="180"
+                    class="flex-shrink-0 rounded-lg"
+                  />
+                </div>
+
+                <v-alert
+                  v-else-if="isSelf && !playlistsCompartilhadas.length"
+                  type="info"
+                  variant="tonal"
+                  density="comfortable"
+                  class="mb-0"
+                >
+                  Você ainda não compartilhou nenhuma playlist. Use “Gerenciar playlists” para escolher quais aparecem aqui.
+                </v-alert>
+
+                <v-slide-group v-else-if="playlistsCompartilhadas.length" show-arrows class="shared-playlists-slider">
+                  <v-slide-group-item v-for="playlist in playlistsCompartilhadas" :key="playlist.spotify_playlist_id">
+                    <v-card
+                      width="188"
+                      rounded="lg"
+                      flat
+                      class="mr-4 shared-playlist-card"
+                      :href="playlist.spotify_url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <div class="shared-playlist-cover-wrap">
+                        <v-img
+                          v-if="playlist.imagem_url"
+                          :src="playlist.imagem_url"
+                          :alt="`Capa da playlist ${playlist.nome}`"
+                          width="188"
+                          height="188"
+                          cover
+                          class="shared-playlist-cover"
+                        />
+                        <div v-else class="shared-playlist-placeholder d-flex align-center justify-center">
+                          <v-icon icon="mdi-playlist-music" size="58" color="grey-lighten-1" />
+                        </div>
+                        <div class="spotify-playlist-badge">
+                          <v-icon icon="mdi-spotify" size="17" />
+                        </div>
+                      </div>
+
+                      <div class="pa-3">
+                        <div class="text-body-2 font-weight-bold text-grey-darken-4 text-truncate" :title="playlist.nome">
+                          {{ playlist.nome }}
+                        </div>
+                        <div class="text-caption text-grey-darken-1 text-truncate" :title="playlist.owner_name">
+                          por {{ playlist.owner_name || 'Spotify' }}
+                        </div>
+                        <div v-if="playlist.total_items !== null && playlist.total_items !== undefined" class="text-caption text-grey mt-1">
+                          {{ playlist.total_items }} {{ playlist.total_items === 1 ? 'item' : 'itens' }}
+                        </div>
+                      </div>
+                    </v-card>
+                  </v-slide-group-item>
+                </v-slide-group>
+              </v-card-text>
+            </v-card>
+
             <div>
               <h2 class="text-h6 font-weight-bold mb-4 text-grey-darken-4">
                 {{ isSelf ? 'Minhas Avaliações' : `Avaliações de ${perfilUsuario.nome}` }}
@@ -362,6 +463,127 @@
         </v-row>
       </v-container>
 
+      <v-dialog v-model="playlistsDialog" max-width="760px" scrollable>
+        <v-card rounded="xl">
+          <v-card-title class="d-flex align-center justify-space-between pa-5 pb-3">
+            <div>
+              <div class="d-flex align-center ga-2">
+                <v-icon icon="mdi-spotify" color="#1DB954" />
+                <span class="text-h6 font-weight-bold">Playlists do Spotify</span>
+              </div>
+              <div class="text-caption text-grey-darken-1 mt-1 font-weight-regular">
+                Escolha até 12 playlists para exibir no seu perfil.
+              </div>
+            </div>
+            <v-btn icon="mdi-close" variant="text" size="small" @click="fecharGerenciarPlaylists" />
+          </v-card-title>
+
+          <v-divider />
+
+          <v-card-text class="pa-0" style="max-height: 68vh;">
+            <v-alert
+              type="info"
+              variant="tonal"
+              density="compact"
+              class="ma-4 mb-2"
+            >
+              Playlists privadas podem aparecer aqui porque você autorizou o acesso. Ao compartilhá-las, nome, capa e link ficam visíveis no seu perfil do SocialMusic; a configuração da playlist no Spotify não é alterada.
+            </v-alert>
+
+            <div v-if="spotifyPlaylistsLoading && !spotifyPlaylists.length" class="pa-4">
+              <v-skeleton-loader v-for="n in 4" :key="n" type="list-item-avatar-two-line, actions" class="mb-2" />
+            </div>
+
+            <v-alert
+              v-else-if="spotifyPlaylistsMensagem && !spotifyPlaylists.length"
+              type="warning"
+              variant="tonal"
+              class="ma-4"
+            >
+              {{ spotifyPlaylistsMensagem }}
+            </v-alert>
+
+            <v-alert
+              v-else-if="!spotifyPlaylists.length"
+              type="info"
+              variant="tonal"
+              class="ma-4"
+            >
+              Nenhuma playlist encontrada nesta conta do Spotify.
+            </v-alert>
+
+            <v-list v-else class="py-2">
+              <v-list-item
+                v-for="playlist in spotifyPlaylists"
+                :key="playlist.spotify_playlist_id"
+                class="px-5 py-3 playlist-manager-item"
+              >
+                <template #prepend>
+                  <v-avatar size="58" rounded="lg" class="mr-3">
+                    <v-img v-if="playlist.imagem_url" :src="playlist.imagem_url" cover />
+                    <div v-else class="fill-height d-flex align-center justify-center bg-grey-lighten-3">
+                      <v-icon icon="mdi-playlist-music" color="grey" />
+                    </div>
+                  </v-avatar>
+                </template>
+
+                <v-list-item-title class="font-weight-bold text-grey-darken-4">
+                  {{ playlist.nome }}
+                </v-list-item-title>
+                <v-list-item-subtitle class="mt-1">
+                  <span>por {{ playlist.owner_name || 'Spotify' }}</span>
+                  <span v-if="playlist.total_items !== null && playlist.total_items !== undefined"> · {{ playlist.total_items }} itens</span>
+                </v-list-item-subtitle>
+                <div class="d-flex flex-wrap ga-1 mt-2">
+                  <v-chip v-if="playlist.public === false" size="x-small" variant="tonal" color="grey-darken-1">Privada</v-chip>
+                  <v-chip v-if="playlist.collaborative" size="x-small" variant="tonal" color="primary">Colaborativa</v-chip>
+                  <v-chip v-if="!playlist.is_owner" size="x-small" variant="tonal" color="grey">Seguida</v-chip>
+                </div>
+
+                <template #append>
+                  <v-btn
+                    v-if="playlist.compartilhada"
+                    color="grey-darken-1"
+                    variant="outlined"
+                    size="small"
+                    rounded="lg"
+                    class="text-none ml-3"
+                    :loading="playlistActionLoadingId === playlist.spotify_playlist_id"
+                    @click="removerPlaylistDoPerfil(playlist)"
+                  >
+                    Remover
+                  </v-btn>
+                  <v-btn
+                    v-else
+                    color="#1DB954"
+                    variant="flat"
+                    size="small"
+                    rounded="lg"
+                    class="text-none text-white ml-3"
+                    :loading="playlistActionLoadingId === playlist.spotify_playlist_id"
+                    @click="compartilharPlaylistNoPerfil(playlist)"
+                  >
+                    Compartilhar
+                  </v-btn>
+                </template>
+              </v-list-item>
+            </v-list>
+
+            <div v-if="spotifyPlaylistsNextOffset !== null" class="text-center pa-4 pt-2">
+              <v-btn
+                variant="text"
+                color="primary"
+                class="text-none"
+                :loading="spotifyPlaylistsLoadingMore"
+                @click="carregarMaisPlaylistsSpotify"
+              >
+                Carregar mais playlists
+              </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+
       <v-dialog v-model="editDialog" max-width="500px" persistent>
         <v-form ref="editFormRef" @submit.prevent="saveProfile">
           <v-card>
@@ -490,6 +712,20 @@ const spotifyConectado = computed(() => {
   return valor === true || valor === 1 || valor === '1';
 });
 const { playTrack: playGlobalTrack } = useGlobalPlayer();
+
+// --- Playlists do Spotify compartilhadas no perfil ---
+const playlistsCompartilhadas = ref([]);
+const playlistsCompartilhadasLoading = ref(false);
+let playlistsPerfilController = null;
+
+const playlistsDialog = ref(false);
+const spotifyPlaylists = ref([]);
+const spotifyPlaylistsLoading = ref(false);
+const spotifyPlaylistsLoadingMore = ref(false);
+const spotifyPlaylistsNextOffset = ref(null);
+const spotifyPlaylistsMensagem = ref('');
+const playlistActionLoadingId = ref(null);
+let spotifyPlaylistsController = null;
 
 const conexoesDialog = ref(false);
 const conexoesTitulo = ref('');
@@ -893,6 +1129,207 @@ async function toggleFollow() {
   }
 }
 
+async function carregarPlaylistsCompartilhadas() {
+  playlistsPerfilController?.abort();
+
+  if (!perfilUsuario.value?.id) {
+    playlistsCompartilhadas.value = [];
+    playlistsCompartilhadasLoading.value = false;
+    return;
+  }
+
+  const controller = new AbortController();
+  playlistsPerfilController = controller;
+  playlistsCompartilhadasLoading.value = true;
+
+  try {
+    const params = new URLSearchParams({ perfil_id: String(perfilUsuario.value.id) });
+    const res = await authFetch(`${API_URL}/api/users/perfil_playlists.php?${params.toString()}`, {
+      method: 'GET',
+      credentials: 'include',
+      signal: controller.signal,
+    });
+    const data = await res.json();
+    if (playlistsPerfilController !== controller) return;
+
+    if (!res.ok || !data.sucesso) {
+      throw new Error(data.mensagem || 'Não foi possível carregar as playlists compartilhadas.');
+    }
+
+    playlistsCompartilhadas.value = Array.isArray(data.playlists) ? data.playlists : [];
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    console.warn('Não foi possível carregar playlists compartilhadas:', err);
+    playlistsCompartilhadas.value = [];
+  } finally {
+    if (playlistsPerfilController === controller) playlistsCompartilhadasLoading.value = false;
+  }
+}
+
+function autorizarLeituraPlaylistsSpotify() {
+  sessionStorage.setItem('socialmusic_gerenciar_playlists_pendente', '1');
+  const returnTo = route.fullPath || `/perfil/${perfilUsuario.value.username || ''}`;
+  const authUrl = `${API_URL}/api/spotify/spotify_user_auth.php?action=authorize&mode=login&return_to=${encodeURIComponent(returnTo)}`;
+  window.location.href = authUrl;
+}
+
+async function abrirGerenciarPlaylists() {
+  if (!isSelf.value) return;
+  if (!spotifyConectado.value) {
+    showAlert('Conecte sua conta Spotify para importar playlists.', 'info');
+    return;
+  }
+
+  playlistsDialog.value = true;
+  spotifyPlaylistsMensagem.value = '';
+  await carregarPlaylistsSpotify({ reset: true });
+}
+
+function fecharGerenciarPlaylists() {
+  playlistsDialog.value = false;
+  spotifyPlaylistsController?.abort();
+  spotifyPlaylistsController = null;
+  spotifyPlaylistsLoading.value = false;
+  spotifyPlaylistsLoadingMore.value = false;
+}
+
+async function carregarPlaylistsSpotify({ reset = false } = {}) {
+  if (!isSelf.value || !spotifyConectado.value) return;
+  if ((spotifyPlaylistsLoading.value || spotifyPlaylistsLoadingMore.value) && !reset) return;
+
+  if (reset) {
+    spotifyPlaylistsController?.abort();
+    spotifyPlaylistsController = new AbortController();
+    spotifyPlaylists.value = [];
+    spotifyPlaylistsNextOffset.value = null;
+    spotifyPlaylistsMensagem.value = '';
+    spotifyPlaylistsLoading.value = true;
+  } else {
+    spotifyPlaylistsLoadingMore.value = true;
+  }
+
+  const offset = reset ? 0 : (spotifyPlaylistsNextOffset.value ?? 0);
+
+  try {
+    const params = new URLSearchParams({ limit: '50', offset: String(offset) });
+    const res = await authFetch(`${API_URL}/api/spotify/minhas_playlists.php?${params.toString()}`, {
+      method: 'GET',
+      credentials: 'include',
+      signal: spotifyPlaylistsController?.signal,
+    });
+    const data = await res.json();
+
+    if (data.necessita_autorizacao) {
+      autorizarLeituraPlaylistsSpotify();
+      return;
+    }
+
+    if (!res.ok || !data.sucesso) {
+      throw new Error(data.mensagem || 'Não foi possível carregar suas playlists do Spotify.');
+    }
+
+    const novas = Array.isArray(data.playlists) ? data.playlists : [];
+    spotifyPlaylists.value = reset ? novas : [...spotifyPlaylists.value, ...novas];
+    spotifyPlaylistsNextOffset.value = data.proximo_offset === null || data.proximo_offset === undefined
+      ? null
+      : Number(data.proximo_offset);
+
+    if (reset) void carregarPlaylistsCompartilhadas();
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    console.error('Erro ao carregar playlists do Spotify:', err);
+    spotifyPlaylistsMensagem.value = err.message || 'Não foi possível carregar suas playlists agora.';
+  } finally {
+    if (reset) spotifyPlaylistsLoading.value = false;
+    spotifyPlaylistsLoadingMore.value = false;
+  }
+}
+
+function carregarMaisPlaylistsSpotify() {
+  if (spotifyPlaylistsNextOffset.value === null) return;
+  void carregarPlaylistsSpotify({ reset: false });
+}
+
+async function compartilharPlaylistNoPerfil(playlist) {
+  if (!playlist?.spotify_playlist_id || playlistActionLoadingId.value) return;
+  playlistActionLoadingId.value = playlist.spotify_playlist_id;
+
+  try {
+    const res = await authFetch(`${API_URL}/api/spotify/compartilhar_playlist.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playlist_id: playlist.spotify_playlist_id }),
+    });
+    const data = await res.json();
+
+    if (data.necessita_autorizacao) {
+      autorizarLeituraPlaylistsSpotify();
+      return;
+    }
+
+    if (!res.ok || !data.sucesso) {
+      throw new Error(data.mensagem || 'Não foi possível compartilhar esta playlist.');
+    }
+
+    playlist.compartilhada = true;
+    const compartilhada = data.playlist || {
+      spotify_playlist_id: playlist.spotify_playlist_id,
+      nome: playlist.nome,
+      descricao: playlist.descricao,
+      imagem_url: playlist.imagem_url,
+      spotify_url: playlist.spotify_url,
+      owner_name: playlist.owner_name,
+      owner_spotify_id: playlist.owner_spotify_id,
+      public: playlist.public,
+      collaborative: playlist.collaborative,
+      total_items: playlist.total_items,
+    };
+
+    playlistsCompartilhadas.value = [
+      compartilhada,
+      ...playlistsCompartilhadas.value.filter(p => p.spotify_playlist_id !== playlist.spotify_playlist_id),
+    ].slice(0, 12);
+
+    showAlert(data.mensagem || 'Playlist compartilhada no seu perfil!', 'success');
+  } catch (err) {
+    console.error('Erro ao compartilhar playlist:', err);
+    showAlert(err.message || 'Não foi possível compartilhar esta playlist.', 'error');
+  } finally {
+    playlistActionLoadingId.value = null;
+  }
+}
+
+async function removerPlaylistDoPerfil(playlist) {
+  if (!playlist?.spotify_playlist_id || playlistActionLoadingId.value) return;
+  playlistActionLoadingId.value = playlist.spotify_playlist_id;
+
+  try {
+    const res = await authFetch(`${API_URL}/api/spotify/remover_playlist_compartilhada.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playlist_id: playlist.spotify_playlist_id }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.sucesso) {
+      throw new Error(data.mensagem || 'Não foi possível remover esta playlist do perfil.');
+    }
+
+    playlist.compartilhada = false;
+    playlistsCompartilhadas.value = playlistsCompartilhadas.value.filter(
+      p => p.spotify_playlist_id !== playlist.spotify_playlist_id
+    );
+    showAlert('Playlist removida do seu perfil.', 'success');
+  } catch (err) {
+    console.error('Erro ao remover playlist compartilhada:', err);
+    showAlert(err.message || 'Não foi possível remover esta playlist.', 'error');
+  } finally {
+    playlistActionLoadingId.value = null;
+  }
+}
+
 async function carregarRecomendacoesCache() {
   recomendacoesCacheController?.abort();
 
@@ -1264,6 +1701,8 @@ let perfilController = null;
 function limparDadosSecundarios() {
   avaliacoesController?.abort();
   recomendacoesCacheController?.abort();
+  playlistsPerfilController?.abort();
+  spotifyPlaylistsController?.abort();
   recomendacoesCacheController = null;
   avaliacoes.value = [];
   avaliacoesTotal.value = 0;
@@ -1277,6 +1716,12 @@ function limparDadosSecundarios() {
   recomendacoesMensagem.value = '';
   recomendacoesPrecisaContexto.value = false;
   spotifyPlaylistUrl.value = '';
+  playlistsCompartilhadas.value = [];
+  playlistsCompartilhadasLoading.value = false;
+  spotifyPlaylists.value = [];
+  spotifyPlaylistsNextOffset.value = null;
+  spotifyPlaylistsMensagem.value = '';
+  playlistsDialog.value = false;
 }
 
 async function carregarPerfil(username) {
@@ -1326,9 +1771,20 @@ async function carregarPerfil(username) {
     // Carregamento progressivo: as seções secundárias começam imediatamente
     // e não bloqueiam a renderização do nome/foto/contadores do perfil.
     void carregarAvaliacoes({ reset: true });
+    void carregarPlaylistsCompartilhadas();
 
     if (isSelf.value) {
       void carregarRecomendacoesCache();
+
+      // Se o usuário acabou de autorizar a leitura de playlists, reabre o
+      // gerenciador depois que o perfil já estiver visível.
+      const gerenciarPendente = sessionStorage.getItem('socialmusic_gerenciar_playlists_pendente') === '1';
+      if (gerenciarPendente) {
+        sessionStorage.removeItem('socialmusic_gerenciar_playlists_pendente');
+        setTimeout(() => {
+          if (isSelf.value) void abrirGerenciarPlaylists();
+        }, 0);
+      }
     }
 
     // Normaliza a URL sem disparar uma segunda requisição para o mesmo perfil.
@@ -1371,6 +1827,8 @@ onBeforeUnmount(() => {
   perfilController?.abort();
   avaliacoesController?.abort();
   recomendacoesCacheController?.abort();
+  playlistsPerfilController?.abort();
+  spotifyPlaylistsController?.abort();
 });
 </script>
 
@@ -1445,7 +1903,83 @@ onBeforeUnmount(() => {
   line-height: 1.3;
 }
 
+.shared-playlists-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.045);
+}
+
+.shared-playlists-slider {
+  margin-inline: -4px;
+}
+
+.shared-playlist-card {
+  border: 1px solid rgba(0, 0, 0, 0.055);
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.shared-playlist-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(29, 185, 84, 0.28);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.07);
+}
+
+.shared-playlist-cover-wrap {
+  width: 188px;
+  height: 188px;
+  position: relative;
+  overflow: hidden;
+  background: #f1f3f4;
+}
+
+.shared-playlist-cover {
+  transition: transform 0.25s ease;
+}
+
+.shared-playlist-card:hover .shared-playlist-cover {
+  transform: scale(1.015);
+}
+
+.shared-playlist-placeholder {
+  width: 188px;
+  height: 188px;
+  background: #f4f5f6;
+}
+
+.spotify-playlist-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1DB954;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.18);
+}
+
+.playlist-manager-item + .playlist-manager-item {
+  border-top: 1px solid rgba(0, 0, 0, 0.055);
+}
+
 @media (max-width: 600px) {
+  .shared-playlist-card,
+  .shared-playlist-cover-wrap,
+  .shared-playlist-placeholder {
+    width: 172px !important;
+  }
+
+  .shared-playlist-cover-wrap,
+  .shared-playlist-placeholder {
+    height: 172px !important;
+  }
+
   .discovery-track-card {
     width: 172px !important;
   }
